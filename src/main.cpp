@@ -7,6 +7,7 @@
 #include "LittleFS.h"
 #include <time.h>
 #include "RTClib.h"
+#include <ElegantOTA.h>
 
 #define LED_PIN  25
 #define LDR_PIN  36
@@ -32,9 +33,6 @@ boolean isTick;
 boolean isSetup;
 
 WiFiClient client;
-// IPAddress localIP; //IPAddress localIP(192, 168, 1, 200); // hardcoded
-// IPAddress localGateway; //IPAddress localGateway(192, 168, 1, 1); //hardcoded
-// IPAddress subnet(255, 255, 255, 0);
 
 HADevice device;
 HAMqtt mqtt(client, device);
@@ -65,6 +63,33 @@ const char* TZ_INFO    = "CET-1CEST,M3.5.0,M10.5.0/3";  // https://github.com/na
 struct tm timeinfo;
 time_t now;
 long unsigned lastNTPtime = 0;
+
+unsigned long ota_progress_millis = 0;
+
+void onOTAStart() {
+  // Log when OTA has started
+  Serial.println("OTA update started!");
+  // <Add your own code here>
+}
+
+void onOTAProgress(size_t current, size_t final) {
+  // Log every 1 second
+  if (millis() - ota_progress_millis > 1000) {
+    ota_progress_millis = millis();
+    Serial.printf("OTA Progress Current: %u bytes, Final: %u bytes\n", current, final);
+  }
+}
+
+void onOTAEnd(bool success) {
+  // Log when OTA has finished
+  if (success) {
+    Serial.println("OTA update finished successfully!");
+    ESP.restart();
+  } else {
+    Serial.println("There was an error during OTA update!");
+  }
+  // <Add your own code here>
+}
 
 void initLittleFS() {
   if (!LittleFS.begin(true)) {
@@ -209,15 +234,11 @@ void initWebserver() {
     });
     server.serveStatic("/", LittleFS, "/");
     
-    // Route to set GPIO state to HIGH
     server.on("/on", HTTP_GET, [](AsyncWebServerRequest *request) {
-      //digitalWrite(ledPin, HIGH);
       request->send(LittleFS, "/index.html", "text/html", false, processor);
     });
 
-    // Route to set GPIO state to LOW
     server.on("/off", HTTP_GET, [](AsyncWebServerRequest *request) {
-      //digitalWrite(ledPin, LOW);
       request->send(LittleFS, "/index.html", "text/html", false, processor);
     });
     server.begin();
@@ -264,7 +285,7 @@ void initHostAP() {
         //Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
       }
     }
-    request->send(200, "text/plain", "Done. ESP will restart, connect to your router and go to thze new address");
+    request->send(200, "text/plain", "Done. ESP will restart, connect to your router and go to the new address");
     delay(3000);
     ESP.restart();
   });
@@ -301,14 +322,22 @@ void setup() {
       Serial.println(&timeinfo, "%d.%m.%Y %H:%M:%S %Z");
     }
 
+    ElegantOTA.begin(&server);    // Start ElegantOTA
+    // ElegantOTA callbacks
+    ElegantOTA.onStart(onOTAStart);
+    ElegantOTA.onProgress(onOTAProgress);
+    ElegantOTA.onEnd(onOTAEnd);
+
     initWebserver(); 
     initMqtt();
-    FastLED.addLeds<CHIPSET, LED_PIN>(leds, NUM_LEDS);
+    FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
     FastLED.setBrightness( 128 );  
 
     unsigned long m = millis();
     lastMillisIlluminance = m;
     lastMillisLED = m;
+
+
   }
   else { 
     isSetup = true;
@@ -361,6 +390,7 @@ void loop()
       FastLED.show();  
     }
 
+    ElegantOTA.loop();
     mqtt.loop();
   }
 

@@ -65,6 +65,7 @@ time_t now;
 long unsigned lastNTPtime = 0;
 
 unsigned long ota_progress_millis = 0;
+#define FW_VERSION "1.0.1"
 
 void onOTAStart()
 {
@@ -252,12 +253,15 @@ String processor(const String &var)
       ledState = "OFF";
     }
     return ledState;
-  }
+  } else if (var == "FW_VERSION") {
+    return FW_VERSION;
+  } 
   return String();
 }
 
 void handleFWUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final)
 {
+  Serial.printf("Upload: %s, Index: %u, Len: %u, Final: %u\n", filename.c_str(), index, len, final);
   if (!index)
   {
     Serial.printf("UploadStart: %s\n", filename.c_str());
@@ -289,25 +293,25 @@ void notFoundResponse(AsyncWebServerRequest *request)
 
 void initWebserver()
 {
-  // Route for root / web page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(LittleFS, "/index.html", "text/html", false, processor); });
   server.on("/update", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(LittleFS, "/firmware.html", "text/html"); });
+            { request->send(LittleFS, "/firmware.html", "text/html", false, processor); });
   server.on("/on", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(LittleFS, "/index.html", "text/html", false, processor); });
-
   server.on("/off", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(LittleFS, "/index.html", "text/html", false, processor); });
 
   server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request)
             {
       if (!Update.hasError()) {
+        Serial.println("Update successful");
           AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", "OK");
           response->addHeader("Connection", "close");
           request->send(response);
           ESP.restart();
       } else {
+        Serial.println("Update failed");
           AsyncWebServerResponse *response = request->beginResponse(500, "text/plain", "ERROR");
           response->addHeader("Connection", "close");
           request->send(response);
@@ -403,12 +407,6 @@ void setup()
       Serial.println(&timeinfo, "%d.%m.%Y %H:%M:%S %Z");
     }
 
-    // ElegantOTA.begin(&server);    // Start ElegantOTA
-    // // ElegantOTA callbacks
-    // ElegantOTA.onStart(onOTAStart);
-    // ElegantOTA.onProgress(onOTAProgress);
-    // ElegantOTA.onEnd(onOTAEnd);
-
     initWebserver();
     initMqtt();
     FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
@@ -484,7 +482,6 @@ void loop()
       FastLED.show();
     }
 
-    // ElegantOTA.loop();
     mqtt.loop();
   }
 }

@@ -65,7 +65,7 @@ time_t now;
 long unsigned lastNTPtime = 0;
 
 unsigned long ota_progress_millis = 0;
-#define FW_VERSION "1.0.1"
+#define FW_VERSION "1.0.1-test-01"
 
 void onOTAStart()
 {
@@ -188,7 +188,15 @@ void initMqtt()
   sensor.setIcon("mdi:home");
   sensor.setName("Light Intensity");
 
+  mqtt.onConnected([]() {
+    Serial.println("Connected to MQTT broker");
+  });
+  mqtt.onDisconnected([]() {
+    Serial.println("Disconnected from MQTT broker");
+  });
+
   mqtt.begin(BROKER_ADDR);
+
 }
 
 bool getNTPtime()
@@ -268,12 +276,12 @@ void handleFWUpload(AsyncWebServerRequest *request, String filename, size_t inde
     if (!Update.begin(UPDATE_SIZE_UNKNOWN))
     { // start with max available size
       Update.printError(Serial);
-    }
+    } else Serial.println("OTA update started!");
   }
   if (Update.write(data, len) != len)
   {
     Update.printError(Serial);
-  }
+  } else Serial.printf("Written: %u\n", index + len);
   if (final)
   {
     if (Update.end(true))
@@ -304,6 +312,7 @@ void initWebserver()
 
   server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request)
             {
+              Serial.println("Update requested");
       if (!Update.hasError()) {
         Serial.println("Update successful");
           AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", "OK");
@@ -377,7 +386,7 @@ void setup()
 {
   isTick = true;
   Serial.begin(115200);
-  Serial.println("Starting...");
+  Serial.printf("Starting with FW %s...\n", FW_VERSION);
 
   if (!rtc.begin())
   {

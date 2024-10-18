@@ -19,7 +19,7 @@
 
 #define WL_MAC_ADDR_LENGTH 6
 
-#define BROKER_ADDR IPAddress(192, 168, 56, 56)
+#define BROKER_ADDR IPAddress(192, 168, 56, 65)
 #define BROKER_USERNAME "user" // replace with your credentials
 #define BROKER_PASSWORD "pass"
 
@@ -37,6 +37,7 @@ WiFiClient client;
 HADevice device;
 HAMqtt mqtt(client, device);
 HASensor sensor("wc-lightintensity");
+HASwitch led("wc-led");
 
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
@@ -65,7 +66,8 @@ time_t now;
 long unsigned lastNTPtime = 0;
 
 unsigned long ota_progress_millis = 0;
-#define FW_VERSION "1.0.1-test-01"
+#define FW_VERSION "0.1-test"
+#define PRODUCT "WordClock-v2"
 
 void onOTAStart()
 {
@@ -173,6 +175,14 @@ bool initWiFi()
   return true;
 }
 
+void ledSwitchCommand(bool state, HASwitch* sender) {
+    if (state) {
+      Serial.println("LED turned ON");
+    } else {
+      Serial.println("LED turned OFF");
+    }
+}
+
 void initMqtt()
 {
   // Unique ID must be set!
@@ -184,9 +194,13 @@ void initMqtt()
   device.setSoftwareVersion("1.0.0");
   device.setModel("ESP32");
   device.setManufacturer("Espressif");
-  // configure sensor (optional)
+  
   sensor.setIcon("mdi:home");
   sensor.setName("Light Intensity");
+  
+  led.setIcon("mdi:lightbulb");
+  led.setName("WordClock Light");
+  led.onCommand(ledSwitchCommand);
 
   mqtt.onConnected([]() {
     Serial.println("Connected to MQTT broker");
@@ -247,8 +261,27 @@ void setTimeZone(const char *timezone)
   tzset();
 }
 
-// Replaces placeholder with LED state value
-String processor(const String &var)
+String wifiSetupProcessor(const String &var)
+{
+  if (var == "PAGE_TITLE") {
+    return PRODUCT;
+  }
+
+  return String();
+}
+
+String fwUpdateProcessor(const String &var) 
+{
+  if (var == "PAGE_TITLE") {
+    return PRODUCT;
+  } else if (var == "FW_VERSION") {
+    return FW_VERSION;
+  }
+
+  return String();
+}
+
+String configurationProcessor(const String &var)
 {
   if (var == "STATE")
   {
@@ -263,7 +296,9 @@ String processor(const String &var)
     return ledState;
   } else if (var == "FW_VERSION") {
     return FW_VERSION;
-  } 
+  } else if (var == "PAGE_TITLE") {
+    return PRODUCT;
+  }
   return String();
 }
 
@@ -302,29 +337,29 @@ void notFoundResponse(AsyncWebServerRequest *request)
 void initWebserver()
 {
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(LittleFS, "/index.html", "text/html", false, processor); });
+            { request->send(LittleFS, "/index.html", "text/html", false, configurationProcessor); });
   server.on("/update", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(LittleFS, "/firmware.html", "text/html", false, processor); });
+            { request->send(LittleFS, "/firmware.html", "text/html", false, fwUpdateProcessor); });
   server.on("/on", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(LittleFS, "/index.html", "text/html", false, processor); });
+            { request->send(LittleFS, "/index.html", "text/html", false, configurationProcessor); });
   server.on("/off", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(LittleFS, "/index.html", "text/html", false, processor); });
+            { request->send(LittleFS, "/index.html", "text/html", false, configurationProcessor); });
 
   server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request)
             {
               Serial.println("Update requested");
-      if (!Update.hasError()) {
-        Serial.println("Update successful");
-          AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", "OK");
-          response->addHeader("Connection", "close");
-          request->send(response);
-          ESP.restart();
-      } else {
-        Serial.println("Update failed");
-          AsyncWebServerResponse *response = request->beginResponse(500, "text/plain", "ERROR");
-          response->addHeader("Connection", "close");
-          request->send(response);
-      } }, handleFWUpload);
+              if (!Update.hasError()) {
+                Serial.println("Update successful");
+                  AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", "OK");
+                  response->addHeader("Connection", "close");
+                  request->send(response);
+                  ESP.restart();
+              } else {
+                Serial.println("Update failed");
+                  AsyncWebServerResponse *response = request->beginResponse(500, "text/plain", "ERROR");
+                  response->addHeader("Connection", "close");
+                  request->send(response);
+              } }, handleFWUpload);
   server.onNotFound(notFoundResponse);
 
   server.serveStatic("/", LittleFS, "/");
@@ -337,7 +372,7 @@ void initHostAP()
   // Connect to Wi-Fi network with SSID and password
   Serial.println("Setting AP (Access Point)");
   // NULL sets an open Access Point
-  WiFi.softAP("ESP-WIFI-MANAGER", NULL);
+  WiFi.softAP(PRODUCT, NULL);
 
   IPAddress IP = WiFi.softAPIP();
   Serial.print("AP IP address: ");
@@ -345,7 +380,7 @@ void initHostAP()
 
   // Web Server Root URL
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(LittleFS, "/wifimanager.html", "text/html"); });
+            { request->send(LittleFS, "/wifimanager.html", "text/html", false, wifiSetupProcessor); });
 
   server.serveStatic("/", LittleFS, "/");
 

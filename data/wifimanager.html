@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>ESP Wi-Fi Manager</title>
+  <title>%PAGE_TITLE%</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="data:,">
   <link rel="stylesheet" type="text/css" href="style.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 </head>
 <body>
   <div class="topnav">
-    <h1>ESP Wi-Fi Manager</h1>
+    <h1>WiFi Setup</h1>
   </div>
   <div class="content">
     <div class="card-grid">
@@ -16,13 +17,9 @@
         <form action="/" method="POST">
           <p>
             <label for="ssid">SSID</label>
-            <input type="text" id ="ssid" name="ssid"><br>
+            <input type="text" id ="ssid" name="ssid"><br />
             <label for="pass">Password</label>
-            <input type="text" id ="pass" name="pass"><br>
-            <!-- <label for="ip">IP Address</label>
-            <input type="text" id ="ip" name="ip" value="192.168.1.200"><br>
-            <label for="gateway">Gateway Address</label>
-            <input type="text" id ="gateway" name="gateway" value="192.168.1.1"><br> -->
+            <input type="password" id ="pass" name="pass"><br />
             <input type ="submit" value ="Submit">
           </p>
         </form>

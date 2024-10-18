@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Firmware Update</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" href="data:,">
-  <link rel="stylesheet" type="text/css" href="style.css">
-</head>
+  <head>
+    <title>%PAGE_TITLE%</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+     <link rel="stylesheet" type="text/css" href="style.css">
+  </head>
 <body>
   <div class="topnav">
     <h1>Upload new firmware</h1>
@@ -19,11 +18,8 @@
       </div>
       <div class="card">
         <form action="/update" method="POST" enctype="multipart/form-data" id="upload_form">
-          <p>
-            <label for="file">File</label>
-            <input type="file" id ="file" name="file" accept=".bin"><br>
+            <label for="file">File</label><input type="file" id ="file" name="file" accept=".bin"><br/>
             <input type ="submit" value ="Submit">
-          </p>
         </form>
       </div>
     </div>

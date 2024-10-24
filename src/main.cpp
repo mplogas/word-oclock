@@ -4,29 +4,14 @@
 #include <ArduinoHA.h>
 #include <ESPAsyncWebServer.h>
 #include <AsyncTCP.h>
-#include "LittleFS.h"
+#include <LittleFS.h>
 #include <time.h>
-#include "RTClib.h"
+#include <RTClib.h>
 #include <Update.h>
 
-#define LED_PIN 25
-#define LDR_PIN 36
-
-#define COLOR_ORDER GRB
-#define CHIPSET WS2812B
-#define BRIGHTNESS 128
-#define NUM_LEDS 9
-
-#define WL_MAC_ADDR_LENGTH 6
-
-#define BROKER_ADDR IPAddress(192, 168, 56, 65)
-#define BROKER_USERNAME "user" // replace with your credentials
-#define BROKER_PASSWORD "pass"
-
-#define ILLUMINANCE_INTERVAL 200
-#define LED_INTERVAL 15000
-#define WIFI_SCAN_TIMEOUT 10000
-#define NTP_TIMEOUT 10000
+#include "constants.h"
+#include "homeassistant.h"
+#include "storage.h"
 
 CRGB leds[NUM_LEDS];
 boolean isTick;
@@ -34,23 +19,12 @@ boolean isSetup;
 
 WiFiClient client;
 
-HADevice device;
-HAMqtt mqtt(client, device);
-HASensor sensor("wc-lightintensity");
-HASwitch led("wc-led");
-
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
-// Search for parameter in HTTP POST request
-const char *PARAM_INPUT_1 = "ssid";
-const char *PARAM_INPUT_2 = "pass";
 // Variables to save values from HTML form
 String ssid;
 String pass;
 
-// File paths to save input values permanently
-const char *ssidPath = "/ssid.txt";
-const char *passPath = "/pass.txt";
 
 unsigned long lastMillisIlluminance = 0;
 unsigned long lastMillisLED = 0;
@@ -59,98 +33,11 @@ unsigned long lastMillisWifi = 0;
 String ledState;
 
 RTC_DS3231 rtc;
-const char *NTP_SERVER = "pool.ntp.org";
-const char *TZ_INFO = "CET-1CEST,M3.5.0,M10.5.0/3"; // https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv for UI
-struct tm timeinfo;
-time_t now;
-long unsigned lastNTPtime = 0;
 
 unsigned long ota_progress_millis = 0;
-#define FW_VERSION "0.1-test"
-#define PRODUCT "WordClock-v2"
 
-void onOTAStart()
-{
-  // Log when OTA has started
-  Serial.println("OTA update started!");
-  // <Add your own code here>
-}
 
-void onOTAProgress(size_t current, size_t final)
-{
-  // Log every 1 second
-  if (millis() - ota_progress_millis > 1000)
-  {
-    ota_progress_millis = millis();
-    Serial.printf("OTA Progress Current: %u bytes, Final: %u bytes\n", current, final);
-  }
-}
 
-void onOTAEnd(bool success)
-{
-  // Log when OTA has finished
-  if (success)
-  {
-    Serial.println("OTA update finished successfully!");
-    ESP.restart();
-  }
-  else
-  {
-    Serial.println("There was an error during OTA update!");
-  }
-  // <Add your own code here>
-}
-
-void initLittleFS()
-{
-  if (!LittleFS.begin(true))
-  {
-    Serial.println("An error has occurred while mounting LittleFS");
-  }
-  Serial.println("LittleFS mounted successfully");
-}
-
-// Read File from LittleFS
-String readFile(fs::FS &fs, const char *path)
-{
-  Serial.printf("Reading file: %s\r\n", path);
-
-  File file = fs.open(path);
-  if (!file || file.isDirectory())
-  {
-    Serial.println("- failed to open file for reading");
-    return String();
-  }
-
-  String fileContent;
-  while (file.available())
-  {
-    fileContent = file.readStringUntil('\n');
-    break;
-  }
-  return fileContent;
-}
-
-// Write file to LittleFS
-void writeFile(fs::FS &fs, const char *path, const char *message)
-{
-  Serial.printf("Writing file: %s\r\n", path);
-
-  File file = fs.open(path, FILE_WRITE);
-  if (!file)
-  {
-    Serial.println("- failed to open file for writing");
-    return;
-  }
-  if (file.print(message))
-  {
-    Serial.println("- file written");
-  }
-  else
-  {
-    Serial.println("- write failed");
-  }
-}
 
 // Initialize WiFi
 bool initWiFi()
@@ -181,36 +68,6 @@ void ledSwitchCommand(bool state, HASwitch* sender) {
     } else {
       Serial.println("LED turned OFF");
     }
-}
-
-void initMqtt()
-{
-  // Unique ID must be set!
-  byte mac[WL_MAC_ADDR_LENGTH];
-  WiFi.macAddress(mac);
-  device.setUniqueId(mac, sizeof(mac));
-
-  device.setName("NodeMCU");
-  device.setSoftwareVersion("1.0.0");
-  device.setModel("ESP32");
-  device.setManufacturer("Espressif");
-  
-  sensor.setIcon("mdi:home");
-  sensor.setName("Light Intensity");
-  
-  led.setIcon("mdi:lightbulb");
-  led.setName("WordClock Light");
-  led.onCommand(ledSwitchCommand);
-
-  mqtt.onConnected([]() {
-    Serial.println("Connected to MQTT broker");
-  });
-  mqtt.onDisconnected([]() {
-    Serial.println("Disconnected from MQTT broker");
-  });
-
-  mqtt.begin(BROKER_ADDR);
-
 }
 
 bool getNTPtime()
@@ -391,20 +248,20 @@ void initHostAP()
       const AsyncWebParameter* p = request->getParam(i);
       if(p->isPost()){
         // HTTP POST ssid value
-        if (p->name() == PARAM_INPUT_1) {
+        if (p->name() == SSID_INPUT) {
           ssid = p->value().c_str();
           Serial.print("SSID set to: ");
           Serial.println(ssid);
           // Write file to save value
-          writeFile(LittleFS, ssidPath, ssid.c_str());
+          writeFile(LittleFS, SSID_PATH, ssid.c_str());
         }
         // HTTP POST pass value
-        if (p->name() == PARAM_INPUT_2) {
+        if (p->name() == WIFI_PASS_INPUT) {
           pass = p->value().c_str();
           Serial.print("Password set to: ");
           Serial.println(pass);
           // Write file to save value
-          writeFile(LittleFS, passPath, pass.c_str());
+          writeFile(LittleFS, WIFI_PASS_PATH, pass.c_str());
         }
         //Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
       }
@@ -430,13 +287,6 @@ void setup()
     abort();
   }
 
-  initLittleFS();
-
-  // Load values saved in LittleFS
-  ssid = readFile(LittleFS, ssidPath);
-  pass = readFile(LittleFS, passPath);
-  Serial.println(ssid);
-  Serial.println(pass);
 
   if (initWiFi())
   {
@@ -452,7 +302,6 @@ void setup()
     }
 
     initWebserver();
-    initMqtt();
     FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
     FastLED.setBrightness(128);
 

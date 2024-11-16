@@ -5,25 +5,33 @@
 #include <time.h>
 #include <RTClib.h>
 
+
+struct tm timeinfo;
+
 class Clock
 {
 private:
-    const char *NTP_SERVER = "pool.ntp.org";
-    const char *TZ_INFO = "CET-1CEST,M3.5.0,M10.5.0/3"; // https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv for UI
-    const uint16_t NTP_TIMEOUT = 10000;
+    const uint16_t ntpTimeout = 10000;
+    const char *ntpServer;
+    const char *tzInfo;
     RTC_DS3231 rtc;
-    struct tm timeinfo;
     time_t now;
     long unsigned lastNTPtime = 0;
+    bool getNTPTime();
+    bool initialized = false;
 public:
-    Clock(RTC_DS3231& rtc);
+    Clock(RTC_DS3231& rtc, const char *timezone, const char *ntpServer);
     ~Clock();
     void setTimeZone(const char *timezone);
     bool begin();
-    bool getNTPtime();
+    bool update();
+    void loop();
 };
 
-Clock::Clock(RTC_DS3231& rtc) : rtc(rtc) {}
+Clock::Clock(RTC_DS3231& rtc, const char *timezone, const char *ntpServer) : rtc(rtc){
+    tzInfo = timezone;
+    ntpServer = ntpServer;    
+}
 
 Clock::~Clock()
 {
@@ -36,33 +44,83 @@ bool Clock::begin()
         Serial.println("Couldn't find RTC");
         return false;
     }
+
+    setTimeZone(tzInfo);
+
+    if(getNTPTime())
+    {
+        rtc.adjust(DateTime(now));
+    }
+
+    DateTime now = rtc.now();
+    if (now.year() < 2024)
+    {
+        Serial.println("RTC is not initialized");
+        return false;
+    }
+
+    initialized = true;
     return true;
 }
 
-bool Clock::getNTPtime()
+bool Clock::getNTPTime()
 {
-
-  unsigned long lastMillis = millis();
-  configTime(0, 0, NTP_SERVER);
-
-  Serial.println("Waiting for NTP time sync: ");
-  while (millis() - lastMillis < NTP_TIMEOUT)
-  {
-    time(&now);
-    localtime_r(&now, &timeinfo);
-    Serial.print(".");
-    delay(100);
-
-    if (getLocalTime(&timeinfo))
+    if(!initialized)
     {
-      Serial.println(" Successfully obtained time");
-      return true;
+        return false;
     }
-  }
 
-  Serial.println("Failed to get time from NTP");
-  return false;
+    unsigned long lastMillis = millis();
+    configTime(0, 0, NTP_SERVER);
+
+    //in order to get rid of the blocking behavior I just add an update indicator and let the loop function handle the update and check for progress on the ntp update until ntpTimeout is reached
+    //this way the main loop is not blocked by the ntp update, downside is that begin does not guarantee a successful ntp update
+
+    Serial.println("Waiting for NTP time sync: ");
+    while (millis() - lastMillis < ntpTimeout)
+    {
+        time(&now);
+        localtime_r(&now, &timeinfo);
+        Serial.print(".");
+        delay(100);
+
+        if (getLocalTime(&timeinfo))
+        {
+        Serial.println("Successfully obtained time");
+        Serial.println(&timeinfo, "%d.%m.%Y %H:%M:%S %Z");
+        lastNTPtime = now;
+        return true;
+        }
+    }
+
+    return false;
 }
 
+void Clock::setTimeZone(const char *timezone)
+{
+  setenv("TZ", timezone, 1);
+  tzset();
+  tzInfo = timezone;
+}
+
+bool Clock::update()
+{
+    if(getNTPTime())
+    {
+        rtc.adjust(DateTime(now));
+        return true;
+    }    
+
+    return false;
+}
+
+void Clock::loop()
+{
+    //update ntp every 6 hours
+    if (millis() - lastNTPtime > 21600000)
+    {
+        update();
+    }
+}
 
 #endif

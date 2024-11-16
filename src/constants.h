@@ -4,6 +4,11 @@
 #define PRODUCT "WordClock-v2"
 #define FW_VERSION "0.1-test"
 
+// temporary
+const char *NTP_SERVER = "pool.ntp.org";
+const char *TZ_INFO = "CET-1CEST,M3.5.0,M10.5.0/3"; // https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv for UI
+
+
 #define LED_PIN 25
 #define LDR_PIN 36
 

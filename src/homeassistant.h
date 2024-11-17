@@ -6,17 +6,31 @@
 #include <ArduinoHA.h>
 #include <functional>
 #include <memory>
-#include "constants.h"
+
+// HA entities enums
+enum class SensorType {
+    LightIntensity=0,
+    LightColor,
+    TimeUpdateInterval,
+    SensorTypeCount // Keep this as the last element
+};
+
+enum class SwitchType {
+    LED=0,
+    AutoTimeUpdate,
+    SwitchTypeCount // Keep this as the last element
+};
 
 // Define callback types
 using MqttConnectCallback = std::function<void()>;
 using MqttDisconnectCallback = std::function<void()>;
-using LedSwitchCommandCallback = std::function<void(bool)>;
+using SwitchCommandCallback = std::function<void(SwitchType switchType, bool state)>;
 
 class HomeAssistant
 {
 private:
     const uint8_t maclen = 6;
+    static constexpr const char* DEFAULT_ICON = "mdi:clock-digital";
 
     // Using smart pointers for dynamic initialization
     std::unique_ptr<HAMqtt> mqtt;
@@ -28,196 +42,55 @@ private:
     MqttConnectCallback mqttConnectCallback;
     MqttDisconnectCallback mqttDisconnectCallback;
 
-    // Callback for LED switch commands
-    LedSwitchCommandCallback ledSwitchCallback;
+    // Callback for switch commands
+    SwitchCommandCallback switchCommandCallback;
 
     // Static pointer to the current instance
     static HomeAssistant* instance;
-
-    // Helper methods to build HA components
-    HADevice buildDevice();
-    std::unique_ptr<HASensor> buildSensor();
-    std::unique_ptr<HASwitch> buildSwitch();
 
     // Static callback forwarders
     static void onMqttConnectedStatic();
     static void onMqttDisconnectedStatic();
     static void onSwitchCommandStatic(bool state, HASwitch* sender);
 
+    // Arrays to store sensors and switches
+    std::unique_ptr<HASensor> sensors[static_cast<uint8_t>(SensorType::SensorTypeCount)];
+    std::unique_ptr<HASwitch> switches[static_cast<uint8_t>(SwitchType::SwitchTypeCount)];
+
+    // Helper method to generate, devices, names and unique IDs
+    HADevice buildDevice(const char* name, const char* firmware);
+    const char* generateUniqueId(const char* name);
+    const char* getSensorName(SensorType sensor);
+    const char* getSwitchName(SwitchType sw);
+
 public:
     // Constructor and Destructor
-    HomeAssistant(WiFiClient& client, const LedSwitchCommandCallback& ledCb);
+    HomeAssistant(WiFiClient& client, const char* devicename, const char* firmware);
     ~HomeAssistant();
 
     // Connect methods with callbacks
     bool connect(
         IPAddress broker, 
-        const char* username, 
-        const char* password, 
         const MqttConnectCallback& onConnected, 
-        const MqttDisconnectCallback& onDisconnected
+        const MqttDisconnectCallback& onDisconnected,
+        const char* username = nullptr,
+        const char* password = nullptr
     );
-    
-    bool connect(
-        IPAddress broker, 
-        const MqttConnectCallback& onConnected, 
-        const MqttDisconnectCallback& onDisconnected
-    );
+
+        // Methods to add sensors and switches
+    void addSensor(SensorType sensorType, const char * initialValue = nullptr, const char* icon = HomeAssistant::DEFAULT_ICON);
+    void addSwitch(SwitchType switchType, bool initialState = false, const char* icon = HomeAssistant::DEFAULT_ICON);
+
+    // Methods to modify sensor and switch values
+    void setSensorValue(SensorType sensorType, const char *value);
+    void setSwitchState(SwitchType switchType, bool state);
+
+    // Method to set switch command callback
+    void setSwitchCommandCallback(const SwitchCommandCallback& callback);
 
     // Loop method to maintain MQTT connection
     void loop() { if(mqtt) mqtt->loop(); }
 };
 
-// Initialize static member
-HomeAssistant* HomeAssistant::instance = nullptr;
-
-// Static callback forwarders
-void HomeAssistant::onMqttConnectedStatic()
-{
-    if (instance && instance->mqttConnectCallback) {
-        instance->mqttConnectCallback();
-    }
-}
-
-void HomeAssistant::onMqttDisconnectedStatic()
-{
-    if (instance && instance->mqttDisconnectCallback) {
-        instance->mqttDisconnectCallback();
-    }
-}
-
-// Inside HomeAssistant class
-void HomeAssistant::onSwitchCommandStatic(bool state, HASwitch* sender)
-{
-    if (instance && instance->ledSwitchCallback) {
-        instance->ledSwitchCallback(state);
-    }
-}
-
-// Constructor Implementation
-HomeAssistant::HomeAssistant(WiFiClient& client, const LedSwitchCommandCallback& ledCb) 
-    : ledSwitchCallback(ledCb)
-{
-    // Set the static instance pointer
-    if (instance == nullptr) {
-        instance = this;
-    } else {
-        // Handle multiple instances if necessary
-        // For simplicity, we'll assume only one instance exists
-        Serial.println("Warning: Multiple instances of HomeAssistant are not supported.");
-    }
-
-    // Build the HADevice first
-    device = buildDevice();
-
-    // Initialize HAMqtt with the built device
-    mqtt = std::make_unique<HAMqtt>(client, device);
-    mqtt->setDataPrefix("wc2");
-
-    // Build and initialize sensor and switch
-    sensor = buildSensor();
-    led = buildSwitch();
-}
-
-// Destructor Implementation
-HomeAssistant::~HomeAssistant()
-{
-    if (mqtt) {
-        mqtt->disconnect();
-        // No need to manually delete as std::unique_ptr handles it
-        mqtt.reset();
-    }
-
-    // Clear the static instance pointer if it points to this object
-    if (instance == this) {
-        instance = nullptr;
-    }
-}
-
-// Connect with username and password
-bool HomeAssistant::connect(
-    IPAddress broker, 
-    const char* username, 
-    const char* password, 
-    const MqttConnectCallback& onConnected, 
-    const MqttDisconnectCallback& onDisconnected
-)
-{
-    if (!mqtt) {
-        Serial.println("MQTT instance not initialized.");
-        return false;
-    }
-
-    // Store the callbacks
-    mqttConnectCallback = onConnected;
-    mqttDisconnectCallback = onDisconnected;
-
-    // Use static forwarders
-    mqtt->onConnected(&HomeAssistant::onMqttConnectedStatic);
-    mqtt->onDisconnected(&HomeAssistant::onMqttDisconnectedStatic);
-
-    return mqtt->begin(broker, username, password);
-}
-
-// Connect without username and password
-bool HomeAssistant::connect(
-    IPAddress broker, 
-    const MqttConnectCallback& onConnected, 
-    const MqttDisconnectCallback& onDisconnected
-)
-{
-    if (!mqtt) return false;
-
-    // Store the callbacks
-    mqttConnectCallback = onConnected;
-    mqttDisconnectCallback = onDisconnected;
-
-    // Use static forwarders
-    mqtt->onConnected(&HomeAssistant::onMqttConnectedStatic);
-    mqtt->onDisconnected(&HomeAssistant::onMqttDisconnectedStatic);
-
-    return mqtt->begin(broker);
-}
-
-// Build HADevice
-HADevice HomeAssistant::buildDevice()
-{
-    byte mac[maclen];
-    WiFi.macAddress(mac);
-    
-    HADevice haDevice(mac, sizeof(mac));  
-    haDevice.setName(PRODUCT);
-    haDevice.setSoftwareVersion(FW_VERSION);
-    haDevice.setModel("v1.0");
-    haDevice.setManufacturer("digitalnatives Berlin");
-    return haDevice;
-}
-
-// Build HASensor
-std::unique_ptr<HASensor> HomeAssistant::buildSensor()
-{
-    auto localSensor = std::make_unique<HASensor>("wc-lightintensity");
-    localSensor->setIcon("mdi:home");
-    localSensor->setName("Light Intensity");
-    return localSensor;
-}
-
-// Build HASwitch
-std::unique_ptr<HASwitch> HomeAssistant::buildSwitch()
-{
-    auto localSwitch = std::make_unique<HASwitch>("wc-led");
-    localSwitch->setIcon("mdi:lightbulb");
-    localSwitch->setName("WordClock Light");
-    
-    // Use the stored callback for switch commands
-    localSwitch->onCommand(&HomeAssistant::onSwitchCommandStatic);
-    // localSwitch->onCommand([this](const char* state) {
-    //     if (ledSwitchCallback) {
-    //         ledSwitchCallback(state);
-    //     }
-    // });
-    
-    return localSwitch;
-}
 
 #endif // HOMEASSISTANT_H

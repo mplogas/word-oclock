@@ -1,49 +1,23 @@
-#ifndef TIME_H
-#define TIME_H
-
-#include <Arduino.h>
-#include <time.h>
-#include <RTClib.h>
+#include "wclock.h"
 
 
-struct tm timeinfo;
-
-class Clock
-{
-private:
-    const uint16_t ntpTimeout = 10000;
-    const char *ntpServer;
-    const char *tzInfo;
-    RTC_DS3231 rtc;
-    time_t now;
-    long unsigned lastNTPtime = 0;
-    bool getNTPTime();
-    bool initialized = false;
-public:
-    Clock(RTC_DS3231& rtc, const char *timezone, const char *ntpServer);
-    ~Clock();
-    void setTimeZone(const char *timezone);
-    bool begin();
-    bool update();
-    void loop();
-};
-
-Clock::Clock(RTC_DS3231& rtc, const char *timezone, const char *ntpServer) : rtc(rtc){
+WClock::WClock(RTC_DS3231& rtc, const char *timezone, const char *ntpServer) : rtc(rtc){
     tzInfo = timezone;
     ntpServer = ntpServer;    
 }
 
-Clock::~Clock()
+WClock::~WClock()
 {
 }
 
-bool Clock::begin()
+bool WClock::begin()
 {
-    if (!rtc.begin())
-    {
-        Serial.println("Couldn't find RTC");
-        return false;
-    }
+    // we assume rtc exists, as we explicitly call in main.cpp
+    // if (!rtc.begin())
+    // {
+    //     Serial.println("Couldn't find RTC");
+    //     return false;
+    // }
 
     setTimeZone(tzInfo);
 
@@ -63,7 +37,7 @@ bool Clock::begin()
     return true;
 }
 
-bool Clock::getNTPTime()
+bool WClock::getNTPTime()
 {
     if(!initialized)
     {
@@ -71,7 +45,7 @@ bool Clock::getNTPTime()
     }
 
     unsigned long lastMillis = millis();
-    configTime(0, 0, NTP_SERVER);
+    configTime(0, 0, ntpServer);
 
     //in order to get rid of the blocking behavior I just add an update indicator and let the loop function handle the update and check for progress on the ntp update until ntpTimeout is reached
     //this way the main loop is not blocked by the ntp update, downside is that begin does not guarantee a successful ntp update
@@ -96,14 +70,14 @@ bool Clock::getNTPTime()
     return false;
 }
 
-void Clock::setTimeZone(const char *timezone)
+void WClock::setTimeZone(const char *timezone)
 {
   setenv("TZ", timezone, 1);
   tzset();
   tzInfo = timezone;
 }
 
-bool Clock::update()
+bool WClock::update()
 {
     if(getNTPTime())
     {
@@ -114,7 +88,7 @@ bool Clock::update()
     return false;
 }
 
-void Clock::loop()
+void WClock::loop()
 {
     //update ntp every 6 hours
     if (millis() - lastNTPtime > 21600000)
@@ -122,5 +96,3 @@ void Clock::loop()
         update();
     }
 }
-
-#endif

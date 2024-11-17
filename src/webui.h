@@ -8,14 +8,13 @@
 #include <AsyncTCP.h>
 #include <LittleFS.h>
 #include <functional>
-#include <memory>
 
 using UpdateSuccessCallback = std::function<bool()>;
 using UploadHandlerCallback = std::function<void(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final)>;
 using WiFiCredentialsCallback = std::function<void(const String &ssid, const String &password)>;
 
 // Forward declaration for shared_ptr usage
-class WebUI : public std::enable_shared_from_this<WebUI>
+class WebUI
 {
     private:
         AsyncWebServer &server; 

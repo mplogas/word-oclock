@@ -10,7 +10,6 @@ WifiSetup::~WifiSetup()
 
 bool WifiSetup::connect(const char* ssid, const char* pass, u32_t timeout)
 {
-    //check length of ssid
     if(strlen(ssid) == 0)
     {
         Serial.println("Invalid SSID");
@@ -18,23 +17,22 @@ bool WifiSetup::connect(const char* ssid, const char* pass, u32_t timeout)
     }
 
     Serial.println("Connecting to WiFi...");
+    WiFi.setAutoReconnect(true);
+    WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, pass);
-    unsigned long currentMillis = millis();
-    lastMillisWifi = currentMillis;
-
-    while (WiFi.status() != WL_CONNECTED)
+    uint8_t status = WiFi.waitForConnectResult(timeout);
+    
+    if(status == WL_CONNECTED)
     {
-        currentMillis = millis();
-        if (currentMillis - lastMillisWifi > timeout)
-        {
-        Serial.println("Failed to connect.");
-        return false;
-        }
+        Serial.print("WIFI-Client IP address: ");
+        Serial.println(WiFi.localIP());
+        return true;
     }
-
-    Serial.print("WIFI-Client IP address: ");
-    Serial.println(WiFi.localIP());
-    return true;
+    else
+    {
+        Serial.printf("Failed to connect. Status code: %d\n", status);
+        return false;
+    }
 }
 
 bool WifiSetup::enableHostAp(const char* ssid, const char* pass)

@@ -16,19 +16,29 @@ void WebUI::init(const UpdateSuccessCallback &updateCb, const UploadHandlerCallb
     updateCallback = updateCb;
     uploadHandlerCallback = uploadCb;
 
-    // Using weak_ptr to prevent dangling references
-    std::weak_ptr<WebUI> weakSelf = shared_from_this();
-
-    server.on("/", HTTP_GET, [weakSelf](AsyncWebServerRequest *request) {
-        if(auto self = weakSelf.lock()) {
-            request->send(LittleFS, WebUI::INDEX_HTML, "text/html", false, std::bind(&WebUI::configurationProcessor, self.get(), std::placeholders::_1));
-        }
+    server.on("/", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        request->send(
+            LittleFS,
+            WebUI::INDEX_HTML,
+            "text/html",
+            false,
+            [this](const String& var) -> String {
+                return this->configurationProcessor(var);
+            }
+        );
     });
 
-    server.on("/update", HTTP_GET, [weakSelf](AsyncWebServerRequest *request) {
-        if(auto self = weakSelf.lock()) {
-            request->send(LittleFS, WebUI::FIRMWARE_HTML, "text/html", false, std::bind(&WebUI::fwUpdateProcessor, self.get(), std::placeholders::_1));
-        }
+    // Route for "/update" GET request
+    server.on("/update", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        request->send(
+            LittleFS,
+            WebUI::FIRMWARE_HTML,
+            "text/html",
+            false,
+            [this](const String& var) -> String {
+                return this->fwUpdateProcessor(var);
+            }
+        );
     });
 
     server.on("/update", HTTP_POST, [this](AsyncWebServerRequest *request) {
@@ -43,18 +53,6 @@ void WebUI::init(const UpdateSuccessCallback &updateCb, const UploadHandlerCallb
         request->send(404, "text/plain", F("Not found"));
     });
 
-    server.on("/on", HTTP_GET, [weakSelf](AsyncWebServerRequest *request) {
-        if(auto self = weakSelf.lock()) {
-            request->send(LittleFS, WebUI::INDEX_HTML, "text/html", false, std::bind(&WebUI::configurationProcessor, self.get(), std::placeholders::_1));
-        }
-    });
-
-    server.on("/off", HTTP_GET, [weakSelf](AsyncWebServerRequest *request) {
-        if(auto self = weakSelf.lock()) {
-            request->send(LittleFS, WebUI::INDEX_HTML, "text/html", false, std::bind(&WebUI::configurationProcessor, self.get(), std::placeholders::_1));
-        }
-    });
-
     server.serveStatic("/", LittleFS, "/").setCacheControl("max-age=3600");
     server.begin();
 }
@@ -62,12 +60,16 @@ void WebUI::init(const UpdateSuccessCallback &updateCb, const UploadHandlerCallb
 void WebUI::initHostAP(const WiFiCredentialsCallback &wifiCb) {
     wifiCredentialsCallback = wifiCb;
 
-    std::weak_ptr<WebUI> weakSelf = shared_from_this();
-
-    server.on("/", HTTP_GET, [weakSelf](AsyncWebServerRequest *request) {
-        if(auto self = weakSelf.lock()) {
-            request->send(LittleFS, WebUI::WIFI_MANAGER_HTML, "text/html", false, std::bind(&WebUI::wifiSetupProcessor, self.get(), std::placeholders::_1));
-        }
+    server.on("/", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        request->send(
+            LittleFS,
+            WebUI::WIFI_MANAGER_HTML,
+            "text/html",
+            false,
+            [this](const String& var) -> String {
+                return this->wifiSetupProcessor(var);
+            }
+        );
     });
 
     server.on("/", HTTP_POST, [this](AsyncWebServerRequest *request) {

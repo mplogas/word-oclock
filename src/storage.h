@@ -30,10 +30,8 @@ class Storage
     public:
         Storage(fs::FS &fs);
         bool init();
-        const char* readFile(StorageType type);
+        String readFile(StorageType type);
         void writeFile(StorageType type, const char *message);
 };
-
-
 
 #endif

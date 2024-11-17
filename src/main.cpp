@@ -134,10 +134,10 @@ void setup()
     abort();
   }
 
-  const char* ssid = storage.readFile(StorageType::SSID);
-  const char* pass = storage.readFile(StorageType::WIFI_PASS);
+  String ssid = storage.readFile(StorageType::SSID);
+  String pass = storage.readFile(StorageType::WIFI_PASS);
 
-  if (wifiSetup.connect(ssid, pass, WIFI_SCAN_TIMEOUT))
+  if (wifiSetup.connect(ssid.c_str(), pass.c_str(), WIFI_SCAN_TIMEOUT))
   {
     isSetup = false;
 
@@ -176,6 +176,7 @@ void setup()
     isSetup = true;
     if (!wifiSetup.enableHostAp(PRODUCT, DEFAULT_WIFI_PASS))
     {
+      Serial.println("Failed to start AP");
       Serial.flush();
       abort();
     } else {

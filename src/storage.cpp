@@ -13,36 +13,26 @@ bool Storage::init()
     return true;
 }
 
-const char* Storage::readFile(StorageType type)
+String Storage::readFile(StorageType type)
 {
-// Static buffer to hold the file content
-    static char fileContent[256]; // Adjust the size as needed
-
     const char *path = getPath(type);
     if (strlen(path) == 0) {
         Serial.println("Invalid path");
-        fileContent[0] = '\0'; // Return an empty string
-        return fileContent;
+        return String(); // Return empty String
     }
 
     File file = fs.open(path);
     if (!file || file.isDirectory()) {
         Serial.println("- failed to open file for reading");
-        fileContent[0] = '\0'; // Return an empty string
-        return fileContent;
+        return String(); // Return empty String
     }
 
-    size_t index = 0;
-    while (file.available() && index < sizeof(fileContent) - 1) {
-        char c = file.read();
-        if (c == '\n') {
-            break;
-        }
-        fileContent[index++] = c;
+    String fileContent;
+    while (file.available()) {
+        fileContent += file.readStringUntil('\n');
     }
-    fileContent[index] = '\0'; // Null-terminate the string
 
-    file.close(); // Close the file
+    file.close();
 
     return fileContent;
 }
@@ -63,11 +53,11 @@ void Storage::writeFile(StorageType type, const char *message) {
     
     if (file.print(message))
     {
-        Serial.println("File written");
+        Serial.printf("File %s written with message %s\n", path, message);
     }
     else
     {
-        Serial.println("Write failed");
+        Serial.printf("Write failed: %s\n", path);
     }
 }
 

@@ -23,11 +23,11 @@ boolean isSetup;
 RTC_DS3231 rtc;
 WiFiClient client;
 AsyncWebServer server(80);
-WifiSetup wifiSetup;
-Storage storage(LittleFS);
+WifiSetup* wifiSetup;
+Storage* storage;
 WClock* wordClock;
 HomeAssistant* homeAssistant;
-WebUI webui(server, PRODUCT, FW_VERSION);
+WebUI* webui;
 
 
 unsigned long lastMillisIlluminance = 0;
@@ -39,17 +39,7 @@ String ledState;
 
 unsigned long ota_progress_millis = 0;
 
-
-
-void ledSwitchCommand(bool state, HASwitch* sender) {
-    if (state) {
-      Serial.println("LED turned ON");
-    } else {
-      Serial.println("LED turned OFF");
-    }
-}
-
-
+// callbacks
 
 void handleFWUpload(AsyncWebServerRequest *request, const String filename, size_t index, uint8_t *data, size_t len, bool final)
 {
@@ -79,7 +69,7 @@ void handleFWUpload(AsyncWebServerRequest *request, const String filename, size_
   }
 }
 
-bool updateCallback() {
+bool handleUpdateResult() {
     // Logic to determine if the update was successful
     return !Update.hasError();
 }
@@ -88,8 +78,8 @@ void handleWiFiCredentials(const String &ssid, const String &password) {
     Serial.printf("SSID set to: %s\n", ssid.c_str());
     Serial.printf("Password set to: %s\n", password.c_str());
     
-    storage.writeFile(StorageType::SSID, ssid.c_str());
-    storage.writeFile(StorageType::WIFI_PASS, password.c_str());
+    storage->writeFile(StorageType::SSID, ssid.c_str());
+    storage->writeFile(StorageType::WIFI_PASS, password.c_str());
 }
 
 // Callback for MQTT connected
@@ -104,15 +94,10 @@ void handleMqttDisconnected() {
     // Additional logic upon disconnection
 }
 
-// Callback for LED switch commands
-void handleLedSwitchCommand(bool state) {
-    if (state) {
-        Serial.println("LED turned ON");
-    } else {
-        Serial.println("LED turned OFF");
-    }
+void handleSwitchCommand(SwitchType switchType, bool state) {
+    Serial.printf("Switch command received for %s: %s\n", switchType, state ? "ON" : "OFF");
+    // Additional logic to handle switch commands
 }
-
 
 
 void setup()
@@ -121,47 +106,48 @@ void setup()
   Serial.begin(115200);
   Serial.printf("Starting with FW %s...\n", FW_VERSION);
 
-  if (!rtc.begin())
+  wordClock = new WClock(rtc);
+  if (!wordClock->init())
   {
-    Serial.println("Couldn't find RTC");
+    Serial.println("RTC may lack power or may be missing");
     Serial.flush();
     abort();
   }
 
-  if (!storage.init())
+  storage = new Storage(LittleFS);
+  if (!storage->init())
   {
     Serial.flush();
     abort();
   }
 
-  String ssid = storage.readFile(StorageType::SSID);
-  String pass = storage.readFile(StorageType::WIFI_PASS);
+  String ssid = storage->readFile(StorageType::SSID);
+  String pass = storage->readFile(StorageType::WIFI_PASS);
 
-  if (wifiSetup.connect(ssid.c_str(), pass.c_str(), WIFI_SCAN_TIMEOUT))
+  wifiSetup = new WifiSetup();
+
+  if (wifiSetup->connect(ssid.c_str(), pass.c_str(), WIFI_SCAN_TIMEOUT))
   {
     isSetup = false;
 
     wordClock = new WClock(rtc);
-    wordClock->begin();
-    wordClock->setTimeZone();
+    bool clockResult = wordClock->begin();
+
+    if(!clockResult) {
+      Serial.println("Failed to initialize clock");
+    } else {
+      Serial.println("Successfully intitialized clock");
+    }
 
     homeAssistant = new HomeAssistant(client, PRODUCT, FW_VERSION);
     homeAssistant->addSensor(SensorType::LightIntensity, "0", "mdi:brightness-5");
     homeAssistant->addSwitch(SwitchType::LED, false, "mdi:lightbulb");
-    homeAssistant->setSwitchCommandCallback([](SwitchType switchType, bool state) {
-      if (switchType == SwitchType::LED) {
-          if (state) {
-              // Turn on LED
-              digitalWrite(LED_PIN, HIGH);
-          } else {
-              // Turn off LED
-              digitalWrite(LED_PIN, LOW);
-          }
-      }
-    });
+    homeAssistant->setSwitchCommandCallback(handleSwitchCommand);
 
-    homeAssistant->connect(IPAddress(192, 168, 1, 1), handleMqttConnected, handleMqttDisconnected);
-    webui.init(updateCallback, handleFWUpload);
+    homeAssistant->connect(IPAddress(192, 168, 56, 65), handleMqttConnected, handleMqttDisconnected);
+
+    webui = new WebUI(server, PRODUCT, FW_VERSION);
+    webui->init(handleUpdateResult, handleFWUpload);
 
     FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
     FastLED.setBrightness(128);
@@ -174,13 +160,13 @@ void setup()
   else
   {
     isSetup = true;
-    if (!wifiSetup.enableHostAp(PRODUCT, DEFAULT_WIFI_PASS))
+    if (!wifiSetup->enableHostAp(PRODUCT, DEFAULT_WIFI_PASS))
     {
       Serial.println("Failed to start AP");
       Serial.flush();
       abort();
     } else {
-        webui.initHostAP(handleWiFiCredentials);
+        webui->initHostAP(handleWiFiCredentials);
     }
   }
 }

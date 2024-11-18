@@ -10,31 +10,31 @@ WClock::~WClock()
 {
 }
 
-bool WClock::begin()
+bool WClock::init()
 {
-    // we assume rtc exists, as we explicitly call in main.cpp
-    // if (!rtc.begin())
-    // {
-    //     Serial.println("Couldn't find RTC");
-    //     return false;
-    // }
-
-    setTimeZone(tzInfo);
-
-    if(getNTPTime())
+    if (!rtc.begin())
     {
-        rtc.adjust(DateTime(now));
-    }
-
-    DateTime now = rtc.now();
-    if (now.year() < 2024)
-    {
-        Serial.println("RTC is not initialized");
+        Serial.println("Couldn't find RTC");
         return false;
     }
 
     initialized = true;
     return true;
+}
+
+bool WClock::begin()
+{
+    if(!initialized)
+    {
+        return false;
+    }
+
+    configTime(0, 0, ntpServer);
+    setTimeZone(tzInfo);
+
+    timeStatus();
+
+    return update();
 }
 
 bool WClock::getNTPTime()
@@ -44,27 +44,12 @@ bool WClock::getNTPTime()
         return false;
     }
 
-    unsigned long lastMillis = millis();
-    configTime(0, 0, ntpServer);
-
-    //in order to get rid of the blocking behavior I just add an update indicator and let the loop function handle the update and check for progress on the ntp update until ntpTimeout is reached
-    //this way the main loop is not blocked by the ntp update, downside is that begin does not guarantee a successful ntp update
-
-    Serial.println("Waiting for NTP time sync: ");
-    while (millis() - lastMillis < ntpTimeout)
+    if (getLocalTime(&timeinfo, ntpTimeout))
     {
-        time(&now);
-        localtime_r(&now, &timeinfo);
-        Serial.print(".");
-        delay(100);
-
-        if (getLocalTime(&timeinfo))
-        {
         Serial.println("Successfully obtained time");
         Serial.println(&timeinfo, "%d.%m.%Y %H:%M:%S %Z");
         lastNTPtime = now;
         return true;
-        }
     }
 
     return false;
@@ -79,13 +64,21 @@ void WClock::setTimeZone(const char *timezone)
 
 bool WClock::update()
 {
+    setTimeZone(tzInfo);
+
     if(getNTPTime())
     {
         rtc.adjust(DateTime(now));
-        return true;
-    }    
+    } 
 
-    return false;
+    DateTime now = rtc.now();
+    if (now.year() < 2024)
+    {
+        Serial.println("RTC is not initialized");
+        return false;
+    }
+
+    return true;
 }
 
 void WClock::loop()

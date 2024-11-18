@@ -25,6 +25,7 @@ public:
     WClock(RTC_DS3231& rtc, const char *timezone = WClock::TIMEZONE, const char *ntpServer = WClock::NTP_SERVER);
     ~WClock();
     void setTimeZone(const char *timezone = WClock::TIMEZONE);
+    bool init();
     bool begin();
     bool update();
     void loop();

@@ -130,7 +130,6 @@ void setup()
   {
     isSetup = false;
 
-    wordClock = new WClock(rtc);
     bool clockResult = wordClock->begin();
 
     if(!clockResult) {

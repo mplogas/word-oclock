@@ -130,11 +130,6 @@ bool HomeAssistant::connect(
     const char* password
 )
 {
-    // if (!mqtt) {
-    //     Serial.println("MQTT instance not initialized.");
-    //     return false;
-    // }
-
     // Store the callbacks
     mqttConnectCallback = onConnected;
     mqttDisconnectCallback = onDisconnected;
@@ -166,33 +161,6 @@ void HomeAssistant::setupDevice(const char* name, const char* firmware)
     device.setModel("v1.0");
     device.setManufacturer("digitalnatives Berlin");
 }
-
-// // Build HASensor
-// std::unique_ptr<HASensor> HomeAssistant::buildSensor()
-// {
-//     auto localSensor = std::make_unique<HASensor>("wc-lightintensity");
-//     localSensor->setIcon("mdi:home");
-//     localSensor->setName("Light Intensity");
-//     return localSensor;
-// }
-
-// // Build HASwitch
-// std::unique_ptr<HASwitch> HomeAssistant::buildSwitch()
-// {
-//     auto localSwitch = std::make_unique<HASwitch>("wc-led");
-//     localSwitch->setIcon("mdi:lightbulb");
-//     localSwitch->setName("WordClock Light");
-    
-//     // Use the stored callback for switch commands
-//     localSwitch->onCommand(&HomeAssistant::onSwitchCommandStatic);
-//     // localSwitch->onCommand([this](const char* state) {
-//     //     if (ledSwitchCallback) {
-//     //         ledSwitchCallback(state);
-//     //     }
-//     // });
-    
-//     return localSwitch;
-// }
 
 const char* HomeAssistant::generateUniqueId(const char* name)
 {

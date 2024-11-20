@@ -5,7 +5,6 @@
 #include <WiFi.h>
 #include <ArduinoHA.h>
 #include <functional>
-#include <memory>
 
 // HA entities enums
 enum class SensorType {
@@ -32,10 +31,7 @@ private:
     const uint8_t maclen = 6;
     static constexpr const char* DEFAULT_ICON = "mdi:clock-digital";
 
-    // Using smart pointers for dynamic initialization
-    std::unique_ptr<HAMqtt> mqtt;
-    std::unique_ptr<HASensor> sensor;
-    std::unique_ptr<HASwitch> led;
+    HAMqtt mqtt;
     HADevice device;
 
     // Callbacks for MQTT
@@ -54,11 +50,11 @@ private:
     static void onSwitchCommandStatic(bool state, HASwitch* sender);
 
     // Arrays to store sensors and switches
-    std::unique_ptr<HASensor> sensors[static_cast<uint8_t>(SensorType::SensorTypeCount)];
-    std::unique_ptr<HASwitch> switches[static_cast<uint8_t>(SwitchType::SwitchTypeCount)];
+    HASensor* sensors[static_cast<uint8_t>(SensorType::SensorTypeCount)];
+    HASwitch* switches[static_cast<uint8_t>(SwitchType::SwitchTypeCount)];
 
     // Helper method to generate, devices, names and unique IDs
-    HADevice buildDevice(const char* name, const char* firmware);
+    void setupDevice(const char* name, const char* firmware);
     const char* generateUniqueId(const char* name);
     const char* getSensorName(SensorType sensor);
     const char* getSwitchName(SwitchType sw);
@@ -89,7 +85,7 @@ public:
     void setSwitchCommandCallback(const SwitchCommandCallback& callback);
 
     // Loop method to maintain MQTT connection
-    void loop() { if(mqtt) mqtt->loop(); }
+    void loop();
 };
 
 

@@ -1,5 +1,7 @@
 #include "homeassistant.h"
 
+#define ARDUINOHA_TEST 1
+
 // Initialize static member
 HomeAssistant* HomeAssistant::instance = nullptr;
 
@@ -48,7 +50,7 @@ void HomeAssistant::onSwitchCommandStatic(bool state, HASwitch* sender)
         // Find the SwitchType corresponding to the sender
         for (uint8_t i = 0; i < static_cast<uint8_t>(SwitchType::SwitchTypeCount); ++i)
         {
-            if (instance->switches[i] && instance->switches[i].get() == sender)
+            if (instance->switches[i] && instance->switches[i] == sender)
             {
                 SwitchType switchType = static_cast<SwitchType>(i);
                 instance->switchCommandCallback(switchType, state);
@@ -59,7 +61,7 @@ void HomeAssistant::onSwitchCommandStatic(bool state, HASwitch* sender)
 }
 
 // Constructor Implementation
-HomeAssistant::HomeAssistant(WiFiClient& client, const char* name, const char* firmware)
+HomeAssistant::HomeAssistant(WiFiClient& client, const char* name, const char* firmware) : device(), mqtt(client, device)
 {
     // Set the static instance pointer
     if (instance == nullptr) {
@@ -69,28 +71,54 @@ HomeAssistant::HomeAssistant(WiFiClient& client, const char* name, const char* f
         Serial.println("Warning: Multiple instances of HomeAssistant are not supported.");
     }
 
-    // Build the HADevice first
-    device = buildDevice(name, firmware);
+    // // Build the HADevice first
+    byte mac[maclen];
+    WiFi.macAddress(mac);    
+    // Extract the last two bytes of the MAC address
+    uint8_t lastTwoBytes[2] = { mac[4], mac[5] };
+    // Format the last two bytes as a hexadecimal string (4 characters)
+    char macStr[5]; // 4 hex digits + null terminator
+    snprintf(macStr, sizeof(macStr), "%02X%02X", lastTwoBytes[0], lastTwoBytes[1]);
+    byte uniqueid[15]; // "wordclock-" (10) + "XXXX" (4) + null terminator (1) = 15
+    snprintf((char*)uniqueid, sizeof(uniqueid), "wordclock-%s", macStr);
+    Serial.print("Unique ID: ");
+    Serial.println((const char*)uniqueid);
+
+    //HADevice device("TestDevice-01");  
+    device.setUniqueId(uniqueid, sizeof(uniqueid)); 
+    device.setName(name);
+    device.setSoftwareVersion(firmware);
+    device.setModel("v1.0");
+    device.setManufacturer("digitalnatives Berlin");
 
     // Initialize HAMqtt with the built device
-    mqtt = std::make_unique<HAMqtt>(client, device);
-    mqtt->setDataPrefix("wc2");
-
+    //HAMqtt test(client, device); // last number is the amount of devices/sensors implemented
+    mqtt.setDataPrefix("wc2");
 }
 
 // Destructor Implementation
 HomeAssistant::~HomeAssistant()
 {
-    if (mqtt) {
-        mqtt->disconnect();
-        // No need to manually delete as std::unique_ptr handles it
-        mqtt.reset();
+    mqtt.disconnect();
+
+    for (uint8_t i = 0; i < static_cast<uint8_t>(SensorType::SensorTypeCount); ++i)
+    {
+        delete sensors[i];
+    }
+    for (uint8_t i = 0; i < static_cast<uint8_t>(SwitchType::SwitchTypeCount); ++i)
+    {
+        delete switches[i];
     }
 
     // Clear the static instance pointer if it points to this object
     if (instance == this) {
         instance = nullptr;
     }
+}
+
+void HomeAssistant::loop()
+{
+        mqtt.loop();
 }
 
 // Connect with username and password
@@ -102,39 +130,41 @@ bool HomeAssistant::connect(
     const char* password
 )
 {
-    if (!mqtt) {
-        Serial.println("MQTT instance not initialized.");
-        return false;
-    }
+    // if (!mqtt) {
+    //     Serial.println("MQTT instance not initialized.");
+    //     return false;
+    // }
 
     // Store the callbacks
     mqttConnectCallback = onConnected;
     mqttDisconnectCallback = onDisconnected;
 
     // Use static forwarders
-    mqtt->onConnected(&HomeAssistant::onMqttConnectedStatic);
-    mqtt->onDisconnected(&HomeAssistant::onMqttDisconnectedStatic);
+    mqtt.onConnected(&HomeAssistant::onMqttConnectedStatic);
+    mqtt.onDisconnected(&HomeAssistant::onMqttDisconnectedStatic);
 
     // Connect with or without credentials
-    if (username && password) {
-        return mqtt->begin(broker, username, password);
-    } else {
-        return mqtt->begin(broker);
-    }
+    // if (username && password) {
+    //     return mqtt->begin(broker, username, password);
+    // } else {
+    //     return mqtt->begin(broker);
+    // }
+    return mqtt.begin(broker);
 }
 
 // Build HADevice
-HADevice HomeAssistant::buildDevice(const char* name, const char* firmware)
+void HomeAssistant::setupDevice(const char* name, const char* firmware)
 {
     byte mac[maclen];
     WiFi.macAddress(mac);
     
-    HADevice haDevice(mac, sizeof(mac));  
-    haDevice.setName(name);
-    haDevice.setSoftwareVersion(firmware);
-    haDevice.setModel("v1.0");
-    haDevice.setManufacturer("digitalnatives Berlin");
-    return haDevice;
+    //HADevice haDevice(mac, sizeof(mac)); 
+    device = HADevice("TestDevice");
+    
+    device.setName(name);
+    device.setSoftwareVersion(firmware);
+    device.setModel("v1.0");
+    device.setManufacturer("digitalnatives Berlin");
 }
 
 // // Build HASensor
@@ -227,7 +257,7 @@ void HomeAssistant::addSensor(SensorType sensorType, const char *initialValue, c
     const char* name = getSensorName(sensorType);
     const char* uniqueId = generateUniqueId(name);
 
-    sensors[index] = std::make_unique<HASensor>(uniqueId);
+    sensors[index] = new HASensor(uniqueId);
     sensors[index]->setName(name);
     if (icon) sensors[index]->setIcon(icon);
     if (initialValue) {
@@ -242,7 +272,7 @@ void HomeAssistant::addSwitch(SwitchType switchType, bool initialState, const ch
     const char* name = getSwitchName(switchType);
     const char* uniqueId = generateUniqueId(name);
 
-    switches[index] = std::make_unique<HASwitch>(uniqueId);
+    switches[index] = new HASwitch(uniqueId);
     switches[index]->setName(name);
     if (icon) switches[index]->setIcon(icon);
     switches[index]->setState(initialState);

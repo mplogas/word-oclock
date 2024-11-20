@@ -79,13 +79,13 @@ HomeAssistant::HomeAssistant(WiFiClient& client, const char* name, const char* f
     // Format the last two bytes as a hexadecimal string (4 characters)
     char macStr[5]; // 4 hex digits + null terminator
     snprintf(macStr, sizeof(macStr), "%02X%02X", lastTwoBytes[0], lastTwoBytes[1]);
-    byte uniqueid[15]; // "wordclock-" (10) + "XXXX" (4) + null terminator (1) = 15
-    snprintf((char*)uniqueid, sizeof(uniqueid), "wordclock-%s", macStr);
+    char uniqueid[15]; // "wordclock-" (10) + "XXXX" (4) + null terminator (1) = 15
+    snprintf(uniqueid, sizeof(uniqueid), "wordclock-%s", macStr);
     Serial.print("Unique ID: ");
-    Serial.println((const char*)uniqueid);
+    Serial.println(uniqueid);
 
     //HADevice device("TestDevice-01");  
-    device.setUniqueId(uniqueid, sizeof(uniqueid)); 
+    device.setUniqueId(uniqueid); 
     device.setName(name);
     device.setSoftwareVersion(firmware);
     device.setModel("v1.0");

@@ -13,97 +13,369 @@ html {
     font-size: 1.4rem;
   }
   
-  .topnav { 
-    overflow: hidden; 
-    background-color: #0A1128;
-  }
-  
   body {  
     margin: 0;
   }
   
+  /* Content Styles */
   .content { 
-    padding: 5%;
+    padding: 20px;
   }
   
+  /* Navigation Bar Styles */
+  .topnav {
+    background-color: #333;
+    overflow: hidden;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+  }
+  
+  .topnav h1 {
+    color: white;
+    margin: 0;
+    font-size: 24px;
+  }
+  
+  .topnav .link {
+    color: white;
+    padding: 8px 16px;
+    text-decoration: none;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .topnav .link i {
+    margin-right: 8px;
+  }
+  
+  .topnav .link:hover {
+    background-color: #ddd;
+    color: black;
+    border-radius: 4px;
+  }
+
+  /* Section Title */
+  .content h2 {
+    margin-top: 40px;
+    font-size: 28px;
+    text-align: center;
+  }
+
+  /* Card Grid Styles */
   .card-grid { 
-    max-width: 800px; 
-    margin: 0 auto; 
-    display: grid; 
-    grid-gap: 2rem; 
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Three columns */
+    gap: 20px;
+    margin-top: 20px;
   }
   
+  /* Card Styles */
+  .card-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center items horizontally */
+  }
+
   .card { 
-    background-color: white; 
-    box-shadow: 2px 2px 12px 1px rgba(140,140,140,.5);
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   
   .card-title { 
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: #034078
-  }
-  
-  input[type=submit], input[type=file] {
-    border: none;
-    color: #FEFCFB;
-    background-color: #034078;
-    padding: 15px 15px;
+    font-size: 20px;
+    margin-bottom: 15px;
     text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    width: 100px;
+  }
+
+  .toggle-group {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 15px;
+  }
+
+  .toggle-item {
+    display: flex;
+    align-items: center;
+    width: 48%;
+  }
+
+  .toggle-item label {
     margin-right: 10px;
-    border-radius: 4px;
-    transition-duration: 0.4s;
-    }
-  
-  input[type=submit], input[type=file]:hover {
-    background-color: #1282A2;
+    font-weight: bold;
+    flex: 1;
+    text-align: right;
+  }
+
+  .toggle-item .switch {
+    flex: 1;
+    text-align: left;
+  }
+
+  .card-content label {
+    margin: 10px 0 5px;
+    font-weight: bold;
+    width: 100%;
+    text-align: left; /* Align labels to the left */
+  }
+
+  /* Specific Styles for Toggle Switches Inside .card-content */
+  .card-content label.switch {
+    width: 60px;
+    flex: 0 0 auto; /* Prevent the switch from stretching */
+    align-self: flex-end; /* Align the switch to the start */
   }
   
-  input[type=text], input[type=number], input[type=password], select {
-    width: 50%;
-    padding: 12px 20px;
-    margin: 18px;
-    display: inline-block;
+  .card-content input[type="text"],
+  .card-content input[type="number"],
+  .card-content input[type="password"],
+  .card-content input[type="color"],
+  .card-content input[type="time"] {
+    padding: 8px;
+    margin-bottom: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
+    width: 60%;
     box-sizing: border-box;
   }
   
-  label {
-    font-size: 1.2rem; 
-  }
-  .value{
-    font-size: 1.2rem;
-    color: #1282A2;  
-  }
-  .state {
-    font-size: 1.2rem;
-    color: #1282A2;
-  }
-  button {
-    border: none;
-    color: #FEFCFB;
-    padding: 15px 32px;
-    text-align: center;
-    font-size: 16px;
-    width: 100px;
-    border-radius: 4px;
-    transition-duration: 0.4s;
-  }
-  .button-on {
-    background-color: #034078;
-  }
-  .button-on:hover {
+  .card-content button {
+    padding: 10px;
     background-color: #1282A2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 60%; /* Set button to 60% width */
+    margin: 0 auto; /* Center the button horizontally */
   }
-  .button-off {
-    background-color: #858585;
+
+  .card-content button:hover {
+    background-color: #0b6373;
   }
-  .button-off:hover {
-    background-color: #252524;
-  } 
+
+  /* Toggle Switch Styles */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+  margin-top: 13px;
+  margin-bottom: 13px;
+}
+
+/* Hide default checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+/* When checked */
+.switch input:checked + .slider {
+  background-color: #66bb6a;
+}
+
+/* Move the slider when checked */
+.switch input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+/* Enhanced Color Picker Styles */
+.card input[type="color"] {
+  width: 40px !important;
+  height: 40px !important;
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  padding: 0;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  transition: transform 0.3s ease;
+}
+
+.card input[type="color"]:hover {
+  transform: scale(1.1);
+}
+
+.card input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.card input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 50%;
+}
+
+.card .state {
+  margin-top: 10px;
+  font-weight: bold;
+  text-align: center;
+  font-size: 1.2rem;
+  color: #1282A2;
+}
+
+/* State Text Styles */
+.state {
+  margin-top: 10px;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* Optional: Button Styles for Existing Light Controls */
+.button-on,
+.button-off {
+  padding: 10px 20px;
+  margin: 5px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.button-on {
+  background-color: #4CAF50; /* Green */
+  color: white;
+}
+
+.button-off {
+  background-color: #858585;
+  color: white;
+}
+
+.button-off:hover {
+  background-color: #252524;
+}
+
+.button-on:hover {
+  background-color: #45a049;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .card-grid {
+    grid-template-columns: repeat(2, 1fr); /* Two columns for medium screens */
+  }
+}
+
+@media (max-width: 600px) {
+  .card-grid {
+    grid-template-columns: 1fr; /* Single column for small screens */
+  }
+
+  .card-content input[type="text"],
+  .card-content input[type="number"],
+  .card-content input[type="password"],
+  .card-content input[type="color"],
+  .card-content input[type="time"],
+  .card-content button {
+    width: 80%; /* Adjust width for smaller screens */
+  }
+
+  .toggle-group {
+    flex-direction: column;
+  }
+
+  .toggle-item {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .toggle-item label {
+    text-align: left;
+  }
+
+  .toggle-item .switch {
+    text-align: left;
+  }
+
+  /* Adjustments for Toggle Switches on Small Screens */
+  .card-content label.switch {
+    align-self: flex-start;
+  }
+
+  .card-content form .toggle-row button {
+    width: 80%;
+  }
+}
+
+/* New Styles for Toggle Rows */
+.toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 10px; /* Space below each toggle row */
+}
+
+/* Ensure Labels Take Up Appropriate Space */
+.toggle-row label[for] {
+  flex: 1;
+  margin-right: 10px;
+  font-weight: bold;
+  text-align: left; /* Align labels to the left */
+}
+
+/* Maintain Switch Size and Alignment */
+.toggle-row .switch {
+  flex: 0 0 auto; /* Prevent the switch from stretching */
+}
+
+/* Add these styles to handle the form within .card-content */
+.card-content form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+/* Ensure toggle-row within form maintains proper spacing */
+.card-content form .toggle-row {
+  width: 100%;
+}
+
+/* Optional: Adjust spacing for the submit button */
+.card-content form .toggle-row button {
+  width: 60%; /* Match other input/button widths */
+}

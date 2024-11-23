@@ -1,17 +1,46 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+  <meta charset="UTF-8">
   <title>WordClock Configuration</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" type="text/css" href="style.css">
+  
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
   <div class="topnav">
     <h1>WordClock Configuration</h1>
-    <a href="/update" class="link"><i class="fas fa-upload"></i> Firmware Update</a>
+    <div class="topnav-links">
+      
+      <!-- Theme Toggle Container -->
+      <div class="theme-toggle-container">
+        <!-- Sun Icon -->
+        <i class="fas fa-sun sun-icon"></i>
+        
+        <!-- Theme Switch -->
+        <label class="theme-switch">
+          <input type="checkbox" id="theme-toggle">
+          <span class="slider round"></span>
+        </label>
+        
+        <!-- Moon Icon -->
+        <i class="fas fa-moon moon-icon"></i>
+      </div>
+      
+      <!-- Delimiter -->
+      <div class="separator"></div>
+      
+      <!-- Firmware Update Link -->
+      <a href="/update" class="link"><i class="fas fa-upload"></i> Firmware Update</a>
+      
+    </div>
   </div>
+  
   <div class="content">
     <h2>Light</h2>
     <div class="card-grid">
@@ -200,7 +229,7 @@
 
       <!-- Advanced Settings Card -->
       <div class="card">
-        <p class="card-title"><i class="fas fa-clock"></i> Advanced Settings</p>
+        <p class="card-title"><i class="fas fa-gears"></i> Advanced Settings</p>
         <div class="card-content">
 
           <div class="toggle-row">

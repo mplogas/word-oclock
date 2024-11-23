@@ -53,6 +53,23 @@ function toggleLight(isChecked) {
     container.style.display = isChecked ? 'block' : 'none';
   }
 
+  // Apply theme based on user's preference
+  function applyTheme(theme) {
+    if (theme === 'dark') {
+      document.body.classList.add('dark-theme');
+    } else {
+      document.body.classList.remove('dark-theme');
+    }
+  }
+
+  // Toggle the theme and save preference
+  function toggleTheme() {
+    const isDark = document.getElementById('theme-toggle').checked;
+    const theme = isDark ? 'dark' : 'light';
+    applyTheme(theme);
+    localStorage.setItem('theme', theme);
+  }
+
   document.addEventListener('DOMContentLoaded', function() {
   // Initialize NTP Time Update
     const ntpToggle = document.getElementById('ntpTimeUpdate');
@@ -105,5 +122,14 @@ function toggleLight(isChecked) {
         }
       });
     }
+
+    const toggleSwitch = document.getElementById('theme-toggle');
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    // Set initial theme
+    applyTheme(currentTheme);
+    // Set toggle switch state
+    toggleSwitch.checked = currentTheme === 'dark';
+    // Add event listener
+    toggleSwitch.addEventListener('change', toggleTheme);
 
   });

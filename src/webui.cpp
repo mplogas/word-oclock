@@ -48,6 +48,18 @@ void WebUI::init(const UpdateSuccessCallback &updateCb, const UploadHandlerCallb
         uploadHandlerCallback(request, filename, index, data, len, final);
     });
 
+    server.on("/setLightColor", HTTP_GET, [&](AsyncWebServerRequest *request){
+    if (request->hasParam("color")) {
+        String color = request->getParam("color")->value();
+
+        // TODO: color callback
+
+        request->send(200, "text/plain", "Color set to " + color);
+    } else {
+        request->send(400, "text/plain", "Bad Request");
+    }
+    });
+
     // Other routes with sanitized handlers
     server.onNotFound([](AsyncWebServerRequest *request) {
         request->send(404, "text/plain", F("Not found"));

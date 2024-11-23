@@ -139,7 +139,10 @@ html {
   .card-content input[type="number"],
   .card-content input[type="password"],
   .card-content input[type="color"],
-  .card-content input[type="time"] {
+  .card-content input[type="time"], 
+  .card-content input[type="date"],
+  .card-content select
+  {
     padding: 8px;
     margin-bottom: 10px;
     border: 1px solid #ccc;
@@ -379,3 +382,15 @@ html {
 .card-content form .toggle-row button {
   width: 60%; /* Match other input/button widths */
 }
+
+/* Style for input-field class to match other inputs */
+.input-field {
+  background-color: #fff;
+}
+
+
+.input-field:focus {
+  border-color: #007BFF;
+  outline: none;
+}
+

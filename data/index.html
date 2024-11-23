@@ -5,7 +5,6 @@
   <title>WordClock Configuration</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" type="text/css" href="style.css">
-  <script src="index.js"></script>
 </head>
 
 <body>
@@ -59,9 +58,9 @@
     <!-- System Section -->
     <h2>System</h2>
     <div class="card-grid">
-      <!-- MQTT Configuration Card -->
+      <!-- Integration Card -->
       <div class="card">
-        <p class="card-title"><i class="fas fa-cloud"></i>Integration</p>
+        <p class="card-title"><i class="fas fa-cloud"></i> Integration</p>
         <div class="card-content">
           <div class="toggle-row">
             <label for="haIntegration">HomeAssistant:</label>
@@ -98,21 +97,16 @@
                 <input type="text" id="defaultTopic" name="defaultTopic" placeholder="e.g., home/wordclock">
               </div>
 
+              <!-- Submit Button -->
               <div class="toggle-row">
                 <button type="submit">Save</button>
               </div>
             </form>
           </div>
-        </div>
-      </div>
 
-      <!-- NTP Settings Card -->
-      <div class="card">
-        <p class="card-title"><i class="fas fa-clock"></i> NTP Settings</p>
-        <div class="card-content">
           <!-- NTP Time Update Toggle -->
           <div class="toggle-row">
-            <label for="ntpTimeUpdate">NTP Time Update:</label>
+            <label for="ntpTimeUpdate">NTP Time:</label>
             <label class="switch">
               <input type="checkbox" id="ntpTimeUpdate" name="ntpTimeUpdate"
                 onchange="toggleNtpTimeUpdate(this.checked)">
@@ -141,7 +135,7 @@
               </div>
               <!-- Submit Button -->
               <div class="toggle-row">
-                <button type="submit">Save NTP Settings</button>
+                <button type="submit">Save</button>
               </div>
             </form>
           </div>
@@ -150,7 +144,7 @@
 
       <!-- Schedule Card -->
       <div class="card">
-        <p class="card-title"><i class="fas fa-clock"></i>Schedule</p>
+        <p class="card-title"><i class="fas fa-clock"></i> Schedule</p>
         <div class="card-content">
           <div class="toggle-row">
             <label for="lightScheduleToggle">Light Schedule:</label>
@@ -174,7 +168,7 @@
               </div>
               <!-- Submit Button -->
               <div class="toggle-row">
-                <button type="submit">Save NTP Settings</button>
+                <button type="submit">Save</button>
               </div>
             </form>
           </div>
@@ -197,16 +191,69 @@
               </div>
               <!-- Submit Button -->
               <div class="toggle-row">
-                <button type="submit">Save NTP Settings</button>
+                <button type="submit">Save</button>
               </div>
             </form>
           </div>
         </div>
       </div>
 
-      <!-- Additional System Cards can go here -->
+      <!-- Advanced Settings Card -->
+      <div class="card">
+        <p class="card-title"><i class="fas fa-clock"></i> Advanced Settings</p>
+        <div class="card-content">
+
+          <div class="toggle-row">
+            <label for="autoBrightness">Auto Brightness:</label>
+            <label class="switch">
+              <input type="checkbox" id="autoBrightness" name="autoBrightness"
+                onchange="toggleAutoBrightness(this.checked)">
+              <span class="slider round"></span>
+            </label>
+          </div>
+
+          <!-- Auto Brightness Input -->
+          <div id="autoBrightnessContainer" style="display: none; width: 100%;">
+
+            <form action="/saveAutoBrightness" method="POST">
+              <div class="toggle-row">
+                <label for="startBrightness">Start Brightness:</label>
+                <input type="number" id="startBrightness" name="startBrightness" placeholder="e.g., 50" required>
+              </div>
+              <div class="toggle-row">
+                <label for="endBrightness">Max Brightness:</label>
+                <input type="number" id="endBrightness" name="endBrightness" placeholder="e.g., 10000" required>
+              </div>
+              <!-- Submit Button -->
+              <div class="toggle-row">
+                <button type="submit">Save</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="toggle-row">
+            <label for="resetConfiguration">Reset Configuration:</label>
+            <label class="switch">
+              <input type="checkbox" id="resetConfiguration" name="resetConfiguration"
+                onchange="toggleResetConfiguration(this.checked)">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <!-- Reset Configuration Form -->
+          <div id="resetConfigurationContainer" style="display: none; width: 100%;">
+            <form action="/resetWordClock" method="POST">
+              <div class="toggle-row">
+                <button type="submit" class="reset-button">Really?</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
+
+  <script src="index.js"></script>
 </body>
 
 </html>

@@ -25,38 +25,32 @@ function toggleLight(isChecked) {
 
   function toggleLightSchedule(isChecked) {
     const container = document.getElementById('lightScheduleContainer');
-    if (isChecked) {
-      container.style.display = 'block';
-    } else {
-      container.style.display = 'none';
-    }
+    container.style.display = isChecked ? 'block' : 'none';
   }
 
   function toggleNtpTimeUpdate(isChecked) {
     const container = document.getElementById('ntpTimeUpdateContainer');
-    if (isChecked) {
-      container.style.display = 'block';
-    } else {
-      container.style.display = 'none';
-    }
+    container.style.display = isChecked ? 'block' : 'none';
   }
 
   function toggleNtpAutoUpdate(isChecked) {
     const container = document.getElementById('ntpAutoUpdateContainer');
-    if (isChecked) {
-      container.style.display = 'block';
-    } else {
-      container.style.display = 'none';
-    }
+    container.style.display = isChecked ? 'block' : 'none';
   }
 
   function toggleHaIntegration(isChecked) {
-    const container = document.getElementById('haIntegrationContainer');
-    if (isChecked) {
-      container.style.display = 'block';
-    } else {
-      container.style.display = 'none';
-    }
+    const form = document.getElementById('haIntegrationContainer');
+    form.style.display = isChecked ? 'block' : 'none';
+  }
+
+  function toggleAutoBrightness(isChecked) {
+    const container = document.getElementById('autoBrightnessContainer');
+    container.style.display = isChecked ? 'block' : 'none';
+  }
+
+  function toggleResetConfiguration(isChecked) {
+    const container = document.getElementById('resetConfigurationContainer');
+    container.style.display = isChecked ? 'block' : 'none';
   }
 
   document.addEventListener('DOMContentLoaded', function() {
@@ -83,6 +77,16 @@ function toggleLight(isChecked) {
     if (haIntegrationToggle) {
       toggleHaIntegration(haIntegrationToggle.checked);
     }
+
+    const autoBrightnessToggle = document.getElementById('autoBrightness');
+    if (autoBrightnessToggle) {
+      toggleAutoBrightness(autoBrightnessToggle.checked);
+    }
+
+    const resetConfigurationToggle = document.getElementById('resetConfiguration');
+    if (resetConfigurationToggle) {
+      toggleResetConfiguration(resetConfigurationToggle.checked);
+    }
     
     // Initialize other toggles if present
     // Example:
@@ -90,5 +94,16 @@ function toggleLight(isChecked) {
     // if (anotherToggle) {
     //   toggleAnotherFeature(anotherToggle.checked);
     // }
+
+    // Initialize Reset Configuration
+    const resetButton = document.querySelector('.reset-button');
+    if (resetButton) {
+      resetButton.addEventListener('click', function(event) {
+        const confirmation = confirm('Are you sure you want to reset the device? This action cannot be undone.');
+        if (!confirmation) {
+          event.preventDefault(); // Prevent form submission
+        }
+      });
+    }
 
   });

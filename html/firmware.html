@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Upload New Firmware</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Link to stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Top Navigation Bar -->
+  <div class="topnav">
+    <h1>Upload New Firmware</h1>
+    <div class="topnav-links">
+      
+      <!-- Theme Toggle Container -->
+      <div class="theme-toggle-container">
+        <!-- Sun Icon -->
+        <i class="fas fa-sun sun-icon"></i>
+        
+        <!-- Theme Switch -->
+        <label class="theme-switch">
+          <input type="checkbox" id="theme-toggle">
+          <span class="slider round"></span>
+        </label>
+        
+        <!-- Moon Icon -->
+        <i class="fas fa-moon moon-icon"></i>
+      </div>
+      
+      <!-- Delimiter -->
+      <div class="separator"></div>
+      
+      <!-- Home Link -->
+      <a href="index.html" class="link"><i class="fas fa-home"></i> Home</a>
+      
+    </div>
+  </div>
+  
+  <!-- Content Area -->
+  <div class="content">
+    <div class="card-grid">
+      
+      <!-- Current Firmware Version Card -->
+      <div class="card">
+        <p class="card-title"><i class="fas fa-info-circle"></i> Current Version</p>
+        <p class="state">%FW_VERSION%</p>
+      </div>
+      
+      <!-- Firmware Upload Card -->
+      <div class="card">
+        <p class="card-title"><i class="fas fa-upload"></i> Upload Firmware</p>
+        <div class="card-content">
+          <form action="/update" method="POST" enctype="multipart/form-data" id="upload_form">
+            <!-- File Input -->
+            <div class="toggle-row">
+              <label for="file">File:</label>
+              <input type="file" id="file" name="file" accept=".bin" class="input-field">
+            </div>
+            
+            <!-- Submit Button -->
+            <div class="toggle-row">
+              <button type="submit" class="submit-button"><i class="fas fa-upload"></i> Update</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+  
+  <!-- JavaScript File -->
+  <script src="index.js"></script>
+</body>
+</html>

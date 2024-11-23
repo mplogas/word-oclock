@@ -374,6 +374,27 @@
   .toggle-row label[for],.toggle-row input,.toggle-row select {
   width:100%
   }
+
+  .toggle-row {
+    flex-direction: row; /* Ensure row direction */
+    align-items: center; /* Center align items vertically */
+    justify-content: space-between; /* Distribute space evenly */
+    flex-wrap: nowrap; /* Prevent wrapping */
+  }
+
+  /* Override width:100% to allow elements to sit side by side */
+  .toggle-row label[for],
+  .toggle-row .switch {
+    width: auto; /* Allow elements to take up only necessary space */
+    margin-bottom: 0; /* Remove bottom margin to prevent unwanted spacing */
+    margin-right: 10px; /* Add some spacing between label and switch */
+  }
+
+  /* Adjust the toggle switch size if necessary */
+  .toggle-row .switch {
+    /* Optional: Adjust width if toggle is too large */
+    width: 50px;
+  }
   }
   
   .toggle-row label[for] {

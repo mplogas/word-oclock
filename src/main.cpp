@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <FastLED.h>
+// #include <FastLED.h>
 #include <WiFi.h>
 // #include <ArduinoHA.h>
 // #include <ESPAsyncWebServer.h>
@@ -15,8 +15,8 @@
 #include "homeassistant.h"
 #include "wclock.h"
 #include "webui.h"
+#include "leds.h"
 
-CRGB leds[NUM_LEDS];
 boolean isTick;
 boolean isSetup;
 
@@ -28,16 +28,11 @@ WifiSetup* wifiSetup;
 Storage* storage;
 WClock* wordClock;
 HomeAssistant* homeAssistant;
+LED ledController;
 
-
-unsigned long lastMillisIlluminance = 0;
-unsigned long lastMillisLED = 0;
-unsigned long lastMillisWifi = 0;
 
 String ledState;
 
-
-unsigned long ota_progress_millis = 0;
 
 // callbacks
 
@@ -146,14 +141,6 @@ void setup()
     homeAssistant->connect(IPAddress(192, 168, 56, 65), handleMqttConnected, handleMqttDisconnected);
 
     webui.init(handleUpdateResult, handleFWUpload);
-
-    FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
-    FastLED.setBrightness(128);
-
-    unsigned long m = millis();
-    lastMillisIlluminance = m;
-    lastMillisLED = m;
-
   }
   else
   {

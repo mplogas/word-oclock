@@ -23,11 +23,11 @@ boolean isSetup;
 RTC_DS3231 rtc;
 WiFiClient client;
 AsyncWebServer server(80);
+WebUI webui(server, PRODUCT, FW_VERSION);
 WifiSetup* wifiSetup;
 Storage* storage;
 WClock* wordClock;
 HomeAssistant* homeAssistant;
-WebUI* webui;
 
 
 unsigned long lastMillisIlluminance = 0;
@@ -145,8 +145,7 @@ void setup()
 
     homeAssistant->connect(IPAddress(192, 168, 56, 65), handleMqttConnected, handleMqttDisconnected);
 
-    webui = new WebUI(server, PRODUCT, FW_VERSION);
-    webui->init(handleUpdateResult, handleFWUpload);
+    webui.init(handleUpdateResult, handleFWUpload);
 
     FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
     FastLED.setBrightness(128);
@@ -165,7 +164,7 @@ void setup()
       Serial.flush();
       abort();
     } else {
-        webui->initHostAP(handleWiFiCredentials);
+        webui.initHostAP(handleWiFiCredentials);
     }
   }
 }

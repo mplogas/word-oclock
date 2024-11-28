@@ -10,7 +10,7 @@ LED::~LED() {
 }
 
 void LED::setBrightness(uint8_t brightness) {
-    setAutoBrightness(false);
+    //setAutoBrightness(false);
     this->brightness = brightness;
     FastLED.setBrightness(brightness);
     FastLED.show();

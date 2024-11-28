@@ -1,13 +1,9 @@
 #include <Arduino.h>
-// #include <FastLED.h>
 #include <WiFi.h>
-// #include <ArduinoHA.h>
-// #include <ESPAsyncWebServer.h>
-// #include <AsyncTCP.h>
 #include <LittleFS.h>
-// #include <time.h>
 #include <RTClib.h>
 #include <Update.h>
+#include <vector>
 
 #include "constants.h"
 #include "wifisetup.h"
@@ -17,7 +13,6 @@
 #include "webui.h"
 #include "leds.h"
 
-boolean isTick;
 boolean isSetup;
 
 RTC_DS3231 rtc;
@@ -30,12 +25,22 @@ WClock* wordClock;
 HomeAssistant* homeAssistant;
 LED ledController;
 
+bool featureHA = true;
+unsigned long lastUpdate = 0;
 
-String ledState;
+// this if for (reduced) testing purposes
+boolean isTick;
+// Define the LED ranges for the two states
+std::vector<std::pair<int, int>> tickLEDs = {
+    {0, 3},   // From LED index 0, turn on 3 LEDs (0 to 2)
+    {6, 3}   // From LED index 6, turn on 3 LEDs (6 to 9)
+};
 
+std::vector<std::pair<int, int>> tockLEDs = {
+    {3, 3}   // From LED index 3, turn on 5 LEDs (3 to 5)
+};
 
 // callbacks
-
 void handleFWUpload(AsyncWebServerRequest *request, const String filename, size_t index, uint8_t *data, size_t len, bool final)
 {
   Serial.printf("Upload: %s, Index: %u, Len: %u, Final: %u\n", filename.c_str(), index, len, final);
@@ -94,6 +99,16 @@ void handleSwitchCommand(SwitchType switchType, bool state) {
     // Additional logic to handle switch commands
 }
 
+void handleIlluminanceSensorUpdate(const int value) {
+    Serial.printf("Illuminance sensor value: %d\n", value);
+
+    if (featureHA) {
+      char buf[8];
+      itoa(value, buf, 10);
+      homeAssistant->setSensorValue(SensorType::LightIntensity, buf);
+    }
+}
+
 
 void setup()
 {
@@ -133,12 +148,21 @@ void setup()
       Serial.println("Successfully intitialized clock");
     }
 
-    homeAssistant = new HomeAssistant(client, PRODUCT, FW_VERSION);
-    homeAssistant->addSensor(SensorType::LightIntensity, "0", "mdi:brightness-5");
-    homeAssistant->addSwitch(SwitchType::LED, false, "mdi:lightbulb");
-    homeAssistant->setSwitchCommandCallback(handleSwitchCommand);
+    ledController = LED();
+    ledController.setAutoBrightness(true);
+    // ledController.setColor(CRGB::White);
 
-    homeAssistant->connect(IPAddress(192, 168, 56, 65), handleMqttConnected, handleMqttDisconnected);
+    if (featureHA)
+    {
+      homeAssistant = new HomeAssistant(client, PRODUCT, FW_VERSION);
+      homeAssistant->addSensor(SensorType::LightIntensity, "0", "mdi:brightness-5");
+      homeAssistant->addSwitch(SwitchType::LED, false, "mdi:lightbulb");
+      homeAssistant->setSwitchCommandCallback(handleSwitchCommand);
+
+      //ledController.registerIlluminanceSensorCallback(handleIlluminanceSensorUpdate);
+
+      homeAssistant->connect(IPAddress(192, 168, 56, 65), handleMqttConnected, handleMqttDisconnected);
+    }
 
     webui.init(handleUpdateResult, handleFWUpload);
   }
@@ -156,65 +180,33 @@ void setup()
   }
 }
 
+
+
 void loop()
 {
   if (!isSetup)
   {
-    unsigned long currentMillis = millis();
-    int illuminance = 0;
-    if (currentMillis - lastMillisIlluminance > ILLUMINANCE_INTERVAL)
+    unsigned long now = millis();
+    if (now - lastUpdate > LED_INTERVAL)
     {
-      lastMillisIlluminance = currentMillis;
-      illuminance = analogRead(LDR_PIN);
-      //Serial.println(illuminance);
-
-      char buf[8];
-      itoa(illuminance, buf, 10);
-      homeAssistant->setSensorValue(SensorType::LightIntensity, buf);
-
-      if (illuminance > 2000)
-      {
-        FastLED.setBrightness(255);
-      }
-      else if (illuminance > 1000)
-      {
-        FastLED.setBrightness(128);
-      }
-      else
-      {
-        FastLED.setBrightness(64);
-      }
-      FastLED.show();
-    }
-
-    if (currentMillis - lastMillisLED > LED_INTERVAL)
-    {
-      lastMillisLED = currentMillis;
+      lastUpdate = now;
       if (isTick)
       {
         isTick = false;
-        leds[2] = CRGB::Black;
-        leds[4] = CRGB::Black;
-        leds[6] = CRGB::Black;
-
-        leds[0] = CRGB::Red;
-        leds[4] = CRGB::Blue;
-        leds[8] = CRGB::White;
+        //ledController.setLEDs(tickLEDs);
       }
       else
       {
         isTick = true;
-        leds[0] = CRGB::Black;
-        leds[4] = CRGB::Black;
-        leds[8] = CRGB::Black;
-
-        leds[2] = CRGB::Red;
-        leds[4] = CRGB::Blue;
-        leds[6] = CRGB::White;
+        //ledController.setLEDs(tockLEDs);
       }
-      FastLED.show();
     }
 
-    homeAssistant->loop();
+    ledController.loop();
+
+    if (featureHA)
+    {
+      homeAssistant->loop();
+    }
   }
 }

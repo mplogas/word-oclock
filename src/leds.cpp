@@ -1,25 +1,29 @@
 #include "leds.h"
 
-LED::LED() : brightness(DEFAULT_BRIGHTNESS), color(CRGB::White) {
-    FastLED.addLeds<WS2812B, DATA_PIN, GRB>(this->leds, NUM_LEDS);
-    FastLED.setBrightness(brightness);
+LED::LED() {
+    sensorCallback = nullptr;
 }
 
 LED::~LED() {
     sensorCallback = nullptr;
 }
 
+void LED::init() {
+    FastLED.addLeds<WS2812B, DATA_PIN>(this->leds, NUM_LEDS);
+    FastLED.setBrightness(DEFAULT_BRIGHTNESS);
+}
+
 void LED::setBrightness(uint8_t brightness) {
-    //setAutoBrightness(false);
+    setAutoBrightness(false);
     this->brightness = brightness;
-    FastLED.setBrightness(brightness);
-    FastLED.show();
+    //FastLED.setBrightness(brightness);
+    //FastLED.show();
 }
 
 void LED::setColor(const CRGB& color) {
     this->color = color;
-    fill_solid(leds, NUM_LEDS, color);
-    FastLED.show();
+    // fill_solid(leds, NUM_LEDS, color);
+    // FastLED.show();
 }
 
 void LED::setAutoBrightness(bool autoBrightness, int illuminanceThresholdHigh, int illuminanceThresholdLow) {
@@ -27,7 +31,7 @@ void LED::setAutoBrightness(bool autoBrightness, int illuminanceThresholdHigh, i
     if(autoBrightness) {
         this->illuminanceThresholdHigh = illuminanceThresholdHigh;
         this->illuminanceThresholdLow = illuminanceThresholdLow;
-        handleAutoBrightness();
+        // handleAutoBrightness();
     } else {
         setBrightness(DEFAULT_BRIGHTNESS);
         this->illuminanceThresholdHigh = ILLUMINANCE_THRESHOLD_HIGH;
@@ -41,20 +45,26 @@ void LED::registerIlluminanceSensorCallback(const IlluminanceSensorCallback &cal
 
 void LED::setLEDs(const std::vector<std::pair<int, int>>& ledRanges) {
 
-    fill_solid(this->leds, NUM_LEDS, CRGB::Black);
+    clearLEDs();
 
     for (const auto& range : ledRanges) {
         int start = range.first;
         int count = range.second;
-        for (int i = start; i < start + count && i < NUM_LEDS; ++i) {
-            this->leds[i] = this->color;
+        Serial.printf("Setting LEDs from %d to %d\n", start, start + count -1);
+        for (int i = start; i < start + count && i < NUM_LEDS; i++) {
+            Serial.printf("Setting LED %d\n", i);
+            this->leds[i] = color;
         }
     }
     FastLED.show();
 }
 
 void LED::clearLEDs() {
-    fill_solid(leds, NUM_LEDS, CRGB::Black);
+    //FastLED.clear(true);
+    for( int i = 0; i < NUM_LEDS; i++) {
+        this->leds[i] = CRGB::Black;
+    }
+
     FastLED.show();
 }
 
@@ -93,6 +103,7 @@ void LED::handleAutoBrightness() {
 void LED::loop() {
     unsigned long currentMillis = millis();
     if(currentMillis - this->lastBrightnessUpdate > BRIGHTNESS_UPDATE_INTERVAL && this->autoBrightness) {
+        Serial.println("Updating brightness");
         this->lastBrightnessUpdate = currentMillis;
         handleAutoBrightness();
     }

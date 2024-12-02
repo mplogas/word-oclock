@@ -26,13 +26,14 @@ HomeAssistant* homeAssistant;
 LED ledController;
 
 bool featureHA = true;
+bool initialized = false;
 unsigned long lastUpdate = 0;
 
 // this if for (reduced) testing purposes
 boolean isTick;
 // Define the LED ranges for the two states
 std::vector<std::pair<int, int>> tickLEDs = {
-    {0, 3},   // From LED index 0, turn on 3 LEDs (0 to 2)
+    {1, 3},   // From LED index 0, turn on 3 LEDs (0 to 2)
     {6, 3}   // From LED index 6, turn on 3 LEDs (6 to 9)
 };
 
@@ -109,7 +110,6 @@ void handleIlluminanceSensorUpdate(const int value) {
     }
 }
 
-
 void setup()
 {
   isTick = true;
@@ -148,10 +148,12 @@ void setup()
       Serial.println("Successfully intitialized clock");
     }
 
-    ledController = LED();
-    ledController.setAutoBrightness(true);
-    // ledController.setColor(CRGB::White);
 
+    ledController = LED();
+    ledController.init();
+    ledController.setColor(CRGB::White);
+    //ledController.setAutoBrightness(true);
+  
     if (featureHA)
     {
       homeAssistant = new HomeAssistant(client, PRODUCT, FW_VERSION);
@@ -159,7 +161,7 @@ void setup()
       homeAssistant->addSwitch(SwitchType::LED, false, "mdi:lightbulb");
       homeAssistant->setSwitchCommandCallback(handleSwitchCommand);
 
-      //ledController.registerIlluminanceSensorCallback(handleIlluminanceSensorUpdate);
+      ledController.registerIlluminanceSensorCallback(handleIlluminanceSensorUpdate);
 
       homeAssistant->connect(IPAddress(192, 168, 56, 65), handleMqttConnected, handleMqttDisconnected);
     }
@@ -178,13 +180,15 @@ void setup()
         webui.initHostAP(handleWiFiCredentials);
     }
   }
+
+  initialized = true;
 }
 
 
 
 void loop()
 {
-  if (!isSetup)
+  if (!isSetup && initialized)
   {
     unsigned long now = millis();
     if (now - lastUpdate > LED_INTERVAL)
@@ -193,13 +197,20 @@ void loop()
       if (isTick)
       {
         isTick = false;
-        //ledController.setLEDs(tickLEDs);
+        ledController.setColor(CRGB::Red);
+        ledController.setLEDs(tickLEDs);
+        Serial.println("Tick");
       }
       else
       {
         isTick = true;
-        //ledController.setLEDs(tockLEDs);
+        ledController.setColor(CRGB::DarkBlue);
+        ledController.setLEDs(tockLEDs);
+
+        Serial.println("Tock");
       }
+
+      FastLED.show();
     }
 
     ledController.loop();

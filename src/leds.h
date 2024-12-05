@@ -12,8 +12,8 @@ using IlluminanceSensorCallback = std::function<void(const int value)>;
 
 class LED {
 public:
-    static constexpr int ILLUMINANCE_THRESHOLD_HIGH = 10000; // High illuminance threshold
-    static constexpr int ILLUMINANCE_THRESHOLD_LOW = 300; // Low illuminance threshold
+    static constexpr int ILLUMINANCE_THRESHOLD_HIGH = 4096; // High illuminance threshold
+    static constexpr int ILLUMINANCE_THRESHOLD_LOW = 200; // Low illuminance threshold
     LED();
     ~LED();
     void init();

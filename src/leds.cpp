@@ -14,10 +14,10 @@ void LED::init() {
 }
 
 void LED::setBrightness(uint8_t brightness) {
-    setAutoBrightness(false);
+    this->autoBrightness = false;
     this->brightness = brightness;
-    //FastLED.setBrightness(brightness);
-    //FastLED.show();
+    FastLED.setBrightness(brightness);
+    FastLED.show();
 }
 
 void LED::setColor(const CRGB& color) {
@@ -31,7 +31,6 @@ void LED::setAutoBrightness(bool autoBrightness, int illuminanceThresholdHigh, i
     if(autoBrightness) {
         this->illuminanceThresholdHigh = illuminanceThresholdHigh;
         this->illuminanceThresholdLow = illuminanceThresholdLow;
-        // handleAutoBrightness();
     } else {
         setBrightness(DEFAULT_BRIGHTNESS);
         this->illuminanceThresholdHigh = ILLUMINANCE_THRESHOLD_HIGH;
@@ -40,7 +39,9 @@ void LED::setAutoBrightness(bool autoBrightness, int illuminanceThresholdHigh, i
 }
 
 void LED::registerIlluminanceSensorCallback(const IlluminanceSensorCallback &callback) {
-    sensorCallback = callback;
+    //make sure the callback is not null and not previously set
+    if (callback && !sensorCallback) 
+        this->sensorCallback = callback;
 }
 
 void LED::setLEDs(const std::vector<std::pair<int, int>>& ledRanges) {
@@ -80,14 +81,17 @@ CRGB LED::HexToRGB(const String& hex) {
 }
 
 void LED::handleAutoBrightness() {
-    if(!this->autoBrightness) {
+    if (!this->autoBrightness) {
+        // Serial.println("Auto brightness is disabled");
         return;
     }
 
-    int illuminance = analogRead(LDR_PIN);
-    int targetBrightness = map(illuminance, this->illuminanceThresholdLow, this->illuminanceThresholdHigh, BRIGHTNESS_MIN, BRIGHTNESS_MAX);
+    // Map the illuminance to the brightness range
+    int targetBrightness = map(this->illuminance, this->illuminanceThresholdLow, this->illuminanceThresholdHigh, BRIGHTNESS_MIN, BRIGHTNESS_MAX);
     targetBrightness = constrain(targetBrightness, BRIGHTNESS_MIN, BRIGHTNESS_MAX);
+    // Serial.printf("Target brightness: %d\n", targetBrightness);
 
+    // Smoothing with Exponential Moving Average
     /*
         Smoothing with Exponential Moving Average:
 
@@ -95,22 +99,40 @@ void LED::handleAutoBrightness() {
         A smaller alpha results in smoother changes but slower responsiveness.
         An alpha of 0.1 means the new brightness is 10% of the target and 90% of the current brightness.
     */
-    const float alpha = 0.2;  // Smoothing factor (0 < alpha <= 1)
-    uint8_t smoothedBrightness = this->brightness * (1 - alpha) + targetBrightness * alpha; // Exponential moving average
-    setBrightness(smoothedBrightness);
+    const float alpha = 0.1f;  // Smoothing factor (0 < alpha <= 1)
+    float currentBrightness = static_cast<float>(this->brightness);
+    float smoothedBrightness = currentBrightness * (1.0f - alpha) + targetBrightness * alpha;
+    // Serial.printf("Smoothed brightness: %.2f\n", smoothedBrightness);
+
+    // Update the brightness with the smoothed value
+    this->brightness = static_cast<uint8_t>(smoothedBrightness);
+
+    // Apply the new brightness
+    FastLED.setBrightness(this->brightness);
+    FastLED.show();
+
+    Serial.printf("Updated brightness: %d\n", this->brightness);
 }
+
 
 void LED::loop() {
     unsigned long currentMillis = millis();
-    if(currentMillis - this->lastBrightnessUpdate > BRIGHTNESS_UPDATE_INTERVAL && this->autoBrightness) {
-        Serial.println("Updating brightness");
+    if(currentMillis - this->lastIlluminanceUpdate > ILLUMINANCE_UPDATE_INTERVAL) {
+        this->lastIlluminanceUpdate = currentMillis;
+        this->illuminance = analogRead(LDR_PIN);
+        // Serial.printf("Illuminance: %d\n", this->illuminance);
+    }
+
+    if(currentMillis - this->lastBrightnessUpdate > BRIGHTNESS_UPDATE_INTERVAL && this->autoBrightness == true) {
         this->lastBrightnessUpdate = currentMillis;
         handleAutoBrightness();
     }
-    if(currentMillis - this->lastSensorUpdate > ILLUMINANCE_INTERVAL && this->sensorCallback) {
-        this->lastSensorUpdate = currentMillis;
-        int illuminance = analogRead(LDR_PIN);
-        sensorCallback(illuminance);
+
+    if(currentMillis - this->lastSensorUpdate > SENSOR_UPDATE_INTERVAL  && this->sensorCallback) 
+    {
+        this->lastSensorUpdate = currentMillis;    
+        int value = this->illuminance;
+        sensorCallback(value);
     }
 
 }

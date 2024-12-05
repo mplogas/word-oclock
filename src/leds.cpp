@@ -90,10 +90,7 @@ void LED::handleAutoBrightness() {
     targetBrightness = constrain(targetBrightness, BRIGHTNESS_MIN, BRIGHTNESS_MAX);
     // Serial.printf("Target brightness: %d\n", targetBrightness);
     
-    if(targetBrightness == this->brightness) {
-        // Serial.println("Target brightness is the same as the current brightness");
-        return;
-    }
+    if(targetBrightness == this->brightness) return;
 
     // Smoothing with Exponential Moving Average
     /*
@@ -105,10 +102,12 @@ void LED::handleAutoBrightness() {
     */
     const float alpha = 0.1f;  // Smoothing factor (0 < alpha <= 1)
     float currentBrightness = static_cast<float>(this->brightness);
-    float smoothedBrightness = currentBrightness * (1.0f - alpha) + targetBrightness * alpha;
+    uint8_t smoothedBrightness = static_cast<uint8_t>(currentBrightness * (1.0f - alpha) + targetBrightness * alpha);
     // Serial.printf("Smoothed brightness: %.2f\n", smoothedBrightness);
 
-    this->brightness = static_cast<uint8_t>(smoothedBrightness);
+    if(smoothedBrightness == this->brightness) return;
+
+    this->brightness = smoothedBrightness;
 
     FastLED.setBrightness(this->brightness);
     FastLED.show();

@@ -151,7 +151,6 @@ void setup()
 
     ledController = LED();
     ledController.init();
-    ledController.setColor(CRGB::White);
     ledController.setAutoBrightness(true);
   
     if (featureHA)

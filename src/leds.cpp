@@ -22,8 +22,8 @@ void LED::setBrightness(uint8_t brightness) {
 
 void LED::setColor(const CRGB& color) {
     this->color = color;
-    // fill_solid(leds, NUM_LEDS, color);
-    // FastLED.show();
+    FastLED.showColor(color);
+    FastLED.show();
 }
 
 void LED::setAutoBrightness(bool autoBrightness, int illuminanceThresholdHigh, int illuminanceThresholdLow) {
@@ -111,7 +111,7 @@ void LED::handleAutoBrightness() {
     FastLED.setBrightness(this->brightness);
     FastLED.show();
 
-    Serial.printf("Updated brightness: %d\n", this->brightness);
+    //Serial.printf("Updated brightness: %d\n", this->brightness);
 }
 
 

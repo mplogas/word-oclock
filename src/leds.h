@@ -18,7 +18,7 @@ public:
     ~LED();
     void init();
     void setBrightness(uint8_t brightness);
-    void setColor(const CRGB& color);
+    void setColor(const CRGB& color, bool show = false);
     void setLEDs(const std::vector<std::pair<int, int>>& ledRanges);
     void clearLEDs();
     void setAutoBrightness(bool autoBrightness, int illuminanceThresholdHigh =  ILLUMINANCE_THRESHOLD_HIGH, int illuminanceThresholdLow = ILLUMINANCE_THRESHOLD_LOW);
@@ -27,7 +27,7 @@ public:
     static String RGBtoHex(const CRGB& color);
     static CRGB HexToRGB(const String& hex);
 private:
-    static const int NUM_LEDS = 9; // Number of LEDs (should be 121 (or 47 or 9 for prototyping))
+    static const int NUM_LEDS = 25; // Number of LEDs (should be 121 (or 47 or 9 for prototyping))
     static const int DATA_PIN = 25; // LED data pin
     static const int LDR_PIN = 35; // Pin for Light-Dependent Resistor
     static const int DEFAULT_BRIGHTNESS = 50; // Default brightness

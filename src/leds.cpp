@@ -20,10 +20,9 @@ void LED::setBrightness(uint8_t brightness) {
     FastLED.show();
 }
 
-void LED::setColor(const CRGB& color) {
+void LED::setColor(const CRGB& color, bool show) {
     this->color = color;
-    FastLED.showColor(color);
-    FastLED.show();
+    if (show) FastLED.showColor(color);
 }
 
 void LED::setAutoBrightness(bool autoBrightness, int illuminanceThresholdHigh, int illuminanceThresholdLow) {
@@ -46,7 +45,7 @@ void LED::registerIlluminanceSensorCallback(const IlluminanceSensorCallback &cal
 
 void LED::setLEDs(const std::vector<std::pair<int, int>>& ledRanges) {
 
-    clearLEDs();
+    FastLED.clear();
 
     for (const auto& range : ledRanges) {
         int start = range.first;
@@ -111,7 +110,7 @@ void LED::handleAutoBrightness() {
     FastLED.setBrightness(this->brightness);
     FastLED.show();
 
-    //Serial.printf("Updated brightness: %d\n", this->brightness);
+    Serial.printf("Updated brightness: %d\n", this->brightness);
 }
 
 

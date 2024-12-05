@@ -196,7 +196,7 @@ void loop()
       if (isTick)
       {
         isTick = false;
-        ledController.setColor(CRGB::Red);
+        ledController.setColor(CRGB::DarkRed);
         ledController.setLEDs(tickLEDs);
         Serial.println("Tick");
       }

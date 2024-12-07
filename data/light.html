@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>WordClock Light Configuration</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">  
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Include header -->
+    <!--#INCLUDE_HEADER#-->
+    <!-- Light Configuration Content -->
+    <div class="content">
+        <h2>Light Configuration</h2>
+        <div class="card-grid">
+            <!-- Light Control Card -->
+            <div class="card">
+                <p class="card-title"><i class="fas fa-lightbulb"></i> Light</p>
+                <div class="card-content">
+                    <div class="toggle-row">
+                        <label for="lightToggle">Status:</label>
+                        <label class="switch">
+                            <input type="checkbox" id="lightToggle" onchange="toggleLight(this.checked)">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Light Color Selection Card -->
+            <div class="card">
+                <p class="card-title"><i class="fas fa-palette"></i> Light Color</p>
+                <div class="card-content">
+                    <div class="toggle-row">
+                        <label for="lightColorPicker">Select Color:</label>
+                        <input type="color" id="lightColorPicker" value="#ffffff"
+                            onchange="selectLightColor(this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Display Type Card -->
+            <div class="card">
+                <p class="card-title"><i class="fas fa-display"></i> Display Type</p>
+                <div class="card-content">
+                    <div class="toggle-row">
+                        <label for="displayTypeToggle">Display Type:</label>
+                        <label class="switch">
+                            <input type="checkbox" id="displayTypeToggle" onchange="toggleDisplayType(this.checked)">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="index.js"></script>
+</body>
+
+</html>

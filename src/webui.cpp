@@ -1,9 +1,7 @@
 #include "webui.h"
 
-WebUI::WebUI(AsyncWebServer &srv, const char* devicename, const char* firmware) : server(srv)
+WebUI::WebUI(AsyncWebServer &srv) : server(srv)
 {
-    deviceName = devicename;
-    firmwareVersion = firmware;
 }
 
 WebUI::~WebUI()
@@ -16,16 +14,34 @@ void WebUI::init(const UpdateSuccessCallback &updateCb, const UploadHandlerCallb
     updateCallback = updateCb;
     uploadHandlerCallback = uploadCb;
 
-    server.on("/", HTTP_GET, [this](AsyncWebServerRequest *request) {
+    server.on("/light", HTTP_GET, [this](AsyncWebServerRequest *request) {
         request->send(
             LittleFS,
-            WebUI::INDEX_HTML,
+            WebUI::LIGHT_HTML,
             "text/html",
             false,
             [this](const String& var) -> String {
-                return this->configurationProcessor(var);
+                return this->pageProcessor(var, Page::LIGHT);
             }
         );
+    });
+    server.on("/light", HTTP_POST, [this](AsyncWebServerRequest *request) {
+        // handle light control
+    });
+
+    server.on("/system", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        request->send(
+            LittleFS,
+            WebUI::SYSTEM_HTML,
+            "text/html",
+            false,
+            [this](const String& var) -> String {
+                return this->pageProcessor(var, Page::SYSTEM);
+            }
+        );
+    });
+    server.on("/system", HTTP_POST, [this](AsyncWebServerRequest *request) {
+        // handle system control
     });
 
     // Route for "/update" GET request
@@ -36,7 +52,7 @@ void WebUI::init(const UpdateSuccessCallback &updateCb, const UploadHandlerCallb
             "text/html",
             false,
             [this](const String& var) -> String {
-                return this->fwUpdateProcessor(var);
+                return this->pageProcessor(var, Page::FIRMWARE);
             }
         );
     });
@@ -48,18 +64,6 @@ void WebUI::init(const UpdateSuccessCallback &updateCb, const UploadHandlerCallb
         uploadHandlerCallback(request, filename, index, data, len, final);
     });
 
-    server.on("/setLightColor", HTTP_GET, [&](AsyncWebServerRequest *request){
-    if (request->hasParam("color")) {
-        String color = request->getParam("color")->value();
-
-        // TODO: color callback
-
-        request->send(200, "text/plain", "Color set to " + color);
-    } else {
-        request->send(400, "text/plain", "Bad Request");
-    }
-    });
-
     // Other routes with sanitized handlers
     server.onNotFound([](AsyncWebServerRequest *request) {
         request->send(404, "text/plain", F("Not found"));
@@ -69,18 +73,14 @@ void WebUI::init(const UpdateSuccessCallback &updateCb, const UploadHandlerCallb
     server.begin();
 }
 
-void WebUI::initHostAP(const WiFiCredentialsCallback &wifiCb) {
+void WebUI::initHostAP(const WiFiSetupCallback &wifiCb) {
     wifiCredentialsCallback = wifiCb;
 
     server.on("/", HTTP_GET, [this](AsyncWebServerRequest *request) {
         request->send(
             LittleFS,
             WebUI::WIFI_MANAGER_HTML,
-            "text/html",
-            false,
-            [this](const String& var) -> String {
-                return this->wifiSetupProcessor(var);
-            }
+            "text/html"
         );
     });
 
@@ -118,33 +118,22 @@ void WebUI::initHostAP(const WiFiCredentialsCallback &wifiCb) {
     server.begin();
 }
 
-String WebUI::wifiSetupProcessor(const String &var)
-{
-    if (var == WebUI::PAGE_TITLE) {
-        return deviceName;
-    }
-
-    return String();
-}
-
-String WebUI::fwUpdateProcessor(const String &var) 
-{
-    if (var == WebUI::PAGE_TITLE) {
-        return deviceName;
-    } else if (var == WebUI::FIRMWARE) {
-        return firmwareVersion;
-    }
-
-    return String();
-}
-
-String WebUI::configurationProcessor(const String &var)
+String WebUI::pageProcessor(const String &var, Page page)
 {
     if (var == WebUI::FIRMWARE) {
-        return deviceName;
-    } else if (var == WebUI::PAGE_TITLE) {
         return firmwareVersion;
     }
+
+    // switch (page) {
+    //     case Page::LIGHT:
+    //         return lightProcessor(var);
+    //     case Page::SYSTEM:
+    //         return systemProcessor(var);
+    //     case Page::FIRMWARE:
+    //         return fwUpdateProcessor(var);
+    //     case Page::WIFI_SETUP:
+    //         return wifiSetupProcessor(var);
+    // }
     return String();
 }
 

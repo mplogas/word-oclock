@@ -5,9 +5,9 @@
 #include <Update.h>
 #include <vector>
 
-#include "constants.h"
+#include "defaults.h"
+#include "configuration.h"
 #include "wifisetup.h"
-#include "storage.h"
 #include "homeassistant.h"
 #include "wclock.h"
 #include "webui.h"
@@ -17,26 +17,27 @@ boolean isSetup;
 
 RTC_DS3231 rtc;
 WiFiClient client;
+Configuration config;
+Configuration::SystemConfig systemConfig;
+Configuration::LightConfig lightConfig;
+Configuration::WifiConfig wifiConfig;
 AsyncWebServer server(80);
-WebUI webui(server, PRODUCT, FW_VERSION);
-WifiSetup* wifiSetup;
-Storage* storage;
+WebUI webui(server, Defaults::PRODUCT, Defaults::FW_VERSION);
 WClock* wordClock;
 HomeAssistant* homeAssistant;
 LED ledController;
 
-bool featureHA = true;
+
 bool initialized = false;
 unsigned long lastUpdate = 0;
 
+
 // this if for (reduced) testing purposes
 boolean isTick;
-// Define the LED ranges for the two states
 std::vector<std::pair<int, int>> tickLEDs = {
     {1, 3},   // From LED index 0, turn on 3 LEDs (0 to 2)
     {6, 3}   // From LED index 6, turn on 3 LEDs (6 to 9)
 };
-
 std::vector<std::pair<int, int>> tockLEDs = {
     {3, 3}   // From LED index 3, turn on 5 LEDs (3 to 5)
 };
@@ -78,9 +79,12 @@ bool handleUpdateResult() {
 void handleWiFiCredentials(const String &ssid, const String &password) {
     Serial.printf("SSID set to: %s\n", ssid.c_str());
     Serial.printf("Password set to: %s\n", password.c_str());
-    
-    storage->writeFile(StorageType::SSID, ssid.c_str());
-    storage->writeFile(StorageType::WIFI_PASS, password.c_str());
+
+    strncpy(wifiConfig.ssid, ssid.c_str(), sizeof(wifiConfig.ssid) - 1);
+    wifiConfig.ssid[sizeof(wifiConfig.ssid) - 1] = '\0';
+    strncpy(wifiConfig.password, password.c_str(), sizeof(wifiConfig.password) - 1);
+    wifiConfig.password[sizeof(wifiConfig.password) - 1] = '\0';
+    config.setWifiConfig(wifiConfig);
 }
 
 // Callback for MQTT connected
@@ -103,18 +107,36 @@ void handleSwitchCommand(SwitchType switchType, bool state) {
 void handleIlluminanceSensorUpdate(const int value) {
     Serial.printf("Illuminance sensor value: %d\n", value);
 
-    if (featureHA) {
+    if (systemConfig.mqttConfig.enabled && homeAssistant != nullptr) {
       char buf[8];
       itoa(value, buf, 10);
       homeAssistant->setSensorValue(SensorType::LightIntensity, buf);
     }
 }
 
+void enableMqtt() {
+  if(systemConfig.mqttConfig.host != nullptr) {
+      homeAssistant = new HomeAssistant(client, Defaults::PRODUCT, Defaults::FW_VERSION);
+      homeAssistant->addSensor(SensorType::LightIntensity, "0", "mdi:brightness-5");
+      homeAssistant->addSwitch(SwitchType::LED, false, "mdi:lightbulb");
+      homeAssistant->setSwitchCommandCallback(handleSwitchCommand);
+
+      ledController.registerIlluminanceSensorCallback(handleIlluminanceSensorUpdate);
+      homeAssistant->connect(IPAddress(systemConfig.mqttConfig.host), handleMqttConnected, handleMqttDisconnected);
+  }
+}
+
 void setup()
 {
   isTick = true;
   Serial.begin(115200);
-  Serial.printf("Starting with FW %s...\n", FW_VERSION);
+  Serial.printf("Starting with FW %s...\n", Defaults::FW_VERSION);
+
+  config = Configuration();
+  config.init();
+  wifiConfig = config.getWifiConfig();
+  systemConfig = config.getSystemConfig();
+  lightConfig = config.getLightConfig();
 
   wordClock = new WClock(rtc);
   if (!wordClock->init())
@@ -124,23 +146,20 @@ void setup()
     abort();
   }
 
-  storage = new Storage(LittleFS);
-  if (!storage->init())
+  if (!LittleFS.begin(true))
   {
-    Serial.flush();
-    abort();
+      Serial.println("An error has occurred while mounting LittleFS");
   }
+  Serial.println("LittleFS mounted successfully");
 
-  String ssid = storage->readFile(StorageType::SSID);
-  String pass = storage->readFile(StorageType::WIFI_PASS);
 
-  wifiSetup = new WifiSetup();
-
-  if (wifiSetup->connect(ssid.c_str(), pass.c_str(), WIFI_SCAN_TIMEOUT))
+  WifiSetup wifiSetup = WifiSetup();
+  if (wifiConfig.ssid != nullptr && wifiConfig.password != nullptr && 
+        wifiSetup.connect(wifiConfig.ssid, wifiConfig.password, Defaults::WIFI_SCAN_TIMEOUT))
   {
     isSetup = false;
 
-    bool clockResult = wordClock->begin();
+    bool clockResult = wordClock->begin(systemConfig.ntpConfig.timezone, systemConfig.ntpConfig.server);
 
     if(!clockResult) {
       Serial.println("Failed to initialize clock");
@@ -151,26 +170,20 @@ void setup()
 
     ledController = LED();
     ledController.init();
-    ledController.setAutoBrightness(true);
+    ledController.enableAutoBrightness(systemConfig.autoBrightnessConfig.illuminanceThresholdHigh, systemConfig.autoBrightnessConfig.illuminanceThresholdLow);
   
-    if (featureHA)
+    if (systemConfig.mqttConfig.enabled)
     {
-      homeAssistant = new HomeAssistant(client, PRODUCT, FW_VERSION);
-      homeAssistant->addSensor(SensorType::LightIntensity, "0", "mdi:brightness-5");
-      homeAssistant->addSwitch(SwitchType::LED, false, "mdi:lightbulb");
-      homeAssistant->setSwitchCommandCallback(handleSwitchCommand);
-
-      ledController.registerIlluminanceSensorCallback(handleIlluminanceSensorUpdate);
-
-      homeAssistant->connect(IPAddress(192, 168, 56, 65), handleMqttConnected, handleMqttDisconnected);
+      enableMqtt();
     }
+
 
     webui.init(handleUpdateResult, handleFWUpload);
   }
   else
   {
     isSetup = true;
-    if (!wifiSetup->enableHostAp(PRODUCT, DEFAULT_WIFI_PASS))
+    if (!wifiSetup.enableHostAp(Defaults::PRODUCT, Defaults::DEFAULT_WIFI_SETUP_PASS))
     {
       Serial.println("Failed to start AP");
       Serial.flush();
@@ -190,7 +203,7 @@ void loop()
   if (!isSetup && initialized)
   {
     unsigned long now = millis();
-    if (now - lastUpdate > LED_INTERVAL)
+    if (now - lastUpdate > Defaults::LED_INTERVAL)
     {
       lastUpdate = now;
       if (isTick)
@@ -214,7 +227,7 @@ void loop()
 
     ledController.loop();
 
-    if (featureHA)
+    if (systemConfig.mqttConfig.enabled && homeAssistant != nullptr)
     {
       homeAssistant->loop();
     }

@@ -1,6 +1,5 @@
 #include "homeassistant.h"
 
-#define ARDUINOHA_TEST 1
 
 // Initialize static member
 HomeAssistant* HomeAssistant::instance = nullptr;

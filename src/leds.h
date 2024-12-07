@@ -7,13 +7,12 @@
 #include <FastLED.h>
 #include <vector>
 #include <functional>
+#include "defaults.h"
 
 using IlluminanceSensorCallback = std::function<void(const int value)>;
 
 class LED {
 public:
-    static constexpr int ILLUMINANCE_THRESHOLD_HIGH = 4096; // High illuminance threshold
-    static constexpr int ILLUMINANCE_THRESHOLD_LOW = 200; // Low illuminance threshold
     LED();
     ~LED();
     void init();
@@ -21,7 +20,8 @@ public:
     void setColor(const CRGB& color, bool show = false);
     void setLEDs(const std::vector<std::pair<int, int>>& ledRanges);
     void clearLEDs();
-    void setAutoBrightness(bool autoBrightness, int illuminanceThresholdHigh =  ILLUMINANCE_THRESHOLD_HIGH, int illuminanceThresholdLow = ILLUMINANCE_THRESHOLD_LOW);
+    void enableAutoBrightness(int illuminanceThresholdHigh, int illuminanceThresholdLow);
+    void disableAutoBrightness();
     void registerIlluminanceSensorCallback(const IlluminanceSensorCallback &callback);
     void loop();
     static String RGBtoHex(const CRGB& color);
@@ -30,20 +30,19 @@ private:
     static const int NUM_LEDS = 25; // Number of LEDs (should be 121 (or 47 or 9 for prototyping))
     static const int DATA_PIN = 25; // LED data pin
     static const int LDR_PIN = 35; // Pin for Light-Dependent Resistor
-    static const int DEFAULT_BRIGHTNESS = 50; // Default brightness
-    static const uint8_t BRIGHTNESS_MIN = 20; // start brightness for auto brightness
+    static const uint8_t BRIGHTNESS_MIN = 10; // start brightness for auto brightness
     static const uint8_t BRIGHTNESS_MAX = 255; // max brightness for auto brightness
     static const unsigned long BRIGHTNESS_UPDATE_INTERVAL = 250; // Brightness update interval
     static const int ILLUMINANCE_UPDATE_INTERVAL = 500; // Illuminance update interval
     static const int SENSOR_UPDATE_INTERVAL = 1000; // Sensor update interval
     CRGB leds[NUM_LEDS];
-    uint8_t brightness = DEFAULT_BRIGHTNESS;
+    uint8_t brightness = Defaults::DEFAULT_LIGHT_BRIGHTNESS;
     bool autoBrightness = false;
     uint16_t illuminance = 0;
-    int illuminanceThresholdHigh = ILLUMINANCE_THRESHOLD_HIGH;
-    int illuminanceThresholdLow = ILLUMINANCE_THRESHOLD_LOW;
+    int illuminanceThresholdHigh = 0;
+    int illuminanceThresholdLow = 0;
     CRGB color = CRGB::White;
-    uint8_t smoothedBrightness  = DEFAULT_BRIGHTNESS;
+    uint8_t smoothedBrightness = Defaults::DEFAULT_LIGHT_BRIGHTNESS;
     unsigned long lastBrightnessUpdate  = 0;
     unsigned long lastSensorUpdate  = 0;
     unsigned long lastIlluminanceUpdate  = 0;

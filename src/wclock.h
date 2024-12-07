@@ -9,10 +9,8 @@
 class WClock
 {
 private:
-    static constexpr const char *NTP_SERVER_1 = "0.pool.ntp.org";
     static constexpr const char *NTP_SERVER_2 = "1.pool.ntp.org";
     static constexpr const char *NTP_SERVER_3 = "2.pool.ntp.org";
-    static constexpr const char *TIMEZONE = "CET-1CEST,M3.5.0,M10.5.0/3"; // https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv for UI
 
     const uint16_t ntpTimeout = 15000;
     const char *ntpServer;
@@ -23,12 +21,12 @@ private:
     bool getNTPTime();
     bool initialized = false;
 public:
-    WClock(RTC_DS3231& rtc, const char *timezone = WClock::TIMEZONE, const char *ntpServer = WClock::NTP_SERVER_1);
+    WClock(RTC_DS3231& rtc);
     ~WClock();
-    void setTimeZone(const char *timezone = WClock::TIMEZONE);
-    bool init();
-    bool begin();
-    bool update();
+    void setTimeZone(const char *timezone);
+    bool init(); // just rtc initialization
+    bool begin(const char *timezone, const char *ntpServer); // this is split because rtc intitialization happens prior to having wifi connection so ntp would fail. 
+    bool update(bool tzUpdate = false);
     void loop();
 };
 

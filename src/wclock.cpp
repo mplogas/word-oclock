@@ -1,9 +1,7 @@
 #include "wclock.h"
 
 
-WClock::WClock(RTC_DS3231& rtc, const char *timezone, const char *ntpServer) : rtc(rtc){
-    tzInfo = timezone;
-    ntpServer = ntpServer;    
+WClock::WClock(RTC_DS3231& rtc) : rtc(rtc){
 }
 
 WClock::~WClock()
@@ -18,20 +16,19 @@ bool WClock::init()
         return false;
     }
 
+
+
     initialized = true;
     return true;
 }
 
-bool WClock::begin()
+bool WClock::begin(const char *timezone, const char *ntpServer)
 {
-    if(!initialized)
-    {
-        return false;
-    }
+    tzInfo = timezone;
+    this->ntpServer = ntpServer; 
 
-    configTime(0, 0, ntpServer, NTP_SERVER_2, NTP_SERVER_3);
-
-    return update();
+    configTime(0, 0, this->ntpServer, NTP_SERVER_2, NTP_SERVER_3);
+    return update(true);
 }
 
 bool WClock::getNTPTime()
@@ -109,14 +106,17 @@ void WClock::setTimeZone(const char *timezone)
   tzInfo = timezone;
 }
 
-bool WClock::update()
+bool WClock::update(bool tzUpdate)
 {
-    setTimeZone(tzInfo);
+    if(!initialized)
+    {
+        return false;
+    }
+
+    if (tzUpdate) setTimeZone(tzInfo);
 
     if(getNTPTime())
     {
-        //rtc.adjust(DateTime(now));
-
         rtc.adjust(DateTime(timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec));
         return true;
     } else {

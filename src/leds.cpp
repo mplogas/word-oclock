@@ -10,7 +10,7 @@ LED::~LED() {
 
 void LED::init() {
     FastLED.addLeds<WS2812B, DATA_PIN>(this->leds, NUM_LEDS);
-    FastLED.setBrightness(DEFAULT_BRIGHTNESS);
+    FastLED.setBrightness(Defaults::DEFAULT_LIGHT_BRIGHTNESS);
 }
 
 void LED::setBrightness(uint8_t brightness) {
@@ -25,16 +25,14 @@ void LED::setColor(const CRGB& color, bool show) {
     if (show) FastLED.showColor(color);
 }
 
-void LED::setAutoBrightness(bool autoBrightness, int illuminanceThresholdHigh, int illuminanceThresholdLow) {
-    this->autoBrightness = autoBrightness;
-    if(autoBrightness) {
-        this->illuminanceThresholdHigh = illuminanceThresholdHigh;
-        this->illuminanceThresholdLow = illuminanceThresholdLow;
-    } else {
-        setBrightness(DEFAULT_BRIGHTNESS);
-        this->illuminanceThresholdHigh = ILLUMINANCE_THRESHOLD_HIGH;
-        this->illuminanceThresholdLow = ILLUMINANCE_THRESHOLD_LOW;
-    }
+void LED::enableAutoBrightness(int illuminanceThresholdHigh, int illuminanceThresholdLow) {
+    this->autoBrightness = true;
+    this->illuminanceThresholdHigh = illuminanceThresholdHigh;
+    this->illuminanceThresholdLow = illuminanceThresholdLow;
+}
+
+void LED::disableAutoBrightness() {
+    this->autoBrightness = false;
 }
 
 void LED::registerIlluminanceSensorCallback(const IlluminanceSensorCallback &callback) {

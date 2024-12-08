@@ -32,11 +32,17 @@ class WebUI
         const char* deviceName;
         const char* firmwareVersion;
 
-        // Processor functions
+        // Page Processor functions
+        String lightPageProcessor(const String &var);
+        String systemPageProcessor(const String &var);
+        String firmwarePageProcessor(const String &var);
+        String headerProcessor(const String &var);
+        String includeProcessor(const String &var);
         String pageProcessor(const String &var, Page page);
 
         // Helper functions
         void handleFirmwareUpdate(AsyncWebServerRequest *request);
+        String readFile(const char* path);
 
         // paths
         static constexpr const char* HEADER_HTML = "/header.html";

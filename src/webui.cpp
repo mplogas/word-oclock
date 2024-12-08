@@ -13,6 +13,7 @@ void WebUI::init(const UpdateSuccessCallback &updateCb, const UploadHandlerCallb
 {
     updateCallback = updateCb;
     uploadHandlerCallback = uploadCb;
+    
 
     server.on("/light", HTTP_GET, [this](AsyncWebServerRequest *request) {
         request->send(
@@ -69,7 +70,10 @@ void WebUI::init(const UpdateSuccessCallback &updateCb, const UploadHandlerCallb
         request->send(404, "text/plain", F("Not found"));
     });
 
-    server.serveStatic("/", LittleFS, "/").setCacheControl("max-age=3600");
+    //server.serveStatic("/", LittleFS, "/").setCacheControl("max-age=3600");
+    // Serve Static CSS and JS only
+    server.serveStatic("/style.css", LittleFS, "/style.css").setCacheControl("max-age=3600");
+    server.serveStatic("/index.js", LittleFS, "/index.js").setCacheControl("max-age=3600");
     server.begin();
 }
 
@@ -118,24 +122,6 @@ void WebUI::initHostAP(const WiFiSetupCallback &wifiCb) {
     server.begin();
 }
 
-String WebUI::pageProcessor(const String &var, Page page)
-{
-    if (var == WebUI::FIRMWARE) {
-        return firmwareVersion;
-    }
-
-    // switch (page) {
-    //     case Page::LIGHT:
-    //         return lightProcessor(var);
-    //     case Page::SYSTEM:
-    //         return systemProcessor(var);
-    //     case Page::FIRMWARE:
-    //         return fwUpdateProcessor(var);
-    //     case Page::WIFI_SETUP:
-    //         return wifiSetupProcessor(var);
-    // }
-    return String();
-}
 
 void WebUI::handleFirmwareUpdate(AsyncWebServerRequest *request)
 {
@@ -153,5 +139,54 @@ void WebUI::handleFirmwareUpdate(AsyncWebServerRequest *request)
         response->addHeader("Connection", "close");
         request->send(response);
     }
+}
+
+String WebUI::pageProcessor(const String &var, Page page)
+{
+    if (var == "PAGE_TITLE") {
+        switch (page)
+        {
+        case Page::LIGHT:
+            return "Light Configuration";
+        case Page::SYSTEM:
+            return "System Configuration";
+        case Page::FIRMWARE:
+            return "Firmware Update";
+        default:
+            return String();
+        }
+    } else if (var == "FW_UPDATE_LINK") {
+        if (page == Page::SYSTEM) {
+            return "<a href=\"/update\" class=\"link\"><i class=\"fas fa-upload\"></i> Firmware Update</a>";
+        } else {
+            return String();
+        }
+    } else if (var == "ACTIVE_LIGHT") {
+        return (page == Page::LIGHT) ? "active" : "";
+    } else if (var == "ACTIVE_SYSTEM") {
+        return (page == Page::SYSTEM) ? "active" : "";
+    } else if (var == "INCLUDE_HEADER") {
+        // Return header content with placeholders processed
+        String headerContent = readFile(HEADER_HTML);
+        // Create a temporary processor to handle header placeholders
+        headerContent.replace("%PAGE_TITLE%", pageProcessor("PAGE_TITLE", page));
+        headerContent.replace("%FW_UPDATE_LINK%", pageProcessor("FW_UPDATE_LINK", page));
+        headerContent.replace("%ACTIVE_LIGHT%", pageProcessor("ACTIVE_LIGHT", page));
+        headerContent.replace("%ACTIVE_SYSTEM%", pageProcessor("ACTIVE_SYSTEM", page));
+        return headerContent;
+    }
+    return String();
+}
+
+
+String WebUI::readFile(const char* path) {
+    File file = LittleFS.open(path, "r");
+    if (!file) {
+        return String();
+    }
+
+    String fileContent = file.readString();
+    file.close();
+    return fileContent;
 }
 

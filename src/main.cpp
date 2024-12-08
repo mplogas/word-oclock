@@ -22,7 +22,7 @@ Configuration::SystemConfig systemConfig;
 Configuration::LightConfig lightConfig;
 Configuration::WifiConfig wifiConfig;
 AsyncWebServer server(80);
-WebUI webui(server, Defaults::PRODUCT, Defaults::FW_VERSION);
+WebUI webui(server);
 WClock* wordClock;
 HomeAssistant* homeAssistant;
 LED ledController;
@@ -149,6 +149,8 @@ void setup()
   if (!LittleFS.begin(true))
   {
       Serial.println("An error has occurred while mounting LittleFS");
+      Serial.flush();
+      abort();
   }
   Serial.println("LittleFS mounted successfully");
 

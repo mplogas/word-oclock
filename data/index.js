@@ -43,10 +43,49 @@ function toggleLight(isChecked) {
     form.style.display = isChecked ? 'block' : 'none';
   }
 
-  function toggleAutoBrightness(isChecked) {
-    const container = document.getElementById('autoBrightnessContainer');
-    container.style.display = isChecked ? 'block' : 'none';
+  // function toggleAutoBrightness(isChecked) {
+  //   const container = document.getElementById('autoBrightnessContainer');
+  //   container.style.display = isChecked ? 'block' : 'none';
+  // }
+
+  // Function to handle auto-brightness toggle
+function toggleAutoBrightness(isEnabled) {
+  const brightnessSliderContainer = document.getElementById('brightnessSliderContainer');
+  if (isEnabled) {
+      brightnessSliderContainer.style.display = 'none';
+      // Send request to enable auto-brightness
+      // fetch('/autoBrightness?enabled=1')
+      //     .then(response => {
+      //         if (response.ok) {
+      //             console.log('Auto-brightness enabled');
+      //         }
+      //     });
+  } else {
+      brightnessSliderContainer.style.display = 'flex';
+      // Send request to disable auto-brightness
+      // fetch('/autoBrightness?enabled=0')
+      //     .then(response => {
+      //         if (response.ok) {
+      //             console.log('Auto-brightness disabled');
+      //         }
+      //     });
   }
+}
+
+// Function to update brightness value display
+function updateBrightnessValue(value) {
+  document.getElementById('brightnessValue').innerText = value;
+}
+
+function setBrightness(value) {
+  // Send request to set brightness value
+  // fetch(`/setBrightness?value=${value}`)
+  //     .then(response => {
+  //         if (response.ok) {
+  //             console.log(`Brightness set to ${value}`);
+  //         }
+  //     });
+}
 
   function toggleResetConfiguration(isChecked) {
     const container = document.getElementById('resetConfigurationContainer');
@@ -95,14 +134,14 @@ function toggleLight(isChecked) {
       toggleHaIntegration(haIntegrationToggle.checked);
     }
 
-    const autoBrightnessToggle = document.getElementById('autoBrightness');
-    if (autoBrightnessToggle) {
-      toggleAutoBrightness(autoBrightnessToggle.checked);
-    }
-
     const resetConfigurationToggle = document.getElementById('resetConfiguration');
     if (resetConfigurationToggle) {
       toggleResetConfiguration(resetConfigurationToggle.checked);
+    }
+
+    const autoBrightnessToggle = document.getElementById('autoBrightness');
+    if (autoBrightnessToggle) {
+      toggleAutoBrightness(autoBrightnessToggle.checked);
     }
     
     // Initialize other toggles if present

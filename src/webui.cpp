@@ -147,18 +147,12 @@ String WebUI::pageProcessor(const String &var, Page page)
         switch (page)
         {
         case Page::LIGHT:
-            return "Light Configuration";
+            return "Light Settings";
         case Page::SYSTEM:
             return "System Configuration";
         case Page::FIRMWARE:
             return "Firmware Update";
         default:
-            return String();
-        }
-    } else if (var == "FW_UPDATE_LINK") {
-        if (page == Page::SYSTEM) {
-            return "<a href=\"/update\" class=\"link\"><i class=\"fas fa-upload\"></i> Firmware Update</a>";
-        } else {
             return String();
         }
     } else if (var == "ACTIVE_LIGHT") {
@@ -170,7 +164,6 @@ String WebUI::pageProcessor(const String &var, Page page)
         String headerContent = readFile(HEADER_HTML);
         // Create a temporary processor to handle header placeholders
         headerContent.replace("%PAGE_TITLE%", pageProcessor("PAGE_TITLE", page));
-        headerContent.replace("%FW_UPDATE_LINK%", pageProcessor("FW_UPDATE_LINK", page));
         headerContent.replace("%ACTIVE_LIGHT%", pageProcessor("ACTIVE_LIGHT", page));
         headerContent.replace("%ACTIVE_SYSTEM%", pageProcessor("ACTIVE_SYSTEM", page));
         return headerContent;

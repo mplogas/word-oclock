@@ -16,7 +16,6 @@
     %INCLUDE_HEADER%
     <!-- System Configuration Content -->
     <div class="content">
-        <h2>System Configuration</h2>
         <div class="card-grid">
             <!-- Integration Card -->
             <div class="card">
@@ -166,36 +165,22 @@
             <div class="card">
                 <p class="card-title"><i class="fas fa-gears"></i> Advanced Settings</p>
                 <div class="card-content">
-
                     <div class="toggle-row">
-                        <label for="autoBrightness">Auto Brightness:</label>
+                        <label for="displayTypeToggle">Alternate Clock Type:</label>
                         <label class="switch">
-                            <input type="checkbox" id="autoBrightness" name="autoBrightness"
-                                onchange="toggleAutoBrightness(this.checked)">
+                            <input type="checkbox" id="displayTypeToggle" onchange="toggleDisplayType(this.checked)">
                             <span class="slider round"></span>
                         </label>
                     </div>
 
-                    <!-- Auto Brightness Input -->
-                    <div id="autoBrightnessContainer" class="system-container">
+                    <!-- Firmware Update button -->
+                    <div class="toggle-row">
+                        <label for="displayTypeToggle">Firmware Update:</label>
+                        <label class="switch" style="width: 70px">
+                            <a href="/update" class="link"><i class="fas fa-upload"></i> Update</a>
+                        </label>
+                    </div> 
 
-                        <form action="/saveAutoBrightness" method="POST">
-                            <div class="toggle-row">
-                                <label for="startBrightness">Start Brightness:</label>
-                                <input type="number" id="startBrightness" name="startBrightness" placeholder="e.g., 50"
-                                    required>
-                            </div>
-                            <div class="toggle-row">
-                                <label for="endBrightness">Max Brightness:</label>
-                                <input type="number" id="endBrightness" name="endBrightness" placeholder="e.g., 10000"
-                                    required>
-                            </div>
-                            <!-- Submit Button -->
-                            <div class="toggle-row">
-                                <button type="submit" class="submit-button"><i class="fas fa-save"></i> Save</button>
-                            </div>
-                        </form>
-                    </div>
 
                     <div class="toggle-row">
                         <label for="resetConfiguration">Reset Configuration:</label>
@@ -208,7 +193,7 @@
                     <!-- Reset Configuration Form -->
                     <div id="resetConfigurationContainer" class="system-container">
                         <form action="/resetWordClock" method="POST">
-                            <div class="toggle-row">
+                            <div >
                                 <button type="reset" class="reset-button"><i class="fas fa-exclamation-triangle"></i>
                                     Really? <i class="fas fa-exclamation-triangle"></i></button>
                             </div>

@@ -472,6 +472,13 @@ body {
   flex: 0 0 auto;
 }
 
+/* System Container Styles */
+.system-container {
+  width: 100%;
+  height: 50%;
+  background-color: #f0f0f0;
+}
+
 .card-content form {
   align-items: center;
   display: flex;
@@ -709,4 +716,11 @@ fas fa-gears
 
 .fa-sun {
   content: "\f185";
-} */
+}
+
+/* System Container Styles */
+.system-container {
+  width: 100%;
+  height: 50%;
+  background-color: #f0f0f0;
+}

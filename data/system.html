@@ -30,7 +30,7 @@
                             <span class="slider round"></span>
                         </label>
                     </div>
-                    <div id="haIntegrationContainer" style="display: none; width: 100%;">
+                    <div id="haIntegrationContainer" class="system-container">
                         <form action="/saveMQTTSettings" method="POST">
                             <div class="toggle-row">
                                 <label for="brokerIP">Broker IP:</label>
@@ -79,8 +79,7 @@
                     </div>
 
                     <!-- NTP Server Input -->
-                    <div id="ntpTimeUpdateContainer" style="display: none; width: 100%;">
-
+                    <div id="ntpTimeUpdateContainer" class="system-container">
                         <form action="/saveNTPSettings" method="POST">
                             <div class="toggle-row">
                                 <label for="ntpServer">NTP Server:</label>
@@ -120,7 +119,7 @@
                     </div>
 
                     <!-- Schedule Time Inputs -->
-                    <div id="lightScheduleContainer" style="display: none; width: 100%;">
+                    <div id="lightScheduleContainer" class="system-container">
                         <form action="/saveLightSchedule" method="POST">
                             <div class="toggle-row">
                                 <label for="startTime">Start Time:</label>
@@ -148,7 +147,7 @@
                     </div>
 
                     <!-- Update Interval Input -->
-                    <div id="ntpAutoUpdateContainer" style="display: none; width: 100%;">
+                    <div id="ntpAutoUpdateContainer" class="system-container">
                         <form action="/saveNTPSchedule" method="POST">
                             <div class="toggle-row">
                                 <label for="ntpInterval">Update Interval (Hours):</label>
@@ -178,7 +177,7 @@
                     </div>
 
                     <!-- Auto Brightness Input -->
-                    <div id="autoBrightnessContainer" style="display: none; width: 100%;">
+                    <div id="autoBrightnessContainer" class="system-container">
 
                         <form action="/saveAutoBrightness" method="POST">
                             <div class="toggle-row">
@@ -207,7 +206,7 @@
                         </label>
                     </div>
                     <!-- Reset Configuration Form -->
-                    <div id="resetConfigurationContainer" style="display: none; width: 100%;">
+                    <div id="resetConfigurationContainer" class="system-container">
                         <form action="/resetWordClock" method="POST">
                             <div class="toggle-row">
                                 <button type="reset" class="reset-button"><i class="fas fa-exclamation-triangle"></i>
@@ -216,8 +215,7 @@
                         </form>
                     </div>
                 </div>
-            </div>
-
+            </div> 
         </div>
     </div>
     <script src="index.js"></script>

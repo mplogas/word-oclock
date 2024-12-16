@@ -12,6 +12,7 @@
 #include "wclock.h"
 #include "webui.h"
 #include "leds.h"
+#include "timeconverterde.h"
 
 boolean isSetup;
 
@@ -25,6 +26,7 @@ AsyncWebServer server(80);
 WebUI webui(server);
 WClock* wordClock;
 HomeAssistant* homeAssistant;
+ITimeConverter* timeConverter;
 LED ledController;
 
 
@@ -173,6 +175,8 @@ void setup()
     ledController = LED();
     ledController.init();
     ledController.enableAutoBrightness(systemConfig.autoBrightnessConfig.illuminanceThresholdHigh, systemConfig.autoBrightnessConfig.illuminanceThresholdLow);
+
+    timeConverter = new TimeConverterDE();
   
     if (systemConfig.mqttConfig.enabled)
     {

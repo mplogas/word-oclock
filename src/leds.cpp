@@ -42,6 +42,11 @@ void LED::registerIlluminanceSensorCallback(const IlluminanceSensorCallback &cal
 }
 
 void LED::setLEDs(const std::vector<std::pair<int, int>>& ledRanges) {
+    if(ledRanges.empty()) return;
+    if(this->testMode) {
+        // this->testMode = false;
+        return;
+    }
 
     FastLED.clear();
 
@@ -64,6 +69,13 @@ void LED::clearLEDs() {
     }
 
     FastLED.show();
+}
+
+void LED::test() {
+    if (!this->testMode) {
+        this->testMode = true;
+        this->testLED = 0;
+    }
 }
 
 String LED::RGBtoHex(const CRGB& color) {
@@ -131,6 +143,21 @@ void LED::loop() {
         this->lastSensorUpdate = currentMillis;    
         int value = this->illuminance;
         sensorCallback(value);
+    }
+
+    if(this->testMode && currentMillis - this->lastTestLEDUpdate > TEST_LED_INTERVAL && this->testLED < NUM_LEDS) {
+        this->lastTestLEDUpdate = currentMillis;
+        this->leds[this->testLED] = CRGB::Black;
+
+        if(this->testLED == NUM_LEDS - 1) {
+            this->testMode = false;
+            this->testLED = 0;
+        } else {
+            this->testLED++;
+            this->leds[this->testLED] = CRGB::White;
+        }
+
+        FastLED.show();
     }
 
 }

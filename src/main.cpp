@@ -37,11 +37,13 @@ unsigned long lastUpdate = 0;
 // this if for (reduced) testing purposes
 boolean isTick;
 std::vector<std::pair<int, int>> tickLEDs = {
-    {1, 3},   // From LED index 0, turn on 3 LEDs (0 to 2)
-    {6, 3}   // From LED index 6, turn on 3 LEDs (6 to 9)
+    {0,1},
+    {1, 1},   // From LED index 0, turn on 3 LEDs (0 to 2)
+    {6, 1}   // From LED index 6, turn on 3 LEDs (6 to 9)
 };
 std::vector<std::pair<int, int>> tockLEDs = {
-    {3, 3}   // From LED index 3, turn on 5 LEDs (3 to 5)
+  {0,1},
+    {3, 1}   // From LED index 3, turn on 5 LEDs (3 to 5)
 };
 
 // callbacks
@@ -174,7 +176,8 @@ void setup()
 
     ledController = LED();
     ledController.init();
-    ledController.enableAutoBrightness(systemConfig.autoBrightnessConfig.illuminanceThresholdHigh, systemConfig.autoBrightnessConfig.illuminanceThresholdLow);
+    //ledController.enableAutoBrightness(systemConfig.autoBrightnessConfig.illuminanceThresholdHigh, systemConfig.autoBrightnessConfig.illuminanceThresholdLow);
+    //ledController.setBrightness(255);
 
     timeConverter = new TimeConverterDE();
   
@@ -200,6 +203,7 @@ void setup()
   }
 
   initialized = true;
+  ledController.test();
 }
 
 
@@ -215,14 +219,14 @@ void loop()
       if (isTick)
       {
         isTick = false;
-        ledController.setColor(CRGB::DarkRed);
+        ledController.setColor(CRGB::Red);
         ledController.setLEDs(tickLEDs);
         Serial.println("Tick");
       }
       else
       {
         isTick = true;
-        ledController.setColor(CRGB::DarkBlue);
+        ledController.setColor(CRGB::Blue);
         ledController.setLEDs(tockLEDs);
 
         Serial.println("Tock");

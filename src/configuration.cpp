@@ -155,12 +155,15 @@ Configuration::AutoBrightnessConfig Configuration::getAutoBrightness() {
 void Configuration::setLightConfig(const LightConfig& config) {
     lightPreferences.putUChar(LIGHT_BRIGHTNESS_KEY, config.brightness);
     lightPreferences.putBytes(LIGHT_COLOR_KEY, config.color, sizeof(config.color));
+    lightPreferences.putBool(LIGHT_STATE_KEY, config.state);
+    setAutoBrightness(config.autoBrightnessConfig);
 }
 
 Configuration::LightConfig Configuration::getLightConfig() {
     LightConfig config;
 
     config.brightness = lightPreferences.getUChar(LIGHT_BRIGHTNESS_KEY, Defaults::DEFAULT_LIGHT_BRIGHTNESS);
+    config.state = lightPreferences.getBool(LIGHT_STATE_KEY, false);
 
     memset(config.color, 0, sizeof(config.color));
 
@@ -169,7 +172,7 @@ Configuration::LightConfig Configuration::getLightConfig() {
         strncpy(config.color, Defaults::DEFAULT_LIGHT_COLOR, sizeof(config.color) - 1);
     }
 
-    config.mode = getClockMode();
+    config.autoBrightnessConfig = getAutoBrightness();
 
     return config;
 }
@@ -179,7 +182,7 @@ Configuration::SystemConfig Configuration::getSystemConfig() {
     config.mqttConfig = getMqttConfig();
     config.ntpConfig = getNtpConfig();
     config.ntpUpdateConfig = getNtpUpdate();
-    config.autoBrightnessConfig = getAutoBrightness();
+    config.mode = getClockMode();
     return config;
 }
 

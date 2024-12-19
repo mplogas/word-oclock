@@ -52,17 +52,18 @@ public:
 
     struct LightConfig {
         uint8_t brightness;
+        AutoBrightnessConfig autoBrightnessConfig;       
         char color[7]; // Hex color string (e.g., "FF0000")
-        ClockMode mode;
+        bool state;
     };
 
     struct SystemConfig {
         //WifiConfig wifiConfig;
+        ClockMode mode;
         MqttConfig mqttConfig;
         NtpConfig ntpConfig;
         NtpUpdateConfig ntpUpdateConfig;
-        LightScheduleConfig lightScheduleConfig;
-        AutoBrightnessConfig autoBrightnessConfig;        
+        LightScheduleConfig lightScheduleConfig; 
     };    
 
     Configuration();
@@ -106,6 +107,7 @@ private:
     static constexpr const char* AUTO_BRIGHTNESS_THRESH_LOW_KEY = "ab_thresh_lo";
     static constexpr const char* LIGHT_BRIGHTNESS_KEY = "light_brightness";
     static constexpr const char* LIGHT_COLOR_KEY = "light_color";
+    static constexpr const char* LIGHT_STATE_KEY = "light_state";
 
     // Default MQTT Configuration
 

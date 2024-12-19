@@ -125,6 +125,26 @@ bool WClock::update(bool tzUpdate)
     }
 }
 
+uint8_t WClock::getHour()
+{
+    if(!initialized)
+    {
+        return 0;
+    }
+
+    return timeinfo.tm_hour;
+}
+
+uint8_t WClock::getMinute()
+{
+    if(!initialized)
+    {
+        return 0;
+    }
+
+    return timeinfo.tm_min;
+}
+
 void WClock::loop()
 {
     //update ntp every 6 hours

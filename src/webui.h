@@ -9,14 +9,15 @@
 #include <LittleFS.h>
 #include <functional>
 #include "defaults.h"
+#include "callbacktypes.h"
 
 using UpdateSuccessCallback = std::function<bool()>;
-using UploadHandlerCallback = std::function<void(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final)>;
+using UploadHandlerCallback = std::function<void(const String &filename, size_t index, uint8_t *data, size_t len, bool final)>;
 using WiFiSetupCallback = std::function<void(const String &ssid, const String &password)>;
-using LightControlCallback = std::function<void(bool)>;
+using LightControlCallback = std::function<void(LightOperationType type, const String& value)>;
 using SystemControlCallback = std::function<void(bool)>;
 
-// Forward declaration for shared_ptr usage
+
 class WebUI
 {
     private:
@@ -29,6 +30,8 @@ class WebUI
         UpdateSuccessCallback updateCallback;
         UploadHandlerCallback uploadHandlerCallback;
         WiFiSetupCallback wifiCredentialsCallback;
+        LightControlCallback lightControlCallback;
+        SystemControlCallback systemControlCallback;
         const char* deviceName;
         const char* firmwareVersion;
 
@@ -42,6 +45,10 @@ class WebUI
 
         // Helper functions
         void handleFirmwareUpdate(AsyncWebServerRequest *request);
+        void handleToggleLight(AsyncWebServerRequest *request);
+        void handleSetLightColor(AsyncWebServerRequest *request);
+        void handleSetAutoBrightness(AsyncWebServerRequest *request);
+        void handleSetBrightness(AsyncWebServerRequest *request);
         String readFile(const char* path);
 
         // paths
@@ -66,8 +73,14 @@ class WebUI
     public:
         WebUI(AsyncWebServer &server);
         ~WebUI();
+        enum class LightOperationType {
+            ToggleStatus,
+            SetColor,
+            SetAutoBrightness,
+            SetBrightness
+            };
 
-        void init(const UpdateSuccessCallback &updateCb, const UploadHandlerCallback &uploadCb);
+        void init(const LightControlCallback &lightCtrlCb, const SystemControlCallback &systemCtrlcb, const UploadHandlerCallback &uploadCb, const UpdateSuccessCallback &updateCb);
         void initHostAP(const WiFiSetupCallback &wifiCb);
 };
 

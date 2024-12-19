@@ -27,6 +27,8 @@ public:
     bool init(); // just rtc initialization
     bool begin(const char *timezone, const char *ntpServer); // this is split because rtc intitialization happens prior to having wifi connection so ntp would fail. 
     bool update(bool tzUpdate = false);
+    uint8_t getHour();
+    uint8_t getMinute();
     void loop();
 };
 

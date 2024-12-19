@@ -1,174 +1,182 @@
+//light.html
+// Function to toggle the light status
 function toggleLight(isChecked) {
-    fetch(`/toggleLight?state=${isChecked}`)
-      .then(response => response.text())
-      .then(data => {
-        console.log(data);
-        document.getElementById('lightState').innerText = isChecked ? 'On' : 'Off';
-      })
-      .catch(error => console.error('Error:', error));
-  }
+  const status = isChecked ? '1' : '0';
 
-  function selectLightColor(color) {
-    fetch(`/setLightColor?color=${encodeURIComponent(color)}`)
-      .then(response => response.text())
-      .then(data => {
-        document.getElementById('lightColorState').innerText = color;
-      })
-      .catch(error => console.error('Error:', error));
-  }
-
-  function toggleDisplayType(isChecked) {
-    const stateText = document.getElementById('displayTypeState');
-    stateText.innerText = isChecked ? 'Mode: Enhanced' : 'Mode: Standard';
-    // Additional logic to switch display types can be added here
-  }
-
-  function toggleLightSchedule(isChecked) {
-    const container = document.getElementById('lightScheduleContainer');
-    container.style.display = isChecked ? 'block' : 'none';
-  }
-
-  function toggleNtpTimeUpdate(isChecked) {
-    const container = document.getElementById('ntpTimeUpdateContainer');
-    container.style.display = isChecked ? 'block' : 'none';
-  }
-
-  function toggleNtpAutoUpdate(isChecked) {
-    const container = document.getElementById('ntpAutoUpdateContainer');
-    container.style.display = isChecked ? 'block' : 'none';
-  }
-
-  function toggleHaIntegration(isChecked) {
-    const form = document.getElementById('haIntegrationContainer');
-    form.style.display = isChecked ? 'block' : 'none';
-  }
-
-  // function toggleAutoBrightness(isChecked) {
-  //   const container = document.getElementById('autoBrightnessContainer');
-  //   container.style.display = isChecked ? 'block' : 'none';
-  // }
-
-  // Function to handle auto-brightness toggle
-function toggleAutoBrightness(isEnabled) {
-  const brightnessSliderContainer = document.getElementById('brightnessSliderContainer');
-  if (isEnabled) {
-      brightnessSliderContainer.style.display = 'none';
-      // Send request to enable auto-brightness
-      // fetch('/autoBrightness?enabled=1')
-      //     .then(response => {
-      //         if (response.ok) {
-      //             console.log('Auto-brightness enabled');
-      //         }
-      //     });
-  } else {
-      brightnessSliderContainer.style.display = 'flex';
-      // Send request to disable auto-brightness
-      // fetch('/autoBrightness?enabled=0')
-      //     .then(response => {
-      //         if (response.ok) {
-      //             console.log('Auto-brightness disabled');
-      //         }
-      //     });
-  }
+  fetch(`/toggleLight?status=${status}`)
+    .then(response => response.text())
+    .then(data => {
+      console.log(`Light toggled: ${data}`);
+    })
+    .catch(error => console.error('Error:', error));
 }
 
-// Function to update brightness value display
+// Function to set the light color
+function selectLightColor(color) {
+  // Validate color format (e.g., #RRGGBB)
+  const colorRegex = /^#[0-9A-Fa-f]{6}$/;
+  if (!colorRegex.test(color)) {
+    alert('Invalid color format.');
+    return;
+  }
+
+  fetch(`/setLightColor?color=${encodeURIComponent(color)}`)
+    .then(response => response.text())
+    .then(data => {
+      console.log(`Color set: ${data}`);
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+// Function to handle auto-brightness toggle
+function toggleAutoBrightness(isEnabled) {
+  const brightnessSliderContainer = document.getElementById('brightnessSliderContainer');
+  brightnessSliderContainer.style.display = isEnabled ? 'none' : 'block';
+
+  const enabled = isEnabled ? '1' : '0';
+
+  fetch(`/setAutoBrightness?enabled=${enabled}`)
+    .then(response => response.text())
+    .then(data => {
+      console.log(`Auto-brightness toggled: ${data}`);
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+// Function to set brightness level
+function setBrightness(value) {
+  // Validate brightness value (should be between 0 and 255)
+  const brightness = parseInt(value, 10);
+  if (isNaN(brightness) || brightness < 0 || brightness > 255) {
+    alert('Invalid brightness value.');
+    return;
+  }
+
+  fetch(`/setBrightness?value=${brightness}`)
+    .then(response => response.text())
+    .then(data => {
+      console.log(`Brightness set: ${data}`);
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+// Function to update the displayed brightness value
 function updateBrightnessValue(value) {
   document.getElementById('brightnessValue').innerText = value;
 }
 
-function setBrightness(value) {
-  // Send request to set brightness value
-  // fetch(`/setBrightness?value=${value}`)
-  //     .then(response => {
-  //         if (response.ok) {
-  //             console.log(`Brightness set to ${value}`);
-  //         }
-  //     });
+// system.html
+function toggleDisplayType(isChecked) {
+  const stateText = document.getElementById('displayTypeState');
+  stateText.innerText = isChecked ? 'Mode: Enhanced' : 'Mode: Standard';
+  // Additional logic to switch display types can be added here
 }
 
-  function toggleResetConfiguration(isChecked) {
-    const container = document.getElementById('resetConfigurationContainer');
-    container.style.display = isChecked ? 'block' : 'none';
-  }
+function toggleLightSchedule(isChecked) {
+  const container = document.getElementById('lightScheduleContainer');
+  container.style.display = isChecked ? 'block' : 'none';
+}
 
-  // Apply theme based on user's preference
-  function applyTheme(theme) {
-    if (theme === 'dark') {
-      document.body.classList.add('dark-theme');
-    } else {
-      document.body.classList.remove('dark-theme');
-    }
-  }
+function toggleNtpTimeUpdate(isChecked) {
+  const container = document.getElementById('ntpTimeUpdateContainer');
+  container.style.display = isChecked ? 'block' : 'none';
+}
 
-  // Toggle the theme and save preference
-  function toggleTheme() {
-    const isDark = document.getElementById('theme-toggle').checked;
-    const theme = isDark ? 'dark' : 'light';
-    applyTheme(theme);
-    localStorage.setItem('theme', theme);
-  }
+function toggleNtpAutoUpdate(isChecked) {
+  const container = document.getElementById('ntpAutoUpdateContainer');
+  container.style.display = isChecked ? 'block' : 'none';
+}
 
-  document.addEventListener('DOMContentLoaded', function() {
+function toggleHaIntegration(isChecked) {
+  const form = document.getElementById('haIntegrationContainer');
+  form.style.display = isChecked ? 'block' : 'none';
+}
+
+function toggleResetConfiguration(isChecked) {
+  const container = document.getElementById('resetConfigurationContainer');
+  container.style.display = isChecked ? 'block' : 'none';
+}
+
+// Theme
+// Apply theme based on user's preference
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.body.classList.add('dark-theme');
+  } else {
+    document.body.classList.remove('dark-theme');
+  }
+}
+
+// Toggle the theme and save preference
+function toggleTheme() {
+  const isDark = document.getElementById('theme-toggle').checked;
+  const theme = isDark ? 'dark' : 'light';
+  applyTheme(theme);
+  localStorage.setItem('theme', theme);
+}
+
+// Initializer
+
+document.addEventListener('DOMContentLoaded', function () {
   // Initialize NTP Time Update
-    const ntpToggle = document.getElementById('ntpTimeUpdate');
-    if (ntpToggle) {
-      toggleNtpTimeUpdate(ntpToggle.checked);
-    }
+  const ntpToggle = document.getElementById('ntpTimeUpdate');
+  if (ntpToggle) {
+    toggleNtpTimeUpdate(ntpToggle.checked);
+  }
 
-    // Initialize NTP Auto Update
-    const ntpAutoUpdateToggle = document.getElementById('ntpAutoUpdate');
-    if (ntpAutoUpdateToggle) {
-      toggleNtpAutoUpdate(ntpAutoUpdateToggle.checked);
-    }
+  // Initialize NTP Auto Update
+  const ntpAutoUpdateToggle = document.getElementById('ntpAutoUpdate');
+  if (ntpAutoUpdateToggle) {
+    toggleNtpAutoUpdate(ntpAutoUpdateToggle.checked);
+  }
 
-    // Initialize Light Schedule
-    const lightScheduleToggle = document.getElementById('lightScheduleToggle');
-    if (lightScheduleToggle) {
-      toggleLightSchedule(lightScheduleToggle.checked);
-    }
+  // Initialize Light Schedule
+  const lightScheduleToggle = document.getElementById('lightScheduleToggle');
+  if (lightScheduleToggle) {
+    toggleLightSchedule(lightScheduleToggle.checked);
+  }
 
-    // Initialize HomeAssistant Integration
-    const haIntegrationToggle = document.getElementById('haIntegration');
-    if (haIntegrationToggle) {
-      toggleHaIntegration(haIntegrationToggle.checked);
-    }
+  // Initialize HomeAssistant Integration
+  const haIntegrationToggle = document.getElementById('haIntegration');
+  if (haIntegrationToggle) {
+    toggleHaIntegration(haIntegrationToggle.checked);
+  }
 
-    const resetConfigurationToggle = document.getElementById('resetConfiguration');
-    if (resetConfigurationToggle) {
-      toggleResetConfiguration(resetConfigurationToggle.checked);
-    }
+  const resetConfigurationToggle = document.getElementById('resetConfiguration');
+  if (resetConfigurationToggle) {
+    toggleResetConfiguration(resetConfigurationToggle.checked);
+  }
 
-    const autoBrightnessToggle = document.getElementById('autoBrightness');
-    if (autoBrightnessToggle) {
-      toggleAutoBrightness(autoBrightnessToggle.checked);
-    }
-    
-    // Initialize other toggles if present
-    // Example:
-    // const anotherToggle = document.getElementById('anotherToggleId');
-    // if (anotherToggle) {
-    //   toggleAnotherFeature(anotherToggle.checked);
-    // }
+  const autoBrightnessToggle = document.getElementById('autoBrightness');
+  if (autoBrightnessToggle) {
+    toggleAutoBrightness(autoBrightnessToggle.checked);
+  }
 
-    // Initialize Reset Configuration
-    const resetButton = document.querySelector('.reset-button');
-    if (resetButton) {
-      resetButton.addEventListener('click', function(event) {
-        const confirmation = confirm('Are you sure you want to reset the device? This action cannot be undone.');
-        if (!confirmation) {
-          event.preventDefault(); // Prevent form submission
-        }
-      });
-    }
+  // Initialize other toggles if present
+  // Example:
+  // const anotherToggle = document.getElementById('anotherToggleId');
+  // if (anotherToggle) {
+  //   toggleAnotherFeature(anotherToggle.checked);
+  // }
 
-    const toggleSwitch = document.getElementById('theme-toggle');
-    const currentTheme = localStorage.getItem('theme') || 'light';
-    // Set initial theme
-    applyTheme(currentTheme);
-    // Set toggle switch state
-    toggleSwitch.checked = currentTheme === 'dark';
-    // Add event listener
-    toggleSwitch.addEventListener('change', toggleTheme);
+  // Initialize Reset Configuration
+  const resetButton = document.querySelector('.reset-button');
+  if (resetButton) {
+    resetButton.addEventListener('click', function (event) {
+      const confirmation = confirm('Are you sure you want to reset the device? This action cannot be undone.');
+      if (!confirmation) {
+        event.preventDefault(); // Prevent form submission
+      }
+    });
+  }
 
-  });
+  const toggleSwitch = document.getElementById('theme-toggle');
+  const currentTheme = localStorage.getItem('theme') || 'light';
+  // Set initial theme
+  applyTheme(currentTheme);
+  // Set toggle switch state
+  toggleSwitch.checked = currentTheme === 'dark';
+  // Add event listener
+  toggleSwitch.addEventListener('change', toggleTheme);
+
+});

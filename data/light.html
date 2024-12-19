@@ -14,6 +14,7 @@
 <body>
     <!-- header -->
     %INCLUDE_HEADER%
+    
     <!-- Light Configuration Content -->
     <div class="content">
         <div class="card-grid">
@@ -57,7 +58,7 @@
                     </div>
 
                     <!-- Brightness Slider -->
-                    <div id="brightnessSliderContainer" class="system-container">
+                    <div id="brightnessSliderContainer" class="system-container" style="display: none;">
                         <div class="toggle-row">
                             <label for="brightnessSlider">Brightness:</label>
                             <input type="range" id="brightnessSlider" min="0" max="255" value="128" oninput="updateBrightnessValue(this.value)" onchange="setBrightness(this.value)">
@@ -66,7 +67,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
     <script src="index.js"></script>

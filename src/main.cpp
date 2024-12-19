@@ -13,6 +13,7 @@
 #include "webui.h"
 #include "leds.h"
 #include "timeconverterde.h"
+#include "callbacktypes.h"
 
 boolean isSetup;
 
@@ -46,8 +47,17 @@ std::vector<std::pair<int, int>> tockLEDs = {
     {3, 1}   // From LED index 3, turn on 5 LEDs (3 to 5)
 };
 
+void showCurrentTime() {
+  uint8_t hour = wordClock->getHour();  
+  uint8_t minute = wordClock->getMinute();
+  Serial.printf("Current time: %d:%d\n", hour, minute);
+  std::vector<std::pair<int, int>> leds = timeConverter->convertTime(hour, minute, true, true);
+  Serial.printf("LEDs: %d\n", leds.size());
+  ledController.setLEDs(leds);
+}
+
 // callbacks
-void handleFWUpload(AsyncWebServerRequest *request, const String filename, size_t index, uint8_t *data, size_t len, bool final)
+void handleFWUpload(const String filename, size_t index, uint8_t *data, size_t len, bool final)
 {
   Serial.printf("Upload: %s, Index: %u, Len: %u, Final: %u\n", filename.c_str(), index, len, final);
   if (!index)
@@ -103,6 +113,84 @@ void handleMqttDisconnected() {
     // Additional logic upon disconnection
 }
 
+void lightOperationHandler(LightOperationType operation, const String& value) {
+  switch (operation) {
+    case LightOperationType::ToggleStatus: {
+      bool status = (value == "1");
+      if(status) {
+        showCurrentTime();
+      } else {
+        ledController.clearLEDs();
+      }
+      break;
+    }
+    case LightOperationType::SetColor: {
+      long rgbValue = strtol(value.substring(1).c_str(), nullptr, 16);
+      uint8_t red = (rgbValue >> 16) & 0xFF;
+      uint8_t green = (rgbValue >> 8) & 0xFF;
+      uint8_t blue = rgbValue & 0xFF;
+      ledController.setColor(CRGB(red, green, blue));
+      break;
+    }
+    case LightOperationType::SetAutoBrightness: {
+      bool enabled = (value == "1");
+      if(enabled) {
+        ledController.enableAutoBrightness(systemConfig.autoBrightnessConfig.illuminanceThresholdHigh, systemConfig.autoBrightnessConfig.illuminanceThresholdLow);
+      } else {
+        ledController.disableAutoBrightness();
+      }
+      break;
+    }
+    case LightOperationType::SetBrightness: {
+      int brightness = value.toInt();
+      ledController.setBrightness(brightness);
+      break;
+    }
+  }
+}
+
+void systemOperationHandler(bool) {
+  // switch (operation) {
+  //   case WebUI::SystemOperationType::SetNTPServer: {
+  //     strncpy(systemConfig.ntpConfig.server, value.c_str(), sizeof(systemConfig.ntpConfig.server) - 1);
+  //     systemConfig.ntpConfig.server[sizeof(systemConfig.ntpConfig.server) - 1] = '\0';
+  //     config.setSystemConfig(systemConfig);
+  //     break;
+  //   }
+  //   case WebUI::SystemOperationType::SetTimezone: {
+  //     strncpy(systemConfig.ntpConfig.timezone, value.c_str(), sizeof(systemConfig.ntpConfig.timezone) - 1);
+  //     systemConfig.ntpConfig.timezone[sizeof(systemConfig.ntpConfig.timezone) - 1] = '\0';
+  //     config.setSystemConfig(systemConfig);
+  //     break;
+  //   }
+  //   case WebUI::SystemOperationType::SetMQTTConfig: {
+  //     strncpy(systemConfig.mqttConfig.host, value.c_str(), sizeof(systemConfig.mqttConfig.host) - 1);
+  //     systemConfig.mqttConfig.host[sizeof(systemConfig.mqttConfig.host) - 1] = '\0';
+  //     config.setSystemConfig(systemConfig);
+  //     break;
+  //   }
+  //   case WebUI::SystemOperationType::SetMQTTUser: {
+  //     strncpy(systemConfig.mqttConfig.user, value.c_str(), sizeof(systemConfig.mqttConfig.user) - 1);
+  //     systemConfig.mqttConfig.user[sizeof(systemConfig.mqttConfig.user) - 1] = '\0';
+  //     config.setSystemConfig(systemConfig);
+  //     break;
+  //   }
+  //   case WebUI::SystemOperationType::SetMQTTPass: {
+  //     strncpy(systemConfig.mqttConfig.pass, value.c_str(), sizeof(systemConfig.mqttConfig.pass) - 1);
+  //     systemConfig.mqttConfig.pass[sizeof(systemConfig.mqttConfig.pass) - 1] = '\0';
+  //     config.setSystemConfig(systemConfig);
+  //     break;
+  //   }
+  //   case WebUI::SystemOperationType::SetMQTTTopic: {
+  //     strncpy(systemConfig.mqttConfig.topic, value.c_str(), sizeof(systemConfig.mqttConfig.topic) - 1);
+  //     systemConfig.mqttConfig.topic[sizeof(systemConfig.mqttConfig.topic) - 1] = '\0';
+  //     config.setSystemConfig(systemConfig);
+  //     break;
+  //   }
+  // }
+}
+
+// home assistant callbacks
 void handleSwitchCommand(SwitchType switchType, bool state) {
     Serial.printf("Switch command received for %s: %s\n", switchType, state ? "ON" : "OFF");
     // Additional logic to handle switch commands
@@ -187,7 +275,7 @@ void setup()
     }
 
 
-    webui.init(handleUpdateResult, handleFWUpload);
+    webui.init(lightOperationHandler, systemOperationHandler, handleFWUpload, handleUpdateResult);
   }
   else
   {
@@ -216,23 +304,9 @@ void loop()
     if (now - lastUpdate > Defaults::LED_INTERVAL)
     {
       lastUpdate = now;
-      if (isTick)
-      {
-        isTick = false;
-        ledController.setColor(CRGB::Red);
-        ledController.setLEDs(tickLEDs);
-        Serial.println("Tick");
-      }
-      else
-      {
-        isTick = true;
-        ledController.setColor(CRGB::Blue);
-        ledController.setLEDs(tockLEDs);
 
-        Serial.println("Tock");
-      }
-
-      FastLED.show();
+      // add checks for minutes changed
+      showCurrentTime();
     }
 
     ledController.loop();

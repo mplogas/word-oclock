@@ -53,9 +53,9 @@ void LED::setLEDs(const std::vector<std::pair<int, int>>& ledRanges) {
     for (const auto& range : ledRanges) {
         int start = range.first;
         int count = range.second;
-        Serial.printf("Setting LEDs from %d to %d\n", start, start + count -1);
+        //Serial.printf("Setting LEDs from %d to %d\n", start, start + count -1);
         for (int i = start; i < start + count && i < NUM_LEDS; i++) {
-            Serial.printf("Setting LED %d\n", i);
+            //Serial.printf("Setting LED %d\n", i);
             this->leds[i] = color;
         }
     }

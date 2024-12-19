@@ -7,14 +7,39 @@ WebUI::WebUI(AsyncWebServer &srv) : server(srv)
 WebUI::~WebUI()
 {
     // Destructor implementation
+    //check and cleanup callbacks
+    updateCallback = nullptr;
+    uploadHandlerCallback = nullptr;
+    wifiCredentialsCallback = nullptr;
+    lightControlCallback = nullptr;
+    systemControlCallback = nullptr;
 }
 
-void WebUI::init(const UpdateSuccessCallback &updateCb, const UploadHandlerCallback &uploadCb)
+void WebUI::init(const LightControlCallback &lightCtrlCb, const SystemControlCallback &systemCtrlCb, const UploadHandlerCallback &uploadCb, const UpdateSuccessCallback &updateCb)
 {
+    //check if any of the callbacks is null
+    if (lightCtrlCb == nullptr || systemCtrlCb == nullptr || uploadCb == nullptr || updateCb == nullptr)
+    {
+        Serial.println("One or more callbacks are null");
+        return;
+    }
+
     updateCallback = updateCb;
     uploadHandlerCallback = uploadCb;
+    lightControlCallback = lightCtrlCb;
+    systemControlCallback = systemCtrlCb;
     
-
+    server.on("/", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        request->send(
+            LittleFS,
+            WebUI::LIGHT_HTML,
+            "text/html",
+            false,
+            [this](const String& var) -> String {
+                return this->pageProcessor(var, Page::LIGHT);
+            }
+        );
+    });
     server.on("/light", HTTP_GET, [this](AsyncWebServerRequest *request) {
         request->send(
             LittleFS,
@@ -26,9 +51,27 @@ void WebUI::init(const UpdateSuccessCallback &updateCb, const UploadHandlerCallb
             }
         );
     });
-    server.on("/light", HTTP_POST, [this](AsyncWebServerRequest *request) {
-        // handle light control
+
+    // Handle light status toggle
+    server.on("/toggleLight", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        this->handleToggleLight(request);
     });
+
+    // Handle light color change
+    server.on("/setLightColor", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        this->handleSetLightColor(request);
+    });
+
+    // Handle auto-brightness toggle
+    server.on("/setAutoBrightness", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        this->handleSetAutoBrightness(request);
+    });
+
+    // Handle brightness adjustment
+    server.on("/setBrightness", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        this->handleSetBrightness(request);
+    });
+
 
     server.on("/system", HTTP_GET, [this](AsyncWebServerRequest *request) {
         request->send(
@@ -45,7 +88,6 @@ void WebUI::init(const UpdateSuccessCallback &updateCb, const UploadHandlerCallb
         // handle system control
     });
 
-    // Route for "/update" GET request
     server.on("/update", HTTP_GET, [this](AsyncWebServerRequest *request) {
         request->send(
             LittleFS,
@@ -62,7 +104,7 @@ void WebUI::init(const UpdateSuccessCallback &updateCb, const UploadHandlerCallb
         handleFirmwareUpdate(request);
     },
     [this](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final) {
-        uploadHandlerCallback(request, filename, index, data, len, final);
+        uploadHandlerCallback(filename, index, data, len, final);
     });
 
     // Other routes with sanitized handlers
@@ -70,7 +112,6 @@ void WebUI::init(const UpdateSuccessCallback &updateCb, const UploadHandlerCallb
         request->send(404, "text/plain", F("Not found"));
     });
 
-    //server.serveStatic("/", LittleFS, "/").setCacheControl("max-age=3600");
     // Serve Static CSS and JS only
     server.serveStatic("/style.css", LittleFS, "/style.css").setCacheControl("max-age=3600");
     server.serveStatic("/index.js", LittleFS, "/index.js").setCacheControl("max-age=3600");
@@ -138,6 +179,104 @@ void WebUI::handleFirmwareUpdate(AsyncWebServerRequest *request)
         auto response = request->beginResponse(500, "text/plain", "ERROR");
         response->addHeader("Connection", "close");
         request->send(response);
+    }
+}
+
+void WebUI::handleToggleLight(AsyncWebServerRequest *request)
+{
+    if (request->hasParam("status")) {
+        String statusParam = request->getParam("status")->value();
+
+        // Validate status parameter
+        if (statusParam == "0" || statusParam == "1") {
+            bool status = statusParam == "1";
+            // TODO: Update light status
+            // setLightStatus(status);
+
+            request->send(200, "text/plain", "Light status updated");
+        } else {
+            request->send(400, "text/plain", "Invalid status value");
+        }
+    } else {
+        request->send(400, "text/plain", "Missing status parameter");
+    }
+}
+
+void WebUI::handleSetLightColor(AsyncWebServerRequest *request)
+{
+    if (request->hasParam("color")) {
+        String colorParam = request->getParam("color")->value();
+
+        // Validate color format (expecting #RRGGBB)
+        if (colorParam.length() == 7 && colorParam[0] == '#') {
+            bool valid = true;
+            for (size_t i = 1; i < colorParam.length(); i++) {
+                char c = colorParam[i];
+                if (!isxdigit(c)) {
+                    valid = false;
+                    break;
+                }
+            }
+
+            if (valid) {
+                // Convert color to RGB values
+                long rgbValue = strtol(colorParam.substring(1).c_str(), nullptr, 16);
+                uint8_t red = (rgbValue >> 16) & 0xFF;
+                uint8_t green = (rgbValue >> 8) & 0xFF;
+                uint8_t blue = rgbValue & 0xFF;
+
+                // TODO: Set light color using RGB values
+                // setLightColor(red, green, blue);
+
+                request->send(200, "text/plain", "Light color updated");
+            } else {
+                request->send(400, "text/plain", "Invalid color format");
+            }
+        } else {
+            request->send(400, "text/plain", "Invalid color format");
+        }
+    } else {
+        request->send(400, "text/plain", "Missing color parameter");
+    }
+}
+
+void WebUI::handleSetAutoBrightness(AsyncWebServerRequest *request)
+{
+    if (request->hasParam("enabled")) {
+        String enabledParam = request->getParam("enabled")->value();
+
+        // Validate enabled parameter
+        if (enabledParam == "0" || enabledParam == "1") {
+            bool enabled = enabledParam == "1";
+            // TODO: Update auto-brightness setting
+            // setAutoBrightness(enabled);
+
+            request->send(200, "text/plain", "Auto-brightness updated");
+        } else {
+            request->send(400, "text/plain", "Invalid enabled value");
+        }
+    } else {
+        request->send(400, "text/plain", "Missing enabled parameter");
+    }
+}
+
+void WebUI::handleSetBrightness(AsyncWebServerRequest *request)
+{
+    if (request->hasParam("value")) {
+        String valueParam = request->getParam("value")->value();
+
+        // Validate brightness value (should be an integer between 0 and 255)
+        int brightness = valueParam.toInt();
+        if (brightness >= 0 && brightness <= 255) {
+            // TODO: Set brightness
+            // setBrightness(brightness);
+
+            request->send(200, "text/plain", "Brightness updated");
+        } else {
+            request->send(400, "text/plain", "Invalid brightness value");
+        }
+    } else {
+        request->send(400, "text/plain", "Missing value parameter");
     }
 }
 

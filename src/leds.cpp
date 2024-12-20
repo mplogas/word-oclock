@@ -117,7 +117,7 @@ void LED::handleAutoBrightness() {
         A smaller alpha results in smoother changes but slower responsiveness.
         An alpha of 0.1 means the new brightness is 10% of the target and 90% of the current brightness.
     */
-    const float alpha = 0.1f;  // Smoothing factor (0 < alpha <= 1)
+    const float alpha = 0.20f;  // Smoothing factor (0 < alpha <= 1)
     uint8_t smoothedBrightness = static_cast<uint8_t>(this->brightness * (1.0f - alpha) + targetBrightness * alpha);
     // Serial.printf("Smoothed brightness: %.2d\n", smoothedBrightness);
 

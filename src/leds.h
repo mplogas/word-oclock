@@ -31,9 +31,9 @@ private:
     static const int NUM_LEDS = 47; // Number of LEDs (should be 121 (or 47 or 9 for prototyping))
     static const int DATA_PIN = 25; // LED data pin
     static const int LDR_PIN = 35; // Pin for Light-Dependent Resistor
-    static const uint8_t BRIGHTNESS_MIN = 10; // start brightness for auto brightness
+    static const uint8_t BRIGHTNESS_MIN = 10; // min brightness for auto brightness
     static const uint8_t BRIGHTNESS_MAX = 255; // max brightness for auto brightness
-    static const unsigned long BRIGHTNESS_UPDATE_INTERVAL = 250; // Brightness update interval
+    static const unsigned long BRIGHTNESS_UPDATE_INTERVAL = 150; // Brightness update interval
     static const int ILLUMINANCE_UPDATE_INTERVAL = 500; // Illuminance update interval
     static const int SENSOR_UPDATE_INTERVAL = 1000; // Sensor update interval
     static const int TEST_LED_INTERVAL = 150; // Test LED interval

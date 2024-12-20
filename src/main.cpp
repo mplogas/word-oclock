@@ -33,6 +33,7 @@ LED ledController;
 
 bool initialized = false;
 unsigned long lastUpdate = 0;
+bool isDark = false;
 
 
 // this if for (reduced) testing purposes
@@ -48,12 +49,14 @@ std::vector<std::pair<int, int>> tockLEDs = {
 };
 
 void showCurrentTime() {
-  uint8_t hour = wordClock->getHour();  
-  uint8_t minute = wordClock->getMinute();
-  Serial.printf("Current time: %d:%d\n", hour, minute);
-  std::vector<std::pair<int, int>> leds = timeConverter->convertTime(hour, minute, true, true);
-  Serial.printf("LEDs: %d\n", leds.size());
-  ledController.setLEDs(leds);
+  if(!isDark) {
+    uint8_t hour = wordClock->getHour();  
+    uint8_t minute = wordClock->getMinute();
+    // Serial.printf("Current time: %d:%d\n", hour, minute);
+    std::vector<std::pair<int, int>> leds = timeConverter->convertTime(hour, minute, true, true);
+    // Serial.printf("LEDs: %d\n", leds.size());
+    ledController.setLEDs(leds);
+  }
 }
 
 // callbacks
@@ -118,32 +121,40 @@ void lightOperationHandler(LightOperationType operation, const String& value) {
     case LightOperationType::ToggleStatus: {
       bool status = (value == "1");
       if(status) {
+        isDark = false;
         showCurrentTime();
       } else {
+        isDark = true;
         ledController.clearLEDs();
       }
+      lightConfig.state = status;
+      config.setLightState(lightConfig.state);
       break;
     }
     case LightOperationType::SetColor: {
-      long rgbValue = strtol(value.substring(1).c_str(), nullptr, 16);
-      uint8_t red = (rgbValue >> 16) & 0xFF;
-      uint8_t green = (rgbValue >> 8) & 0xFF;
-      uint8_t blue = rgbValue & 0xFF;
-      ledController.setColor(CRGB(red, green, blue));
+      ledController.setColor(ledController.HexToRGB(value));
+      showCurrentTime();
+      strncpy(lightConfig.color, value.c_str(), sizeof(lightConfig.color) - 1);
+      config.setLightColor(lightConfig.color);
       break;
     }
     case LightOperationType::SetAutoBrightness: {
       bool enabled = (value == "1");
       if(enabled) {
-        ledController.enableAutoBrightness(systemConfig.autoBrightnessConfig.illuminanceThresholdHigh, systemConfig.autoBrightnessConfig.illuminanceThresholdLow);
+        ledController.enableAutoBrightness(lightConfig.autoBrightnessConfig.illuminanceThresholdHigh, lightConfig.autoBrightnessConfig.illuminanceThresholdLow);
+
       } else {
         ledController.disableAutoBrightness();
       }
+      lightConfig.autoBrightnessConfig.enabled = enabled;
+      config.setAutoBrightness(lightConfig.autoBrightnessConfig);
       break;
     }
     case LightOperationType::SetBrightness: {
-      int brightness = value.toInt();
+      uint8_t brightness = value.toInt();
       ledController.setBrightness(brightness);
+      lightConfig.brightness = brightness;
+      config.setLightBrightness(lightConfig.brightness);
       break;
     }
   }
@@ -197,7 +208,7 @@ void handleSwitchCommand(SwitchType switchType, bool state) {
 }
 
 void handleIlluminanceSensorUpdate(const int value) {
-    Serial.printf("Illuminance sensor value: %d\n", value);
+    //Serial.printf("Illuminance sensor value: %d\n", value);
 
     if (systemConfig.mqttConfig.enabled && homeAssistant != nullptr) {
       char buf[8];
@@ -261,11 +272,20 @@ void setup()
       Serial.println("Successfully intitialized clock");
     }
 
+    // Serial.printf("Light state recovered: %s\n", lightConfig.state ? "ON" : "OFF");
+    // Serial.printf("Light color recovered: %s\n", lightConfig.color);
+    // Serial.printf("Light brightness recovered: %d\n", lightConfig.brightness);
+    // Serial.printf("Auto brightness state recovered: %s\n", lightConfig.autoBrightnessConfig.enabled ? "true" : "false");
+
 
     ledController = LED();
     ledController.init();
-    //ledController.enableAutoBrightness(systemConfig.autoBrightnessConfig.illuminanceThresholdHigh, systemConfig.autoBrightnessConfig.illuminanceThresholdLow);
-    //ledController.setBrightness(255);
+    if(lightConfig.autoBrightnessConfig.enabled) {
+      ledController.enableAutoBrightness(lightConfig.autoBrightnessConfig.illuminanceThresholdHigh, lightConfig.autoBrightnessConfig.illuminanceThresholdLow);
+    } else {
+      ledController.setBrightness(lightConfig.brightness);
+    } 
+    ledController.setColor(ledController.HexToRGB(lightConfig.color));
 
     timeConverter = new TimeConverterDE();
   
@@ -301,16 +321,14 @@ void loop()
   if (!isSetup && initialized)
   {
     unsigned long now = millis();
+    wordClock->loop();
     if (now - lastUpdate > Defaults::LED_INTERVAL)
     {
       lastUpdate = now;
-
-      // add checks for minutes changed
       showCurrentTime();
     }
-
+    
     ledController.loop();
-
     if (systemConfig.mqttConfig.enabled && homeAssistant != nullptr)
     {
       homeAssistant->loop();

@@ -53,7 +53,7 @@ public:
     struct LightConfig {
         uint8_t brightness;
         AutoBrightnessConfig autoBrightnessConfig;       
-        char color[7]; // Hex color string (e.g., "FF0000")
+        char color[8]; // Hex color string (e.g., "FF0000")
         bool state;
     };
 
@@ -70,7 +70,11 @@ public:
     ~Configuration();
     void init();
 
-    void setLightConfig(const LightConfig& config);
+    //void setLightConfig(const LightConfig& config);
+    void setLightState(bool state);
+    void setLightBrightness(uint8_t brightness);
+    void setLightColor(const char* color);
+    void setAutoBrightness(const AutoBrightnessConfig& brightnessConfig);
     LightConfig getLightConfig();
     void setSystemConfig(const SystemConfig& config);
     SystemConfig getSystemConfig();
@@ -85,29 +89,29 @@ private:
     // System Preferences Keys
     static constexpr const char* CLOCK_MODE_KEY = "clock_mode";
     static constexpr const char* WIFI_SSID_KEY = "wifi_ssid";
-    static constexpr const char* WIFI_PASSWORD_KEY = "wifi_password";
-    static constexpr const char* MQTT_ENABLED_KEY = "mqtt_enabled";
+    static constexpr const char* WIFI_PASSWORD_KEY = "wifi_pass";
+    static constexpr const char* MQTT_ENABLED_KEY = "mqtt_nbld";
     static constexpr const char* MQTT_HOST_KEY = "mqtt_host";
     static constexpr const char* MQTT_PORT_KEY = "mqtt_port";
-    static constexpr const char* MQTT_USERNAME_KEY = "mqtt_username";
-    static constexpr const char* MQTT_PASSWORD_KEY = "mqtt_password";
-    static constexpr const char* MQTT_TOPIC_KEY = "mqtt_topic";
-    static constexpr const char* NTP_ENABLED_KEY = "ntp_enabled";
-    static constexpr const char* NTP_TIMEZONE_KEY = "ntp_timezone";
-    static constexpr const char* NTP_SERVER_KEY = "ntp_server";
-    static constexpr const char* NTP_UPDATE_ENABLED_KEY = "ntp_upd_enabled";
-    static constexpr const char* NTP_UPDATE_INTERVAL_KEY = "ntp_upd_interval";
+    static constexpr const char* MQTT_USERNAME_KEY = "mqtt_user";
+    static constexpr const char* MQTT_PASSWORD_KEY = "mqtt_pass";
+    static constexpr const char* MQTT_TOPIC_KEY = "mqtt_tpc";
+    static constexpr const char* NTP_ENABLED_KEY = "ntp_nbld";
+    static constexpr const char* NTP_TIMEZONE_KEY = "ntp_tz";
+    static constexpr const char* NTP_SERVER_KEY = "ntp_srv";
+    static constexpr const char* NTP_UPDATE_ENABLED_KEY = "ntp_upd_nbld";
+    static constexpr const char* NTP_UPDATE_INTERVAL_KEY = "ntp_upd_itvl";
 
     // Light Preferences Keys
-    static constexpr const char* LIGHT_SCHEDULE_ENABLED_KEY = "ls_enabled";
-    static constexpr const char* LIGHT_SCHEDULE_START_TIME_KEY = "ls_start_time";
-    static constexpr const char* LIGHT_SCHEDULE_END_TIME_KEY = "ls_end_time";
-    static constexpr const char* AUTO_BRIGHTNESS_ENABLED_KEY = "ab_enabled";
-    static constexpr const char* AUTO_BRIGHTNESS_THRESH_HIGH_KEY = "ab_thresh_hi";
-    static constexpr const char* AUTO_BRIGHTNESS_THRESH_LOW_KEY = "ab_thresh_lo";
-    static constexpr const char* LIGHT_BRIGHTNESS_KEY = "light_brightness";
-    static constexpr const char* LIGHT_COLOR_KEY = "light_color";
-    static constexpr const char* LIGHT_STATE_KEY = "light_state";
+    static constexpr const char* LIGHT_SCHEDULE_ENABLED_KEY = "ls_nbld";
+    static constexpr const char* LIGHT_SCHEDULE_START_TIME_KEY = "ls_start_t";
+    static constexpr const char* LIGHT_SCHEDULE_END_TIME_KEY = "ls_end_t";
+    static constexpr const char* AUTO_BRIGHTNESS_ENABLED_KEY = "ab_nbld";
+    static constexpr const char* AUTO_BRIGHTNESS_THRESH_HIGH_KEY = "ab_thrsh_hi";
+    static constexpr const char* AUTO_BRIGHTNESS_THRESH_LOW_KEY = "ab_thrsh_lo";
+    static constexpr const char* LIGHT_BRIGHTNESS_KEY = "lght_brightn";
+    static constexpr const char* LIGHT_COLOR_KEY = "lght_color";
+    static constexpr const char* LIGHT_STATE_KEY = "lght_state";
 
     // Default MQTT Configuration
 
@@ -124,7 +128,6 @@ private:
     LightScheduleConfig getLightSchedule();
     void setNtpUpdate(const NtpUpdateConfig& update);
     NtpUpdateConfig getNtpUpdate();
-    void setAutoBrightness(const AutoBrightnessConfig& brightnessConfig);
     AutoBrightnessConfig getAutoBrightness();
 };
 

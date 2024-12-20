@@ -115,6 +115,7 @@ void WebUI::init(const LightControlCallback &lightCtrlCb, const SystemControlCal
     // Serve Static CSS and JS only
     server.serveStatic("/style.css", LittleFS, "/style.css").setCacheControl("max-age=3600");
     server.serveStatic("/index.js", LittleFS, "/index.js").setCacheControl("max-age=3600");
+    server.serveStatic("favicon.ico", LittleFS, "/favicon.ico").setCacheControl("max-age=3600");
     server.begin();
 }
 
@@ -189,9 +190,7 @@ void WebUI::handleToggleLight(AsyncWebServerRequest *request)
 
         // Validate status parameter
         if (statusParam == "0" || statusParam == "1") {
-            bool status = statusParam == "1";
-            // TODO: Update light status
-            // setLightStatus(status);
+            lightControlCallback(LightOperationType::ToggleStatus, statusParam);
 
             request->send(200, "text/plain", "Light status updated");
         } else {
@@ -206,7 +205,6 @@ void WebUI::handleSetLightColor(AsyncWebServerRequest *request)
 {
     if (request->hasParam("color")) {
         String colorParam = request->getParam("color")->value();
-
         // Validate color format (expecting #RRGGBB)
         if (colorParam.length() == 7 && colorParam[0] == '#') {
             bool valid = true;
@@ -219,15 +217,7 @@ void WebUI::handleSetLightColor(AsyncWebServerRequest *request)
             }
 
             if (valid) {
-                // Convert color to RGB values
-                long rgbValue = strtol(colorParam.substring(1).c_str(), nullptr, 16);
-                uint8_t red = (rgbValue >> 16) & 0xFF;
-                uint8_t green = (rgbValue >> 8) & 0xFF;
-                uint8_t blue = rgbValue & 0xFF;
-
-                // TODO: Set light color using RGB values
-                // setLightColor(red, green, blue);
-
+                lightControlCallback(LightOperationType::SetColor, colorParam);
                 request->send(200, "text/plain", "Light color updated");
             } else {
                 request->send(400, "text/plain", "Invalid color format");
@@ -248,9 +238,7 @@ void WebUI::handleSetAutoBrightness(AsyncWebServerRequest *request)
         // Validate enabled parameter
         if (enabledParam == "0" || enabledParam == "1") {
             bool enabled = enabledParam == "1";
-            // TODO: Update auto-brightness setting
-            // setAutoBrightness(enabled);
-
+            lightControlCallback(LightOperationType::SetAutoBrightness, enabledParam);
             request->send(200, "text/plain", "Auto-brightness updated");
         } else {
             request->send(400, "text/plain", "Invalid enabled value");
@@ -268,9 +256,7 @@ void WebUI::handleSetBrightness(AsyncWebServerRequest *request)
         // Validate brightness value (should be an integer between 0 and 255)
         int brightness = valueParam.toInt();
         if (brightness >= 0 && brightness <= 255) {
-            // TODO: Set brightness
-            // setBrightness(brightness);
-
+            lightControlCallback(LightOperationType::SetBrightness, valueParam);
             request->send(200, "text/plain", "Brightness updated");
         } else {
             request->send(400, "text/plain", "Invalid brightness value");

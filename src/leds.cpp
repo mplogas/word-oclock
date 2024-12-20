@@ -79,14 +79,21 @@ void LED::test() {
 }
 
 String LED::RGBtoHex(const CRGB& color) {
-    char hex[7];
-    sprintf(hex, "%02X%02X%02X", color.r, color.g, color.b);
+    char hex[8]; // '#RRGGBB\0'
+    sprintf(hex, "#%02X%02X%02X", color.r, color.g, color.b);
     return String(hex);
 }
 
 CRGB LED::HexToRGB(const String& hex) {
-    long number = strtol(hex.c_str(), nullptr, 16);
-    return CRGB(number >> 16, number >> 8 & 0xFF, number & 0xFF);
+    // Ensure the hex string starts with '#'
+    long number;
+    if (hex[0] == '#') {
+        // Convert the hex string to a long integer, skipping the '#'
+        number = strtol(hex.substring(1).c_str(), nullptr, 16);
+    } else {
+        number = strtol(hex.c_str(), nullptr, 16);        
+    }
+    return CRGB(number >> 16, (number >> 8) & 0xFF, number & 0xFF);
 }
 
 void LED::handleAutoBrightness() {
@@ -121,7 +128,7 @@ void LED::handleAutoBrightness() {
     FastLED.setBrightness(this->brightness);
     FastLED.show();
 
-    Serial.printf("Updated brightness: %d\n", this->brightness);
+    //Serial.printf("Updated brightness: %d\n", this->brightness);
 }
 
 

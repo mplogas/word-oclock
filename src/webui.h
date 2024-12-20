@@ -73,12 +73,6 @@ class WebUI
     public:
         WebUI(AsyncWebServer &server);
         ~WebUI();
-        enum class LightOperationType {
-            ToggleStatus,
-            SetColor,
-            SetAutoBrightness,
-            SetBrightness
-            };
 
         void init(const LightControlCallback &lightCtrlCb, const SystemControlCallback &systemCtrlcb, const UploadHandlerCallback &uploadCb, const UpdateSuccessCallback &updateCb);
         void initHostAP(const WiFiSetupCallback &wifiCb);

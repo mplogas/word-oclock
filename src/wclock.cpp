@@ -16,8 +16,6 @@ bool WClock::init()
         return false;
     }
 
-
-
     initialized = true;
     return true;
 }
@@ -31,7 +29,7 @@ bool WClock::begin(const char *timezone, const char *ntpServer)
     return update(true);
 }
 
-bool WClock::getNTPTime()
+bool WClock::getNTPTime(struct tm &timeinfo)
 {
     if(!initialized)
     {
@@ -46,57 +44,32 @@ bool WClock::getNTPTime()
         return true;
     } else {
         Serial.println("Failed to get NTP time, using RTC for now");
+        // DateTime now = rtc.now();
+        // Serial.println(now.timestamp(now.TIMESTAMP_FULL));
+        return false;
+    }
+}
+
+bool WClock::updateInternal(bool ntpUpdate)
+{
+    if (ntpUpdate && getNTPTime(timeinfo))
+    {
+        rtc.adjust(DateTime(timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec));
+        Serial.println("Synced wordclock time from NTP");
+        return true;
+    } else {
         DateTime now = rtc.now();
-        Serial.println(now.timestamp(now.TIMESTAMP_FULL));
+        timeinfo.tm_year = now.year() - 1900;
+        timeinfo.tm_mon = now.month() - 1;
+        timeinfo.tm_mday = now.day();
+        timeinfo.tm_hour = now.hour();
+        timeinfo.tm_min = now.minute();
+        timeinfo.tm_sec = now.second();
+        //Serial.println("Synced wordclock time from RTC");
         return false;
     }
 
-
-    // this seems to be broken: if (getLocalTime(&timeinfo, ntpTimeout))
-    // it immediately returns false, however the implementation in esp32-hal-time.c is correct
-    /*
-        bool getLocalTime(struct tm *info, uint32_t ms) {
-            uint32_t start = millis();
-            time_t now;
-            while ((millis() - start) <= ms) {
-                time(&now);
-                localtime_r(&now, info);
-                if (info->tm_year > (2016 - 1900)) {
-                return true;
-                }
-                delay(10);
-            }
-            return false;
-        }
-    */
-    // so, let's do it manually
-    // uint32_t start = millis();
-    // time_t now;
-    // bool success = false;
-    // Serial.print("Attempting to get NTP time");
-    // while (millis() - start <= ntpTimeout)
-    // {
-    //     Serial.print(".");
-    //     time(&now);
-    //     localtime_r(&now, &timeinfo);
-    //     if (timeinfo.tm_year > (2016 - 1900))
-    //     {
-    //         success = true;
-    //         break;
-    //     }
-    //     delay(1000);
-    // }
-    
-    // if(!success)
-    // {
-    //     Serial.println("Failed to get NTP time");
-    //     return false;
-    // }
-
-    // Serial.println("Successfully obtained time");
-    // Serial.println(&timeinfo, "%d.%m.%Y %H:%M:%S %Z");
-    // lastNTPtime = now;
-    // return true;
+    return true;
 }
 
 void WClock::setTimeZone(const char *timezone)
@@ -115,14 +88,7 @@ bool WClock::update(bool tzUpdate)
 
     if (tzUpdate) setTimeZone(tzInfo);
 
-    if(getNTPTime())
-    {
-        rtc.adjust(DateTime(timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec));
-        return true;
-    } else {
-        Serial.println("Failed to update time");
-        return false;
-    }
+    return updateInternal(true);
 }
 
 uint8_t WClock::getHour()
@@ -147,9 +113,22 @@ uint8_t WClock::getMinute()
 
 void WClock::loop()
 {
-    //update ntp every 6 hours
-    if (millis() - lastNTPtime > 21600000)
+    if(!initialized)
     {
-        update();
+        return;
+    }
+    
+    long now = millis();
+    if (now - lastTimeInfoUpdate > TIMEINFO_UPDATE_INTERVAL)
+    {
+        lastTimeInfoUpdate = now;
+        updateInternal();
+    }
+
+    //update ntp every 6 hours
+    if (millis() - lastNTPtime > NTP_UPDATE_INTERVAL)
+    {
+        lastNTPtime = now;
+        updateInternal(true);
     }
 }

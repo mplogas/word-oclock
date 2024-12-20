@@ -11,15 +11,18 @@ class WClock
 private:
     static constexpr const char *NTP_SERVER_2 = "1.pool.ntp.org";
     static constexpr const char *NTP_SERVER_3 = "2.pool.ntp.org";
-
-    const uint16_t ntpTimeout = 15000;
+    static const long NTP_UPDATE_INTERVAL = 21600000;
+    static const int TIMEINFO_UPDATE_INTERVAL = 1000;
+    static const u16_t ntpTimeout = 15000;
     const char *ntpServer;
     const char *tzInfo;
     RTC_DS3231 rtc;
     struct tm timeinfo;
     uint32_t lastNTPtime = 0;
-    bool getNTPTime();
+    uint32_t lastTimeInfoUpdate = 0;
+    bool getNTPTime(struct tm &timeinfo);
     bool initialized = false;
+    bool updateInternal(bool ntpUpdate = false); 
 public:
     WClock(RTC_DS3231& rtc);
     ~WClock();

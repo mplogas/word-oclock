@@ -17,7 +17,7 @@ public:
     ~LED();
     void init();
     void setBrightness(uint8_t brightness);
-    void setColor(const CRGB& color, bool show = false);
+    void setColor(const CRGB& color);
     void setLEDs(const std::vector<std::pair<int, int>>& ledRanges);
     void clearLEDs();
     void enableAutoBrightness(int illuminanceThresholdHigh, int illuminanceThresholdLow);

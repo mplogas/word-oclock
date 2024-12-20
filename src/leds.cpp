@@ -20,9 +20,8 @@ void LED::setBrightness(uint8_t brightness) {
     FastLED.show();
 }
 
-void LED::setColor(const CRGB& color, bool show) {
+void LED::setColor(const CRGB& color) {
     this->color = color;
-    if (show) FastLED.showColor(color);
 }
 
 void LED::enableAutoBrightness(int illuminanceThresholdHigh, int illuminanceThresholdLow) {
@@ -98,7 +97,6 @@ CRGB LED::HexToRGB(const String& hex) {
 
 void LED::handleAutoBrightness() {
     if (!this->autoBrightness) {
-        // Serial.println("Auto brightness is disabled");
         return;
     }
 
@@ -137,7 +135,6 @@ void LED::loop() {
     if(currentMillis - this->lastIlluminanceUpdate > ILLUMINANCE_UPDATE_INTERVAL) {
         this->lastIlluminanceUpdate = currentMillis;
         this->illuminance = analogRead(LDR_PIN);
-        // Serial.printf("Illuminance: %d\n", this->illuminance);
     }
 
     if(currentMillis - this->lastBrightnessUpdate > BRIGHTNESS_UPDATE_INTERVAL && this->autoBrightness == true) {

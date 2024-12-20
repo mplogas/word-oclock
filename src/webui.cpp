@@ -30,15 +30,7 @@ void WebUI::init(const LightControlCallback &lightCtrlCb, const SystemControlCal
     systemControlCallback = systemCtrlCb;
     
     server.on("/", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        request->send(
-            LittleFS,
-            WebUI::LIGHT_HTML,
-            "text/html",
-            false,
-            [this](const String& var) -> String {
-                return this->pageProcessor(var, Page::LIGHT);
-            }
-        );
+        request->redirect("/light");
     });
     server.on("/light", HTTP_GET, [this](AsyncWebServerRequest *request) {
         request->send(

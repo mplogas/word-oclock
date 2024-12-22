@@ -331,6 +331,11 @@ body {
   margin-right: 10px;
 }
 
+.navigation-container a.active {
+  color: var(--accent-color);
+  font-weight: bold;
+}
+
 .theme-switch input,
 .switch input {
   height: 0;

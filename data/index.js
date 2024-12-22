@@ -118,7 +118,14 @@ function toggleTheme() {
 // Initializer
 
 document.addEventListener('DOMContentLoaded', function () {
-  // Initialize NTP Time Update
+  // Light Page
+  const autoBrightnessToggle = document.getElementById('autoBrightnessToggle');
+  if (autoBrightnessToggle) {
+    toggleAutoBrightness(autoBrightnessToggle.checked);
+  }
+
+
+  // System Page
   const ntpToggle = document.getElementById('ntpTimeUpdate');
   if (ntpToggle) {
     toggleNtpTimeUpdate(ntpToggle.checked);
@@ -147,10 +154,6 @@ document.addEventListener('DOMContentLoaded', function () {
     toggleResetConfiguration(resetConfigurationToggle.checked);
   }
 
-  const autoBrightnessToggle = document.getElementById('autoBrightness');
-  if (autoBrightnessToggle) {
-    toggleAutoBrightness(autoBrightnessToggle.checked);
-  }
 
   // Initialize other toggles if present
   // Example:

@@ -9,6 +9,7 @@
 #include <LittleFS.h>
 #include <functional>
 #include "defaults.h"
+#include "configuration.h"
 #include "callbacktypes.h"
 
 using UpdateSuccessCallback = std::function<bool()>;
@@ -21,7 +22,7 @@ using SystemControlCallback = std::function<void(bool)>;
 class WebUI
 {
     private:
-        enum class Page {
+        enum Page {
             LIGHT,
             SYSTEM,
             FIRMWARE
@@ -32,6 +33,8 @@ class WebUI
         WiFiSetupCallback wifiCredentialsCallback;
         LightControlCallback lightControlCallback;
         SystemControlCallback systemControlCallback;
+        Configuration::LightConfig *lightConfiguration;
+        Configuration::SystemConfig *systemConfiguration;
         const char* deviceName;
         const char* firmwareVersion;
 
@@ -39,8 +42,8 @@ class WebUI
         String lightPageProcessor(const String &var);
         String systemPageProcessor(const String &var);
         String firmwarePageProcessor(const String &var);
-        String headerProcessor(const String &var);
-        String includeProcessor(const String &var);
+        String headerProcessor(Page page);
+        //String includeProcessor(const String &var);
         String pageProcessor(const String &var, Page page);
 
         // Helper functions
@@ -58,9 +61,14 @@ class WebUI
         static constexpr const char* FIRMWARE_HTML = "/firmware.html";
         static constexpr const char* WIFI_MANAGER_HTML = "/wifimanager.html";
 
+        // page titles
+        static constexpr const char* LIGHT_PAGE_TITLE = "Light Settings";
+        static constexpr const char* SYSTEM_PAGE_TITLE = "System Configuration";
+        static constexpr const char* FIRMWARE_PAGE_TITLE = "Firmware Update";
+
         // processor variables
         static constexpr const char* PAGE_TITLE = "PAGE_TITLE";
-        static constexpr const char* FIRMWARE = "FW_VERSION";
+        static constexpr const char* FIRMWARE_VER = "FW_VERSION";
 
         // Input fields
         static constexpr const char* SSID_INPUT = "ssid";
@@ -74,7 +82,12 @@ class WebUI
         WebUI(AsyncWebServer &server);
         ~WebUI();
 
-        void init(const LightControlCallback &lightCtrlCb, const SystemControlCallback &systemCtrlcb, const UploadHandlerCallback &uploadCb, const UpdateSuccessCallback &updateCb);
+        void init(const LightControlCallback &lightCtrlCb, 
+        const SystemControlCallback &systemCtrlcb, 
+        const UploadHandlerCallback &uploadCb, 
+        const UpdateSuccessCallback &updateCb,
+        Configuration::LightConfig *lightConfig,
+        Configuration::SystemConfig *systemConfig);
         void initHostAP(const WiFiSetupCallback &wifiCb);
 };
 

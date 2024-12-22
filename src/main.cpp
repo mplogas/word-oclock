@@ -295,7 +295,7 @@ void setup()
     }
 
 
-    webui.init(lightOperationHandler, systemOperationHandler, handleFWUpload, handleUpdateResult);
+    webui.init(lightOperationHandler, systemOperationHandler, handleFWUpload, handleUpdateResult, &lightConfig, &systemConfig);
   }
   else
   {

@@ -22,10 +22,10 @@
                 <p class="card-title"><i class="fas fa-cloud"></i> Integration</p>
                 <div class="card-content">
                     <div class="toggle-row">
-                        <label for="haIntegration">HomeAssistant:</label>
+                        <label for="haIntegrationToggle">HomeAssistant:</label>
                         <label class="switch">
-                            <input type="checkbox" id="haIntegration" name="haIntegration"
-                                onchange="toggleHaIntegration(this.checked)">
+                            <input type="checkbox" id="haIntegrationToggle" name="haIntegration"
+                                onchange="toggleHaIntegration(this.checked)" %HA_INTEGRATION_STATE%>
                             <span class="slider round"></span>
                         </label>
                     </div>
@@ -33,19 +33,19 @@
                         <form action="/saveMQTTSettings" method="POST">
                             <div class="toggle-row">
                                 <label for="brokerIP">Broker IP:</label>
-                                <input type="text" id="brokerIP" name="brokerIP" placeholder="e.g., 192.168.1.100"
+                                <input type="text" id="brokerIP" name="brokerIP" placeholder="e.g., 192.168.1.100" value="%BROKER_IP%"
                                     required>
                             </div>
 
                             <div class="toggle-row">
                                 <label for="brokerPort">Port:</label>
-                                <input type="number" id="brokerPort" name="brokerPort" placeholder="e.g., 1883"
+                                <input type="number" id="brokerPort" name="brokerPort" placeholder="e.g., 1883" value="%BROKER_PORT%"
                                     required>
                             </div>
 
                             <div class="toggle-row">
                                 <label for="mqttUsername">Username:</label>
-                                <input type="text" id="mqttUsername" name="mqttUsername" placeholder="Your Username">
+                                <input type="text" id="mqttUsername" name="mqttUsername" placeholder="Your Username" value="%MQTT_USERNAME%"> 
                             </div>
 
                             <div class="toggle-row">
@@ -57,12 +57,12 @@
                             <div class="toggle-row">
                                 <label for="defaultTopic">Default Topic:</label>
                                 <input type="text" id="defaultTopic" name="defaultTopic"
-                                    placeholder="e.g., home/wordclock">
+                                    placeholder="e.g., home/wordclock" value="%DEFAULT_TOPIC%">
                             </div>
 
                             <!-- Submit Button -->
                             <div class="toggle-row">
-                                <button type="submit" class="submit-button"><i class="fas fa-save"></i> Save</button>
+                                <button type="button" class="submit-button" onclick="saveHaIntegration()"><i class="fas fa-save"></i> Save</button>
                             </div>
                         </form>
                     </div>

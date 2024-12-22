@@ -8,6 +8,7 @@
 #include <AsyncTCP.h>
 #include <LittleFS.h>
 #include <functional>
+#include <map>
 #include "defaults.h"
 #include "configuration.h"
 #include "callbacktypes.h"
@@ -16,7 +17,7 @@ using UpdateSuccessCallback = std::function<bool()>;
 using UploadHandlerCallback = std::function<void(const String &filename, size_t index, uint8_t *data, size_t len, bool final)>;
 using WiFiSetupCallback = std::function<void(const String &ssid, const String &password)>;
 using LightControlCallback = std::function<void(LightOperationType type, const String& value)>;
-using SystemControlCallback = std::function<void(bool)>;
+using SystemControlCallback = std::function<void(SystemOperationType type, const std::map<String, String>& params)>;
 
 
 class WebUI
@@ -52,6 +53,7 @@ class WebUI
         void handleSetLightColor(AsyncWebServerRequest *request);
         void handleSetAutoBrightness(AsyncWebServerRequest *request);
         void handleSetBrightness(AsyncWebServerRequest *request);
+        void handleSetHAIntegration(AsyncWebServerRequest *request);
         String readFile(const char* path);
 
         // paths

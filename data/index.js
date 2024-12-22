@@ -97,6 +97,46 @@ function toggleResetConfiguration(isChecked) {
   container.style.display = isChecked ? 'block' : 'none';
 }
 
+// Function to handle form submission
+function saveHaIntegration() {
+  const haIntegrationToggle = document.getElementById('haIntegrationToggle').checked;
+  const mqttHost = document.getElementById('brokerIP').value;
+  const mqttPort = document.getElementById('brokerPort').value;
+  const mqttUsername = document.getElementById('mqttUsername').value;
+  const mqttPassword = document.getElementById('mqttPassword').value;
+  const mqttTopic = document.getElementById('defaultTopic').value;
+
+  if (!mqttHost || !mqttPort || !mqttUsername || !mqttPassword || !mqttTopic) {
+    alert('Please fill in all fields.');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('haIntegration', haIntegrationToggle ? '1' : '0');
+  if(haIntegrationToggle) {
+    formData.append('mqttHost', mqttHost);
+    formData.append('mqttPort', mqttPort);
+    if(mqttUsername.length > 0) {
+      formData.append('mqttUsername', mqttUsername);
+      if(mqttPassword.length > 0) {
+        formData.append('mqttPassword', mqttPassword);
+      }
+    }
+    if(mqttTopic.length > 0) formData.append('mqttTopic', mqttTopic);
+  }
+
+
+  fetch('/setHaIntegration', {
+    method: 'POST',
+    body: formData
+  })
+    .then(response => response.text())
+    .then(data => {
+      console.log(`HomeAssistant integration saved: ${data}`);
+    })
+    .catch(error => console.error('Error:', error));
+}
+
 // Theme
 // Apply theme based on user's preference
 function applyTheme(theme) {
@@ -144,7 +184,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // Initialize HomeAssistant Integration
-  const haIntegrationToggle = document.getElementById('haIntegration');
+  const haIntegrationToggle = document.getElementById('haIntegrationToggle');
   if (haIntegrationToggle) {
     toggleHaIntegration(haIntegrationToggle.checked);
   }

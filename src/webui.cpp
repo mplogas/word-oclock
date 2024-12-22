@@ -34,7 +34,8 @@ void WebUI::init(const LightControlCallback &lightCtrlCb,
     lightControlCallback = lightCtrlCb;
     systemControlCallback = systemCtrlCb;
 
-    if(!lightConfig || !systemConfig) {
+    if (!lightConfig || !systemConfig)
+    {
         Serial.println("Light or System configuration is null");
         return;
     }
@@ -81,10 +82,9 @@ void WebUI::init(const LightControlCallback &lightCtrlCb,
                     {
                         return this->pageProcessor(var, Page::SYSTEM);
                     }); });
-    server.on("/system", HTTP_POST, [this](AsyncWebServerRequest *request)
-              {
-                  // handle system control
-              });
+
+    server.on("/setHaIntegration", HTTP_POST, [this](AsyncWebServerRequest *request)
+              { this->handleSetHAIntegration(request); });
 
     server.on("/update", HTTP_GET, [this](AsyncWebServerRequest *request)
               { request->send(
@@ -289,23 +289,132 @@ void WebUI::handleSetBrightness(AsyncWebServerRequest *request)
     }
 }
 
+void WebUI::handleSetHAIntegration(AsyncWebServerRequest *request)
+{
+    if (request->hasParam("haIntegration"))
+    {
+        char haIntegration[2] = {0};
+        strncpy(haIntegration, request->getParam("haIntegration")->value().c_str(), sizeof(haIntegration) - 1);
+        haIntegration[sizeof(haIntegration) - 1] = '\0';
+        int enabled = atoi(haIntegration);
+
+        if (enabled == 0)
+        {
+            std::map<String, String> params;
+            params["enabled"] = haIntegration;
+            systemControlCallback(SystemOperationType::SetHaIntegration, params);
+            request->send(200, "text/plain", "Home Assistant integration disabled");
+        }
+        else if (enabled == 1)
+        {
+            if (request->hasParam("mqttHost") && request->hasParam("mqttPort"))
+            {
+                // these are somewhat optional
+                // && request->hasParam("mqttUsername") && request->hasParam("mqttPassword") && request->hasParam("mqttTopic")
+
+                // GitHub copilot doesn't like my clean approach :(
+                // after 2nd thought, it's onto something here. lifetime of pointers and stuff.
+                // const char *mqttHost = request->getParam("mqttHost")->value().c_str();
+                // const char *mqttPort = request->getParam("mqttPort")->value().c_str();
+                // const char *mqttUsername = request->getParam("mqttUsername")->value().c_str();
+                // const char *mqttPassword = request->getParam("mqttPassword")->value().c_str();
+                // const char *mqttTopic = request->getParam("mqttTopic")->value().c_str();
+
+                char mqttHost[65] = {0};
+                char mqttPort[6] = {0};
+                char mqttUsername[65] = {0};
+                char mqttPassword[65] = {0};
+                char mqttTopic[65] = {0};
+
+                // Copy parameters to fixed-size buffers
+                strncpy(mqttHost, request->getParam("mqttHost")->value().c_str(), sizeof(mqttHost) - 1);
+                strncpy(mqttPort, request->getParam("mqttPort")->value().c_str(), sizeof(mqttPort) - 1);
+                strncpy(mqttUsername, request->getParam("mqttUsername")->value().c_str(), sizeof(mqttUsername) - 1);
+                strncpy(mqttPassword, request->getParam("mqttPassword")->value().c_str(), sizeof(mqttPassword) - 1);
+                strncpy(mqttTopic, request->getParam("mqttTopic")->value().c_str(), sizeof(mqttTopic) - 1);
+
+                // Ensure null-termination
+                mqttHost[sizeof(mqttHost) - 1] = '\0';
+                mqttPort[sizeof(mqttPort) - 1] = '\0';
+                mqttUsername[sizeof(mqttUsername) - 1] = '\0';
+                mqttPassword[sizeof(mqttPassword) - 1] = '\0';
+                mqttTopic[sizeof(mqttTopic) - 1] = '\0';
+
+                // Validate MQTT host
+                if (strlen(mqttHost) < 1 || strlen(mqttHost) > 64)
+                {
+                    request->send(400, "text/plain", "Invalid MQTT host");
+                    return;
+                }
+
+                // Validate MQTT port
+                int port = atoi(mqttPort);
+                if (port < 1 || port > 65535)
+                {
+                    request->send(400, "text/plain", "Invalid MQTT port");
+                    return;
+                }
+
+                // Optional parameters
+                // Validate MQTT username
+                if (strlen(mqttUsername) > 64)
+                {
+                    request->send(400, "text/plain", "Invalid MQTT username");
+                    return;
+                }
+
+                // Validate MQTT password
+                if (strlen(mqttPassword) > 64)
+                {
+                    request->send(400, "text/plain", "Invalid MQTT password");
+                    return;
+                }
+
+                // Validate MQTT topic
+                if (strlen(mqttTopic) > 64)
+                {
+                    request->send(400, "text/plain", "Invalid MQTT topic");
+                    return;
+                }
+
+                // Prepare parameters
+                std::map<String, String> params;
+                params["mqttHost"] = mqttHost;
+                params["mqttPort"] = mqttPort;
+                if (strlen(mqttUsername) > 0)
+                    params["mqttUsername"] = mqttUsername;
+                if (strlen(mqttPassword) > 0)
+                    params["mqttPassword"] = mqttPassword;
+                if (strlen(mqttTopic) > 0)
+                    params["defaultTopic"] = mqttTopic;
+
+                // Call the system control callback
+                systemControlCallback(SystemOperationType::SetHaIntegration, params);
+
+                request->send(200, "text/plain", "Home Assistant integration settings updated");
+            }
+        }
+    }
+    request->send(400, "text/plain", "Missing parameters");
+}
+
 String WebUI::pageProcessor(const String &var, Page page)
 {
     if (var == "INCLUDE_HEADER")
     {
-        return headerProcessor(page);        
+        return headerProcessor(page);
     }
 
     switch (page)
     {
-        case Page::LIGHT:
-            return lightPageProcessor(var);
-        case Page::SYSTEM:
-            return systemPageProcessor(var);
-        case Page::FIRMWARE:
-            return firmwarePageProcessor(var);
-        default:
-            return String();
+    case Page::LIGHT:
+        return lightPageProcessor(var);
+    case Page::SYSTEM:
+        return systemPageProcessor(var);
+    case Page::FIRMWARE:
+        return firmwarePageProcessor(var);
+    default:
+        return String();
     }
 }
 
@@ -316,21 +425,22 @@ String WebUI::headerProcessor(Page page)
     {
         return String();
     }
-    
+
     String pageTitle;
-    switch (page){
-        case Page::LIGHT:
-            pageTitle = LIGHT_PAGE_TITLE;
-            break;
-        case Page::SYSTEM:
-            pageTitle = SYSTEM_PAGE_TITLE;
-            break;
-        case Page::FIRMWARE:
-            pageTitle = FIRMWARE_PAGE_TITLE;
-            break;
-        default:
-            pageTitle = "Unknown";
-            break;
+    switch (page)
+    {
+    case Page::LIGHT:
+        pageTitle = LIGHT_PAGE_TITLE;
+        break;
+    case Page::SYSTEM:
+        pageTitle = SYSTEM_PAGE_TITLE;
+        break;
+    case Page::FIRMWARE:
+        pageTitle = FIRMWARE_PAGE_TITLE;
+        break;
+    default:
+        pageTitle = "Unknown";
+        break;
     }
 
     headerContent.replace("%PAGE_TITLE%", pageTitle);
@@ -364,11 +474,34 @@ String WebUI::lightPageProcessor(const String &var)
     {
         return String();
     }
-}   
+}
 
 String WebUI::systemPageProcessor(const String &var)
 {
-    // Implement system page processor
+    if (var == "HA_INTEGRATION_STATE")
+    {
+        return systemConfiguration->mqttConfig.enabled ? "checked" : "";
+    }
+    else if (var == "BROKER_IP")
+    {
+        return systemConfiguration->mqttConfig.host;
+    }
+    else if (var == "BROKER_PORT")
+    {
+        return String(systemConfiguration->mqttConfig.port);
+    }
+    else if (var == "MQTT_USERNAME")
+    {
+        return systemConfiguration->mqttConfig.username;
+    }
+    else if (var == "DEFAULT_TOPIC")
+    {
+        return systemConfiguration->mqttConfig.topic;
+    }
+    else
+    {
+        return String();
+    }
     return String();
 }
 

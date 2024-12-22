@@ -160,7 +160,35 @@ void lightOperationHandler(LightOperationType operation, const String& value) {
   }
 }
 
-void systemOperationHandler(bool) {
+void systemOperationHandler(SystemOperationType operation, const std::map<String, String>& params) {
+  switch (operation) {
+    case SystemOperationType::SetHaIntegration: {
+      // Additional logic to handle HA integration
+      break;
+    }
+    case SystemOperationType::SetNTPTime: {
+      // Additional logic to handle NTP time
+      break;
+    }
+    case SystemOperationType::SetNtpAutoUpdate: {
+      // Additional logic to handle NTP auto update
+      break;
+    }
+    case SystemOperationType::SetLightSchedule: {
+      // Additional logic to handle light schedule
+      break;
+    }
+    case SystemOperationType::SetClockFormat: {
+      // Additional logic to handle clock format
+      break;
+    }
+    case SystemOperationType::ResetConfig: {
+      // Additional logic to reset configuration
+      break;
+    }
+  }
+
+
   // switch (operation) {
   //   case WebUI::SystemOperationType::SetNTPServer: {
   //     strncpy(systemConfig.ntpConfig.server, value.c_str(), sizeof(systemConfig.ntpConfig.server) - 1);

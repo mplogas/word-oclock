@@ -1,18 +1,20 @@
 #ifndef CALLBACKTYPES_H
 #define CALLBACKTYPES_H
 
-enum class LightOperationType {
+enum LightOperationType {
   ToggleStatus,
   SetColor,
   SetAutoBrightness,
   SetBrightness
 };
 
-enum class SystemOperationType {
-  SetNTPServer,
-  SetTimezone,
-  SetMQTTConfig,
-  SetMQTTUser
+enum SystemOperationType {
+  SetHaIntegration,
+  SetNTPTime,
+  SetNtpAutoUpdate,
+  SetLightSchedule,
+  SetClockFormat,
+  ResetConfig
 };
 
 #endif // CALLBACKTYPES_H

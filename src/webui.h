@@ -25,6 +25,7 @@ class WebUI
     private:
         enum Page {
             LIGHT,
+            TIME,
             SYSTEM,
             FIRMWARE
         };
@@ -59,6 +60,7 @@ class WebUI
         // paths
         static constexpr const char* HEADER_HTML = "/header.html";
         static constexpr const char* LIGHT_HTML = "/light.html";
+        static constexpr const char* TIME_HTML = "/time.html";
         static constexpr const char* SYSTEM_HTML = "/system.html";
         static constexpr const char* FIRMWARE_HTML = "/firmware.html";
         static constexpr const char* WIFI_MANAGER_HTML = "/wifimanager.html";

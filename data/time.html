@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>WordClock Time Configuration</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">  
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- header -->
+    %INCLUDE_HEADER%
+    
+    <!-- Time Configuration Content -->
+    <div class="content">
+        <div class="card-grid">
+            <!-- Current Time Display -->
+            <div class="card">
+                <p class="card-title"><i class="fas fa-clock"></i> Current Time</p>
+                <div class="card-content">
+                    <div class="toggle-row">
+                        <label for="currentTime">Current Time:</label>
+                        <span id="currentTime">--:--:--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timezone Selection -->
+            <div class="card">
+                <p class="card-title"><i class="fas fa-globe"></i> Timezone</p>
+                <div class="card-content">
+                    <div class="toggle-row">
+                        <label for="timezoneSelect">Timezone:</label>
+                        <select id="timezoneSelect" name="timezone" class="input-field">
+                            <option value="UTC">UTC</option>
+                            <option value="America/New_York">America/New_York</option>
+                            <option value="Europe/London">Europe/London</option>
+                            <option value="Asia/Tokyo">Asia/Tokyo</option>
+                            <option value="Australia/Sydney">Australia/Sydney</option>
+                            <!-- Add more timezones as needed -->
+                        </select>
+                    </div>
+                    <div class="toggle-row">
+                        <button type="button" class="submit-button" onclick="saveTimezone()"><i class="fas fa-save"></i> Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NTP Time Update Toggle -->
+            <div class="card">
+                <p class="card-title"><i class="fas fa-sync-alt"></i> NTP Time Update</p>
+                <div class="card-content">
+                    <div class="toggle-row">
+                        <label for="ntpTimeUpdate">NTP Time:</label>
+                        <label class="switch">
+                            <input type="checkbox" id="ntpTimeUpdate" name="ntpTimeUpdate"
+                                onchange="toggleNtpTimeUpdate(this.checked)">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+
+                    <!-- NTP Server Input -->
+                    <div id="ntpTimeUpdateContainer" class="system-container">
+                        <form action="/saveNTPSettings" method="POST">
+                            <div class="toggle-row">
+                                <label for="ntpServer">NTP Server:</label>
+                                <input type="text" id="ntpServer" name="ntpServer" placeholder="e.g., pool.ntp.org">
+                            </div>
+                            <div class="toggle-row">
+                                <label for="timezoneSelect">Timezone:</label>
+                                <select id="timezoneSelect" name="timezone" class="input-field">
+                                    <option value="UTC">UTC</option>
+                                    <option value="America/New_York">America/New_York</option>
+                                    <option value="Europe/London">Europe/London</option>
+                                    <option value="Asia/Tokyo">Asia/Tokyo</option>
+                                    <option value="Australia/Sydney">Australia/Sydney</option>
+                                    <!-- Add more timezones as needed -->
+                                </select>
+                            </div>
+                            <!-- Submit Button -->
+                            <div class="toggle-row">
+                                <button type="submit" class="submit-button"><i class="fas fa-save"></i> Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schedule Card -->
+            <div class="card">
+                <p class="card-title"><i class="fas fa-clock"></i> Schedule</p>
+                <div class="card-content">
+                    <div class="toggle-row">
+                        <label for="lightScheduleToggle">Light Schedule:</label>
+                        <label class="switch">
+                            <input type="checkbox" id="lightScheduleToggle"
+                                onchange="toggleLightSchedule(this.checked)">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+
+                    <!-- Schedule Time Inputs -->
+                    <div id="lightScheduleContainer" class="system-container">
+                        <form action="/saveLightSchedule" method="POST">
+                            <div class="toggle-row">
+                                <label for="startTime">Start Time:</label>
+                                <input type="time" id="startTime" name="startTime">
+                            </div>
+
+                            <div class="toggle-row">
+                                <label for="endTime">End Time:</label>
+                                <input type="time" id="endTime" name="endTime">
+                            </div>
+                            <!-- Submit Button -->
+                            <div class="toggle-row">
+                                <button type="submit" class="submit-button"><i class="fas fa-save"></i> Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="index.js"></script>
+</body>
+
+</html>

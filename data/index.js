@@ -65,6 +65,38 @@ function updateBrightnessValue(value) {
   document.getElementById('brightnessValue').innerText = value;
 }
 
+// time.html
+function saveTimezone() {
+  const timezone = document.getElementById('timezoneSelect').value;
+  const formData = new FormData();
+  formData.append('timezone', timezone);
+
+  fetch('/saveTimezone', {
+      method: 'POST',
+      body: formData
+  })
+      .then(response => response.text())
+      .then(data => {
+          console.log(`Timezone saved: ${data}`);
+      })
+      .catch(error => console.error('Error saving timezone:', error));
+}
+
+function updateCurrentTime() {
+  fetch('/getCurrentTime')
+      .then(response => response.json())
+      .then(data => {
+          document.getElementById('currentTime').innerText = data.time;
+      })
+      .catch(error => console.error('Error fetching current time:', error));
+}
+
+// Call updateCurrentTime every 30 seconds
+setInterval(updateCurrentTime, 30000);
+
+// Call it once immediately to set the initial time
+updateCurrentTime();
+
 // system.html
 function toggleDisplayType(isChecked) {
   const stateText = document.getElementById('displayTypeState');

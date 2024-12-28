@@ -72,6 +72,17 @@ void WebUI::init(const LightControlCallback &lightCtrlCb,
     server.on("/setBrightness", HTTP_GET, [this](AsyncWebServerRequest *request)
               { this->handleSetBrightness(request); });
 
+    server.on("/time", HTTP_GET, [this](AsyncWebServerRequest *request)
+              { request->send(
+                    LittleFS,
+                    WebUI::TIME_HTML,
+                    "text/html",
+                    false,
+                    [this](const String &var) -> String
+                    {
+                        return this->pageProcessor(var, Page::TIME);
+                    }); });
+
     server.on("/system", HTTP_GET, [this](AsyncWebServerRequest *request)
               { request->send(
                     LittleFS,

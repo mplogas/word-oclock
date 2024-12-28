@@ -9,7 +9,7 @@ LED::~LED() {
 }
 
 void LED::init() {
-    FastLED.addLeds<WS2812B, DATA_PIN>(this->leds, NUM_LEDS);
+    FastLED.addLeds<WS2812B, DATA_PIN, GRB>(this->leds, NUM_LEDS);
     FastLED.setBrightness(Defaults::DEFAULT_LIGHT_BRIGHTNESS);
 }
 

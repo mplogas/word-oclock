@@ -1,0 +1,186 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/25.0.2 Chrome/128.0.6613.186 Electron/32.2.5 Safari/537.36" version="25.0.2">
+  <diagram name="Page-1" id="16e2658f-23c8-b752-8be9-c03fbebb8bbe">
+    <mxGraphModel dx="988" dy="569" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" background="none" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="6d250d948d6a1778-1" value="" style="verticalLabelPosition=bottom;shadow=0;dashed=0;align=center;fillColor=#000000;html=1;verticalAlign=top;strokeWidth=1;shape=mxgraph.electrical.miscellaneous.monocell_battery;rounded=1;comic=0;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;rotation=-90;" parent="1" vertex="1">
+          <mxGeometry x="210" y="419" width="100" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="6d250d948d6a1778-22" value="5V" style="endArrow=classic;html=1;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=16" parent="1" edge="1">
+          <mxGeometry x="-0.15" y="20" width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="240" y="395" as="sourcePoint" />
+            <mxPoint x="240" y="315" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-2" value="" style="verticalLabelPosition=bottom;shadow=0;dashed=0;align=center;html=1;verticalAlign=top;shape=mxgraph.electrical.opto_electronics.led_1;pointerEvents=1;" vertex="1" parent="1">
+          <mxGeometry x="340" y="395" width="100" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.49;entryY=0.246;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="6d250d948d6a1778-1" target="_KaKt-u-psy2Oaof_BQ1-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="260" y="350" />
+              <mxPoint x="420" y="350" />
+              <mxPoint x="420" y="415" />
+              <mxPoint x="389" y="415" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.87;exitY=0.583;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="6d250d948d6a1778-1" target="_KaKt-u-psy2Oaof_BQ1-59">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="160" y="400" as="sourcePoint" />
+            <mxPoint x="700" y="630" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="200" y="412" />
+              <mxPoint x="200" y="630" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="6d250d948d6a1778-1" target="_KaKt-u-psy2Oaof_BQ1-60">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="450" y="495" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="210" y="499" />
+              <mxPoint x="210" y="580" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.7;entryY=0.954;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="6d250d948d6a1778-1" target="_KaKt-u-psy2Oaof_BQ1-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="415" y="499" />
+              <mxPoint x="415" y="461" />
+              <mxPoint x="410" y="461" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-58" value="25" style="triangle;whiteSpace=wrap;html=1;flipV=1;flipH=1;align=right;" vertex="1" parent="1">
+          <mxGeometry x="710" y="510" width="60" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-59" value="VIN" style="triangle;whiteSpace=wrap;html=1;flipV=1;flipH=1;align=right;" vertex="1" parent="1">
+          <mxGeometry x="710" y="610" width="60" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-60" value="GND" style="triangle;whiteSpace=wrap;html=1;flipV=1;flipH=1;align=right;" vertex="1" parent="1">
+          <mxGeometry x="710" y="560" width="60" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-61" value="GND" style="triangle;whiteSpace=wrap;html=1;flipV=1;flipH=0;align=left;" vertex="1" parent="1">
+          <mxGeometry x="900" y="390" width="60" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-85" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;endArrow=none;endFill=0;" edge="1" parent="1" source="_KaKt-u-psy2Oaof_BQ1-62" target="_KaKt-u-psy2Oaof_BQ1-58">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-62" value="220" style="pointerEvents=1;verticalLabelPosition=bottom;shadow=0;dashed=0;align=center;html=1;verticalAlign=top;shape=mxgraph.electrical.resistors.resistor_1;rotation=0;direction=west;" vertex="1" parent="1">
+          <mxGeometry x="530" y="490" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-64" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1;entryY=0.54;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="_KaKt-u-psy2Oaof_BQ1-62" target="_KaKt-u-psy2Oaof_BQ1-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="530" y="430" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-65" value="Data" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="_KaKt-u-psy2Oaof_BQ1-64">
+          <mxGeometry x="-0.5769" y="1" relative="1" as="geometry">
+            <mxPoint x="-39" y="-36" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-66" value="3.3 V" style="triangle;whiteSpace=wrap;html=1;flipV=1;flipH=1;align=right;" vertex="1" parent="1">
+          <mxGeometry x="710" y="390" width="60" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-67" value="35" style="triangle;whiteSpace=wrap;html=1;flipV=1;flipH=1;align=right;" vertex="1" parent="1">
+          <mxGeometry x="710" y="450" width="60" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-70" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.8;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="_KaKt-u-psy2Oaof_BQ1-68" target="_KaKt-u-psy2Oaof_BQ1-66">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="780" y="340" />
+              <mxPoint x="780" y="370" />
+              <mxPoint x="690" y="370" />
+              <mxPoint x="690" y="410" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-68" value="" style="verticalLabelPosition=bottom;shadow=0;dashed=0;align=center;html=1;verticalAlign=top;shape=mxgraph.electrical.opto_electronics.photo_resistor_2;pointerEvents=1;" vertex="1" parent="1">
+          <mxGeometry x="680" y="300" width="90" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-69" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.8;entryDx=0;entryDy=0;entryPerimeter=0;startArrow=classic;startFill=1;endArrow=none;endFill=0;" edge="1" parent="1" source="_KaKt-u-psy2Oaof_BQ1-67" target="_KaKt-u-psy2Oaof_BQ1-68">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="670" y="470" />
+              <mxPoint x="670" y="340" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-73" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;startArrow=classic;startFill=1;endArrow=none;endFill=0;" edge="1" parent="1" source="_KaKt-u-psy2Oaof_BQ1-71" target="_KaKt-u-psy2Oaof_BQ1-61">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-71" value="10K" style="pointerEvents=1;verticalLabelPosition=bottom;shadow=0;dashed=0;align=center;html=1;verticalAlign=top;shape=mxgraph.electrical.resistors.resistor_1;" vertex="1" parent="1">
+          <mxGeometry x="680" y="250" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-72" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.8;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;endArrow=none;endFill=0;startArrow=none;startFill=0;" edge="1" parent="1" source="_KaKt-u-psy2Oaof_BQ1-68" target="_KaKt-u-psy2Oaof_BQ1-71">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="670" y="340" />
+              <mxPoint x="670" y="260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-76" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="_KaKt-u-psy2Oaof_BQ1-75" target="_KaKt-u-psy2Oaof_BQ1-66">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="600" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-77" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="_KaKt-u-psy2Oaof_BQ1-75" target="_KaKt-u-psy2Oaof_BQ1-61">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="540" y="220" />
+              <mxPoint x="980" y="220" />
+              <mxPoint x="980" y="410" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-75" value="" style="pointerEvents=1;verticalLabelPosition=bottom;shadow=0;dashed=0;align=center;html=1;verticalAlign=top;shape=mxgraph.electrical.miscellaneous.generic_component" vertex="1" parent="1">
+          <mxGeometry x="510" y="250" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-81" value="S" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.017;entryY=0.217;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="_KaKt-u-psy2Oaof_BQ1-79" target="_KaKt-u-psy2Oaof_BQ1-75">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1000" y="20" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="1000" y="470" />
+              <mxPoint x="1000" y="210" />
+              <mxPoint x="490" y="210" />
+              <mxPoint x="490" y="263" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-83" value="SCL" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="_KaKt-u-psy2Oaof_BQ1-81">
+          <mxGeometry x="0.8846" y="5" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-79" value="22" style="triangle;whiteSpace=wrap;html=1;flipV=1;flipH=0;align=left;" vertex="1" parent="1">
+          <mxGeometry x="900" y="450" width="60" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-80" value="21" style="triangle;whiteSpace=wrap;html=1;flipV=1;flipH=0;align=left;" vertex="1" parent="1">
+          <mxGeometry x="900" y="510" width="60" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-82" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.017;entryY=0.617;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="_KaKt-u-psy2Oaof_BQ1-80" target="_KaKt-u-psy2Oaof_BQ1-75">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1020" y="530" />
+              <mxPoint x="1020" y="200" />
+              <mxPoint x="480" y="200" />
+              <mxPoint x="480" y="287" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="_KaKt-u-psy2Oaof_BQ1-84" value="SDA" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="_KaKt-u-psy2Oaof_BQ1-82">
+          <mxGeometry x="0.9122" relative="1" as="geometry">
+            <mxPoint x="-10" y="8" as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -8,8 +8,8 @@ class Defaults
 public:
     static const uint32_t WIFI_SCAN_TIMEOUT = 10000;
     static const uint16_t LED_INTERVAL = 5000;
-    static constexpr const char* PRODUCT = "WordClock-v2";
-    static constexpr const char* FW_VERSION = "0.4-test";
+    static constexpr const char* PRODUCT = "word-o-clock";
+    static constexpr const char* FW_VERSION = "0.5-test";
     static constexpr const char* DEFAULT_WIFI_SETUP_PASS = "w0RdCl0cK";
     static constexpr bool DEFAULT_MQTT_ENABLED = false;
     static constexpr uint16_t DEFAULT_MQTT_PORT = 1883;

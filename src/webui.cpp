@@ -83,6 +83,11 @@ void WebUI::init(const LightControlCallback &lightCtrlCb,
                         return this->pageProcessor(var, Page::TIME);
                     }); });
 
+    server.on("/getCurrentTime", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        request->send(200, "application/text", "12:30");
+    });
+
+
     server.on("/system", HTTP_GET, [this](AsyncWebServerRequest *request)
               { request->send(
                     LittleFS,
@@ -446,6 +451,9 @@ String WebUI::headerProcessor(Page page)
     case Page::SYSTEM:
         pageTitle = SYSTEM_PAGE_TITLE;
         break;
+    case Page::TIME:
+        pageTitle = TIME_PAGE_TITLE;
+        break;        
     case Page::FIRMWARE:
         pageTitle = FIRMWARE_PAGE_TITLE;
         break;
@@ -456,6 +464,7 @@ String WebUI::headerProcessor(Page page)
 
     headerContent.replace("%PAGE_TITLE%", pageTitle);
     headerContent.replace("%ACTIVE_LIGHT%", (page == Page::LIGHT) ? "active" : "");
+    headerContent.replace("%ACTIVE_TIME%", (page == Page::TIME) ? "active" : "");
     headerContent.replace("%ACTIVE_SYSTEM%", (page == Page::SYSTEM) ? "active" : "");
 
     return headerContent;
@@ -520,7 +529,7 @@ String WebUI::firmwarePageProcessor(const String &var)
 {
     if (var == "FW_VERSION")
     {
-        return firmwareVersion;
+        return Defaults::FW_VERSION;
     }
     else
     {

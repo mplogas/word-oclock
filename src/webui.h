@@ -37,8 +37,8 @@ class WebUI
         SystemControlCallback systemControlCallback;
         Configuration::LightConfig *lightConfiguration;
         Configuration::SystemConfig *systemConfiguration;
-        const char* deviceName;
-        const char* firmwareVersion;
+        // const char* deviceName;
+        // const char* firmwareVersion;
 
         // Page Processor functions
         String lightPageProcessor(const String &var);
@@ -68,6 +68,7 @@ class WebUI
         // page titles
         static constexpr const char* LIGHT_PAGE_TITLE = "Light Settings";
         static constexpr const char* SYSTEM_PAGE_TITLE = "System Configuration";
+        static constexpr const char* TIME_PAGE_TITLE = "Time Configuration";
         static constexpr const char* FIRMWARE_PAGE_TITLE = "Firmware Update";
 
         // processor variables

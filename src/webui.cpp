@@ -8,7 +8,7 @@ WebUI::~WebUI()
 {
     // Destructor implementation
     // check and cleanup callbacks
-    updateCallback = nullptr;
+    updateSuccessCallback = nullptr;
     uploadHandlerCallback = nullptr;
     wifiCredentialsCallback = nullptr;
     lightControlCallback = nullptr;
@@ -29,7 +29,7 @@ void WebUI::init(const LightControlCallback &lightCtrlCb,
         return;
     }
 
-    updateCallback = updateCb;
+    updateSuccessCallback = updateCb;
     uploadHandlerCallback = uploadCb;
     lightControlCallback = lightCtrlCb;
     systemControlCallback = systemCtrlCb;
@@ -176,7 +176,7 @@ void WebUI::handleFirmwareUpdate(AsyncWebServerRequest *request)
 {
     Serial.println("Update requested");
 
-    if (!updateCallback())
+    if (updateSuccessCallback())
     {
         Serial.println("Update successful");
         auto response = request->beginResponse(200, "text/plain", "OK");

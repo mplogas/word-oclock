@@ -30,7 +30,7 @@ class WebUI
             FIRMWARE
         };
         AsyncWebServer &server; 
-        UpdateSuccessCallback updateCallback;
+        UpdateSuccessCallback updateSuccessCallback;
         UploadHandlerCallback uploadHandlerCallback;
         WiFiSetupCallback wifiCredentialsCallback;
         LightControlCallback lightControlCallback;

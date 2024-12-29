@@ -88,7 +88,7 @@ void handleFWUpload(const String filename, size_t index, uint8_t *data, size_t l
   }
 }
 
-bool handleUpdateResult() {
+bool isUpdateSuccess() {
     // Logic to determine if the update was successful
     return !Update.hasError();
 }
@@ -323,7 +323,7 @@ void setup()
     }
 
 
-    webui.init(lightOperationHandler, systemOperationHandler, handleFWUpload, handleUpdateResult, &lightConfig, &systemConfig);
+    webui.init(lightOperationHandler, systemOperationHandler, handleFWUpload, isUpdateSuccess, &lightConfig, &systemConfig);
   }
   else
   {

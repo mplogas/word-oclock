@@ -115,7 +115,24 @@ void WebUI::init(const LightControlCallback &lightCtrlCb,
 
     server.on("/update", HTTP_POST, [this](AsyncWebServerRequest *request)
               { handleFirmwareUpdate(request); }, [this](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final)
-              { uploadHandlerCallback(filename, index, data, len, final); });
+              { 
+                if (request->hasParam("updateType", true) && request->hasParam("file", true)) {
+                    String updateType = request->getParam("updateType")->value();
+                    UpdateType type = updateType == "firmware" ? UpdateType::FIRMWARE : UpdateType::FILESYSTEM;
+                    if (updateType == "firmware")
+                    {
+                        uploadHandlerCallback(UpdateType::FIRMWARE, filename, index, data, len, final); 
+                    }
+                    else if (updateType == "data")
+                    {
+                        uploadHandlerCallback(UpdateType::FILESYSTEM, filename, index, data, len, final); 
+                    }
+                    else
+                    {
+                        request->send(400, "text/plain", "Invalid update type");
+                    }
+                }                
+              });
 
     // Other routes with sanitized handlers
     server.onNotFound([](AsyncWebServerRequest *request)

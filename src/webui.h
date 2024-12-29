@@ -14,7 +14,7 @@
 #include "callbacktypes.h"
 
 using UpdateSuccessCallback = std::function<bool()>;
-using UploadHandlerCallback = std::function<void(const String &filename, size_t index, uint8_t *data, size_t len, bool final)>;
+using UploadHandlerCallback = std::function<void(UpdateType type, const String &filename, size_t index, uint8_t *data, size_t len, bool final)>;
 using WiFiSetupCallback = std::function<void(const String &ssid, const String &password)>;
 using LightControlCallback = std::function<void(LightOperationType type, const String& value)>;
 using SystemControlCallback = std::function<void(SystemOperationType type, const std::map<String, String>& params)>;
@@ -86,7 +86,6 @@ class WebUI
     public:
         WebUI(AsyncWebServer &server);
         ~WebUI();
-
         void init(const LightControlCallback &lightCtrlCb, 
         const SystemControlCallback &systemCtrlcb, 
         const UploadHandlerCallback &uploadCb, 

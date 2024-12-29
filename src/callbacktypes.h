@@ -17,4 +17,9 @@ enum SystemOperationType {
   ResetConfig
 };
 
+enum UpdateType {
+    FIRMWARE,
+    FILESYSTEM
+};
+
 #endif // CALLBACKTYPES_H

@@ -28,9 +28,19 @@
         <p class="card-title"><i class="fas fa-upload"></i> Upload Firmware</p>
         <div class="card-content">
           <form action="/update" method="POST" enctype="multipart/form-data" id="upload_form">
+              <!-- Radio Buttons for Firmware/Data -->
+              <div class="toggle-row">
+                <label for="updateType">Update Type:</label>
+                <div>
+                    <input type="radio" id="firmware" name="updateType" value="firmware" checked>
+                    <label for="firmware">Firmware</label>
+                    <input type="radio" id="data" name="updateType" value="data">
+                    <label for="data">Filesystem</label>
+                </div>
+            </div>
             <!-- File Input -->
             <div class="toggle-row">
-              <label for="file">File:</label>
+              <label for="file">Firmware:</label>
               <input type="file" id="file" name="file" accept=".bin" class="input-field">
             </div>
             

@@ -116,22 +116,23 @@ void WebUI::init(const LightControlCallback &lightCtrlCb,
     server.on("/update", HTTP_POST, [this](AsyncWebServerRequest *request)
               { handleFirmwareUpdate(request); }, [this](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final)
               { 
-                if (request->hasParam("updateType", true) && request->hasParam("file", true)) {
-                    String updateType = request->getParam("updateType")->value();
-                    UpdateType type = updateType == "firmware" ? UpdateType::FIRMWARE : UpdateType::FILESYSTEM;
-                    if (updateType == "firmware")
-                    {
-                        uploadHandlerCallback(UpdateType::FIRMWARE, filename, index, data, len, final); 
-                    }
-                    else if (updateType == "data")
-                    {
-                        uploadHandlerCallback(UpdateType::FILESYSTEM, filename, index, data, len, final); 
-                    }
-                    else
-                    {
+                UpdateType type = UpdateType::FIRMWARE;
+                if (index == 0 && request->hasParam("updateType", true)) {  
+                    // const AsyncWebParameter *p = request->getParam("updateType", true);  
+                    // Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+                    const String tParam = request->getParam("updateType", true)->value();
+                    Serial.printf("Update type: %s\n", tParam.c_str());
+                    if(tParam == "firmware") {
+                        type = UpdateType::FIRMWARE;
+                    } else if(tParam == "filesystem") {
+                        type = UpdateType::FILESYSTEM;
+                    } else {
+                        Serial.println("Invalid update type");
                         request->send(400, "text/plain", "Invalid update type");
                     }
-                }                
+                }
+                //Serial.printf("Type: %u, Update: %s, Index: %u, Len: %u, Final: %u\n", type, filename.c_str(), index, len, final);
+                uploadHandlerCallback(type, filename, index, data, len, final); 
               });
 
     // Other routes with sanitized handlers

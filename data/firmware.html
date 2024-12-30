@@ -1,49 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>Upload New Firmware</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  
+
   <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
   <!-- Top Navigation Bar -->
   %INCLUDE_HEADER%
-  
+
   <!-- Content Area -->
   <div class="content">
     <div class="card-grid">
-      
+
       <!-- Current Firmware Version Card -->
       <div class="card">
         <p class="card-title"><i class="fas fa-info-circle"></i> Current Version</p>
         <p class="state">%FW_VERSION%</p>
       </div>
-      
+
       <!-- Firmware Upload Card -->
       <div class="card">
         <p class="card-title"><i class="fas fa-upload"></i> Upload Firmware</p>
         <div class="card-content">
           <form action="/update" method="POST" enctype="multipart/form-data" id="upload_form">
-              <!-- Radio Buttons for Firmware/Data -->
-              <div class="toggle-row">
-                <label for="updateType">Update Type:</label>
-                <div>
-                    <input type="radio" id="firmware" name="updateType" value="firmware" checked>
-                    <label for="firmware">Firmware</label>
-                    <input type="radio" id="data" name="updateType" value="data">
-                    <label for="data">Filesystem</label>
-                </div>
+            <!-- Radio Buttons for Firmware/Data -->
+            <div class="toggle-row">
+              <label for="updateType">Update Type:</label>
+              <div>
+                <input type="radio" id="firmware" name="updateType" value="firmware" checked>
+                <label for="firmware">Firmware</label>
+                <input type="radio" id="filesystem" name="updateType" value="filesystem">
+                <label for="filesystem">Filesystem</label>
+              </div>
             </div>
             <!-- File Input -->
             <div class="toggle-row">
               <label for="file">Firmware:</label>
               <input type="file" id="file" name="file" accept=".bin" class="input-field">
             </div>
-            
+
             <!-- Submit Button -->
             <div class="toggle-row">
               <button type="submit" class="submit-button"><i class="fas fa-upload"></i> Update</button>
@@ -51,11 +53,12 @@
           </form>
         </div>
       </div>
-      
+
     </div>
   </div>
-  
+
   <!-- JavaScript File -->
   <script src="index.js"></script>
 </body>
+
 </html>

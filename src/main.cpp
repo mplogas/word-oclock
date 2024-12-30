@@ -62,10 +62,6 @@ void showCurrentTime() {
 // callbacks
 void handleFWUpload(UpdateType updateType, const String filename, size_t index, uint8_t *data, size_t len, bool final)
 {
-  //this will help to update the LittlFS file system
-  //https://stackoverflow.com/questions/63536978/arduino-esp8266-littlefs-upload-for-updating
-
-  Serial.printf("Upload: %s, Index: %u, Len: %u, Final: %u\n", filename.c_str(), index, len, final);
   if (!index)
   {
     Serial.printf("UploadStart: %s\n", filename.c_str());
@@ -75,14 +71,16 @@ void handleFWUpload(UpdateType updateType, const String filename, size_t index, 
       Update.printError(Serial);
     } else Serial.println("OTA update started!");
   }
+
   if (Update.write(data, len) != len)
   {
     Update.printError(Serial);
-  } else Serial.printf("Written: %u\n", index + len);
+  } // else Serial.printf("Written: %u\n", index + len);
+  
   if (final)
   {
     if (Update.end(true))
-    { // true to set the size to the current progress
+    { 
       Serial.printf("UpdateSuccess: %u\nRebooting...\n", index + len);
     }
     else
@@ -93,7 +91,6 @@ void handleFWUpload(UpdateType updateType, const String filename, size_t index, 
 }
 
 bool isUpdateSuccess() {
-    // Logic to determine if the update was successful
     return !Update.hasError();
 }
 

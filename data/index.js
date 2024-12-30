@@ -92,10 +92,10 @@ function updateCurrentTime() {
 }
 
 // Call updateCurrentTime every 30 seconds
-setInterval(updateCurrentTime, 30000);
+//setInterval(updateCurrentTime, 30000);
 
 // Call it once immediately to set the initial time
-updateCurrentTime();
+//updateCurrentTime();
 
 // system.html
 function toggleDisplayType(isChecked) {

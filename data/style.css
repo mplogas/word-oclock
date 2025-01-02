@@ -332,7 +332,7 @@ body {
 }
 
 .navigation-container a.active {
-  color: var(--accent-color);
+  color: var(--secondary-color);
   font-weight: bold;
 }
 

@@ -81,7 +81,7 @@ void handleFWUpload(UpdateType updateType, const String filename, size_t index, 
   {
     if (Update.end(true))
     { 
-      Serial.printf("UpdateSuccess: %u\nRebooting...\n", index + len);
+      Serial.printf("UpdateSuccess: %u\n", index + len);
     }
     else
     {

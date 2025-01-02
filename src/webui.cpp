@@ -118,8 +118,8 @@ void WebUI::init(const LightControlCallback &lightCtrlCb,
               { 
                 UpdateType type = UpdateType::FIRMWARE;
                 if (index == 0 && request->hasParam("updateType", true)) {  
-                    // const AsyncWebParameter *p = request->getParam("updateType", true);  
-                    // Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+                    const AsyncWebParameter *p = request->getParam("updateType", true);  
+                    Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
                     const String tParam = request->getParam("updateType", true)->value();
                     Serial.printf("Update type: %s\n", tParam.c_str());
                     if(tParam == "firmware") {
@@ -192,14 +192,16 @@ void WebUI::initHostAP(const WiFiSetupCallback &wifiCb)
 
 void WebUI::handleFirmwareUpdate(AsyncWebServerRequest *request)
 {
-    Serial.println("Update requested");
-
     if (updateSuccessCallback())
     {
         Serial.println("Update successful");
-        auto response = request->beginResponse(200, "text/plain", "OK");
-        response->addHeader("Connection", "close");
-        request->send(response);
+        String responseHtml = "<html><body><h1>Update Successful</h1><p>The device will restart shortly. Please wait...</p><script>setTimeout(function(){ window.location.reload(); }, 10000);</script></body></html>";
+        request->send(200, "text/html", responseHtml);
+        //auto response = request->beginResponse(200, "text/plain", responseHtml);
+        //response->addHeader("Connection", "close");
+        //request->send(response);
+        //request->client()->close();
+        Serial.println("Restarting...");
         ESP.restart();
     }
     else

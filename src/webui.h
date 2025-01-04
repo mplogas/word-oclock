@@ -55,15 +55,19 @@ class WebUI
         void handleSetAutoBrightness(AsyncWebServerRequest *request);
         void handleSetBrightness(AsyncWebServerRequest *request);
         void handleSetHAIntegration(AsyncWebServerRequest *request);
+        void printAllParams(AsyncWebServerRequest *request);
         String readFile(const char* path);
 
         // paths
-        static constexpr const char* HEADER_HTML = "/header.html";
-        static constexpr const char* LIGHT_HTML = "/light.html";
-        static constexpr const char* TIME_HTML = "/time.html";
-        static constexpr const char* SYSTEM_HTML = "/system.html";
-        static constexpr const char* FIRMWARE_HTML = "/firmware.html";
-        static constexpr const char* WIFI_MANAGER_HTML = "/wifimanager.html";
+        static constexpr const char* PATH_NAVIGATION_HTML = "/navigation.html";
+        static constexpr const char* PATH_LIGHT_HTML = "/light.html";
+        static constexpr const char* PATH_TIME_HTML = "/time.html";
+        static constexpr const char* PATH_SYSTEM_HTML = "/system.html";
+        static constexpr const char* PATH_FIRMWARE_HTML = "/firmware.html";
+        static constexpr const char* PATH_WIFI_HTML = "/wifimanager.html";
+        static constexpr const char* PATH_CSS = "/style.css";
+        static constexpr const char* PATH_JS = "/index.js";
+        static constexpr const char* PATH_ICON = "/favicon.ico";
 
         // page titles
         static constexpr const char* LIGHT_PAGE_TITLE = "Light Settings";
@@ -72,18 +76,36 @@ class WebUI
         static constexpr const char* FIRMWARE_PAGE_TITLE = "Firmware Update";
 
         // processor variables
-        static constexpr const char* PAGE_TITLE = "PAGE_TITLE";
-        static constexpr const char* FIRMWARE_VER = "FW_VERSION";
+        static constexpr const char* PROC_PAGE_TITLE = "PAGE_TITLE";
+        static constexpr const char* PROC_FW_VERS = "FW_VERSION";
 
-        // Input fields
-        static constexpr const char* SSID_INPUT = "ssid";
-        static constexpr const char* WIFI_PASS_INPUT = "wifi-pass";
-        static constexpr const char* BROKER_INPUT = "broker";
-        static constexpr const char* BROKER_USER_INPUT = "broker-user";
-        static constexpr const char* BROKER_PASS_INPUT = "broker-pass";
-        static constexpr const char* MQTT_TOPIC_INPUT = "mqtt-topic";
+        // values
+        static constexpr const char* VALUE_ON = "1";
+        static constexpr const char* VALUE_OFF = "0";
+        static constexpr const char* VALUE_SUCCESS = "Success";
+        static constexpr const char* VALUE_ERROR = "Error!";
+        static constexpr const char* VALUE_ACTIVE = "active";
+        static constexpr const char* VALUE_FIRMWARE = "firmware";
+        static constexpr const char* VALUE_FILESYS = "filesystem";
+
+        static constexpr const char* CONTENT_TEXT = "text/plain";
+        static constexpr const char* CONTENT_HTML = "text/html";
+        static constexpr const char* CONTENT_CACHE = "max-age=3600";
+
+        static constexpr const char* PARAM_FW_Type = "updateType";
 
     public:
+        static constexpr const char* PARAM_WIFI_SSID = "ssid";
+        static constexpr const char* PARAM_WIFI_PASS = "wifi-pass";
+        static constexpr const char* PARAM_ENABLED = "enabled";
+        static constexpr const char* PARAM_VALUE = "value";
+        static constexpr const char* PARAM_COLOR = "color";
+        static constexpr const char* PARAM_BROKER_HOST = "mqttHost";
+        static constexpr const char* PARAM_BROKER_PORT = "mqttPort";
+        static constexpr const char* PARAM_BROKER_USER = "mqttUsername";
+        static constexpr const char* PARAM_BROKER_PASS = "mqttPassword";
+        static constexpr const char* PARAM_BROKER_DEFAULT_TOPIC = "mqttTopic";
+
         WebUI(AsyncWebServer &server);
         ~WebUI();
         void init(const LightControlCallback &lightCtrlCb, 

@@ -24,7 +24,7 @@ public:
     static constexpr uint16_t DEFAULT_ILLUMINANCE_THRESHOLD_HIGH = 4095;
     static constexpr uint16_t DEFAULT_ILLUMINANCE_THRESHOLD_LOW = 300;
     static constexpr uint8_t DEFAULT_LIGHT_BRIGHTNESS = 50;
-    static constexpr const char* DEFAULT_LIGHT_COLOR = "FFFFFF";
+    static constexpr const char* DEFAULT_LIGHT_COLOR = "#FFFFFF";
 
     Defaults(/* args */);
     ~Defaults();

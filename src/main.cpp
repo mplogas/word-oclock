@@ -162,9 +162,25 @@ void lightOperationHandler(LightOperationType operation, const String& value) {
 }
 
 void systemOperationHandler(SystemOperationType operation, const std::map<String, String>& params) {
+  Serial.printf("System operation: %d\n", operation);
+  Serial.printf("Params: %d\n", params.size());
+  for (auto const& x : params)
+  {
+    Serial.printf("Key: %s, Value: %s\n", x.first.c_str(), x.second.c_str());
+  }
   switch (operation) {
     case SystemOperationType::SetHaIntegration: {
-      // Additional logic to handle HA integration
+      systemConfig.mqttConfig.enabled = (params.at(WebUI::PARAM_ENABLED) == "1");
+      strncpy(systemConfig.mqttConfig.host, params.at(WebUI::PARAM_BROKER_HOST).c_str(), sizeof(systemConfig.mqttConfig.host) - 1);
+      systemConfig.mqttConfig.host[sizeof(systemConfig.mqttConfig.host) - 1] = '\0';
+      systemConfig.mqttConfig.port = params.at(WebUI::PARAM_BROKER_PORT).toInt();
+      strncpy(systemConfig.mqttConfig.username, params.at(WebUI::PARAM_BROKER_USER).c_str(), sizeof(systemConfig.mqttConfig.username) - 1);
+      systemConfig.mqttConfig.username[sizeof(systemConfig.mqttConfig.username) - 1] = '\0';
+      strncpy(systemConfig.mqttConfig.password, params.at(WebUI::PARAM_BROKER_PASS).c_str(), sizeof(systemConfig.mqttConfig.password) - 1);
+      systemConfig.mqttConfig.password[sizeof(systemConfig.mqttConfig.password) - 1] = '\0';
+      strncpy(systemConfig.mqttConfig.topic, params.at(WebUI::PARAM_BROKER_DEFAULT_TOPIC).c_str(), sizeof(systemConfig.mqttConfig.topic) - 1);
+      systemConfig.mqttConfig.topic[sizeof(systemConfig.mqttConfig.topic) - 1] = '\0';
+      config.setMqttConfig(systemConfig.mqttConfig);
       break;
     }
     case SystemOperationType::SetNTPTime: {
@@ -188,46 +204,6 @@ void systemOperationHandler(SystemOperationType operation, const std::map<String
       break;
     }
   }
-
-
-  // switch (operation) {
-  //   case WebUI::SystemOperationType::SetNTPServer: {
-  //     strncpy(systemConfig.ntpConfig.server, value.c_str(), sizeof(systemConfig.ntpConfig.server) - 1);
-  //     systemConfig.ntpConfig.server[sizeof(systemConfig.ntpConfig.server) - 1] = '\0';
-  //     config.setSystemConfig(systemConfig);
-  //     break;
-  //   }
-  //   case WebUI::SystemOperationType::SetTimezone: {
-  //     strncpy(systemConfig.ntpConfig.timezone, value.c_str(), sizeof(systemConfig.ntpConfig.timezone) - 1);
-  //     systemConfig.ntpConfig.timezone[sizeof(systemConfig.ntpConfig.timezone) - 1] = '\0';
-  //     config.setSystemConfig(systemConfig);
-  //     break;
-  //   }
-  //   case WebUI::SystemOperationType::SetMQTTConfig: {
-  //     strncpy(systemConfig.mqttConfig.host, value.c_str(), sizeof(systemConfig.mqttConfig.host) - 1);
-  //     systemConfig.mqttConfig.host[sizeof(systemConfig.mqttConfig.host) - 1] = '\0';
-  //     config.setSystemConfig(systemConfig);
-  //     break;
-  //   }
-  //   case WebUI::SystemOperationType::SetMQTTUser: {
-  //     strncpy(systemConfig.mqttConfig.user, value.c_str(), sizeof(systemConfig.mqttConfig.user) - 1);
-  //     systemConfig.mqttConfig.user[sizeof(systemConfig.mqttConfig.user) - 1] = '\0';
-  //     config.setSystemConfig(systemConfig);
-  //     break;
-  //   }
-  //   case WebUI::SystemOperationType::SetMQTTPass: {
-  //     strncpy(systemConfig.mqttConfig.pass, value.c_str(), sizeof(systemConfig.mqttConfig.pass) - 1);
-  //     systemConfig.mqttConfig.pass[sizeof(systemConfig.mqttConfig.pass) - 1] = '\0';
-  //     config.setSystemConfig(systemConfig);
-  //     break;
-  //   }
-  //   case WebUI::SystemOperationType::SetMQTTTopic: {
-  //     strncpy(systemConfig.mqttConfig.topic, value.c_str(), sizeof(systemConfig.mqttConfig.topic) - 1);
-  //     systemConfig.mqttConfig.topic[sizeof(systemConfig.mqttConfig.topic) - 1] = '\0';
-  //     config.setSystemConfig(systemConfig);
-  //     break;
-  //   }
-  // }
 }
 
 // home assistant callbacks

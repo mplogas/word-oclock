@@ -31,17 +31,13 @@ public:
         bool enabled;
         char timezone[32];
         char server[64];
+        uint32_t interval;
     };
 
     struct LightScheduleConfig {
         bool enabled;
         time_t startTime; // Time in seconds since midnight
         time_t endTime;
-    };
-
-    struct NtpUpdateConfig {
-        bool enabled;
-        uint32_t interval;
     };
 
     struct AutoBrightnessConfig {
@@ -62,7 +58,6 @@ public:
         ClockMode mode;
         MqttConfig mqttConfig;
         NtpConfig ntpConfig;
-        NtpUpdateConfig ntpUpdateConfig;
         LightScheduleConfig lightScheduleConfig; 
     };    
 
@@ -70,13 +65,15 @@ public:
     ~Configuration();
     void init();
 
-    //void setLightConfig(const LightConfig& config);
     void setLightState(bool state);
     void setLightBrightness(uint8_t brightness);
     void setLightColor(const char* color);
     void setAutoBrightness(const AutoBrightnessConfig& brightnessConfig);
     LightConfig getLightConfig();
-    void setSystemConfig(const SystemConfig& config);
+    void setClockMode(ClockMode mode);
+    void setMqttConfig(const MqttConfig& config);
+    void setNtpConfig(const NtpConfig& config);
+    void setLightSchedule(const LightScheduleConfig& schedule);
     SystemConfig getSystemConfig();
     void setWifiConfig(const WifiConfig& config);
     WifiConfig getWifiConfig();
@@ -85,6 +82,7 @@ public:
 private:
     Preferences systemPreferences;
     Preferences lightPreferences;
+    //Preferences internalPreferences;
 
     // System Preferences Keys
     static constexpr const char* CLOCK_MODE_KEY = "clock_mode";
@@ -113,22 +111,11 @@ private:
     static constexpr const char* LIGHT_COLOR_KEY = "lght_color";
     static constexpr const char* LIGHT_STATE_KEY = "lght_state";
 
-    // Default MQTT Configuration
 
-
-    // Default Light Configuration
-
-    void setClockMode(ClockMode mode);
     ClockMode getClockMode();
-    void setMqttConfig(const MqttConfig& config);
     MqttConfig getMqttConfig();
-    void setNtpConfig(const NtpConfig& config);
     NtpConfig getNtpConfig();
-    void setLightSchedule(const LightScheduleConfig& schedule);
     LightScheduleConfig getLightSchedule();
-    void setNtpUpdate(const NtpUpdateConfig& update);
-    NtpUpdateConfig getNtpUpdate();
     AutoBrightnessConfig getAutoBrightness();
 };
-
 #endif // CONFIGURATION_H

@@ -29,16 +29,16 @@ void WebUI::init(const LightControlCallback &lightCtrlCb,
         return;
     }
 
-    updateSuccessCallback = updateCb;
-    uploadHandlerCallback = uploadCb;
-    lightControlCallback = lightCtrlCb;
-    systemControlCallback = systemCtrlCb;
-
     if (!lightConfig || !systemConfig)
     {
         Serial.println("Light or System configuration is null");
         return;
     }
+
+    updateSuccessCallback = updateCb;
+    uploadHandlerCallback = uploadCb;
+    lightControlCallback = lightCtrlCb;
+    systemControlCallback = systemCtrlCb;
 
     lightConfiguration = lightConfig;
     systemConfiguration = systemConfig;
@@ -48,8 +48,8 @@ void WebUI::init(const LightControlCallback &lightCtrlCb,
     server.on("/light", HTTP_GET, [this](AsyncWebServerRequest *request)
               { request->send(
                     LittleFS,
-                    WebUI::LIGHT_HTML,
-                    "text/html",
+                    WebUI::PATH_LIGHT_HTML,
+                    CONTENT_HTML,
                     false,
                     [this](const String &var) -> String
                     {
@@ -75,24 +75,22 @@ void WebUI::init(const LightControlCallback &lightCtrlCb,
     server.on("/time", HTTP_GET, [this](AsyncWebServerRequest *request)
               { request->send(
                     LittleFS,
-                    WebUI::TIME_HTML,
-                    "text/html",
+                    WebUI::PATH_TIME_HTML,
+                    CONTENT_HTML,
                     false,
                     [this](const String &var) -> String
                     {
                         return this->pageProcessor(var, Page::TIME);
                     }); });
 
-    server.on("/getCurrentTime", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        request->send(200, "application/text", "12:30");
-    });
-
+    server.on("/getCurrentTime", HTTP_GET, [this](AsyncWebServerRequest *request)
+              { request->send(200, CONTENT_TEXT, "12:30"); });
 
     server.on("/system", HTTP_GET, [this](AsyncWebServerRequest *request)
               { request->send(
                     LittleFS,
-                    WebUI::SYSTEM_HTML,
-                    "text/html",
+                    WebUI::PATH_SYSTEM_HTML,
+                    CONTENT_HTML,
                     false,
                     [this](const String &var) -> String
                     {
@@ -105,8 +103,8 @@ void WebUI::init(const LightControlCallback &lightCtrlCb,
     server.on("/update", HTTP_GET, [this](AsyncWebServerRequest *request)
               { request->send(
                     LittleFS,
-                    WebUI::FIRMWARE_HTML,
-                    "text/html",
+                    WebUI::PATH_FIRMWARE_HTML,
+                    CONTENT_HTML,
                     false,
                     [this](const String &var) -> String
                     {
@@ -117,32 +115,31 @@ void WebUI::init(const LightControlCallback &lightCtrlCb,
               { handleFirmwareUpdate(request); }, [this](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len, bool final)
               { 
                 UpdateType type = UpdateType::FIRMWARE;
-                if (index == 0 && request->hasParam("updateType", true)) {  
-                    const AsyncWebParameter *p = request->getParam("updateType", true);  
-                    Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
-                    const String tParam = request->getParam("updateType", true)->value();
-                    Serial.printf("Update type: %s\n", tParam.c_str());
-                    if(tParam == "firmware") {
+                if (index == 0 && request->hasParam(PARAM_FW_Type, true)) {  
+                    //const AsyncWebParameter *p = request->getParam(PARAM_FW_Type, true);  
+                    //Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+                    const String tParam = request->getParam(PARAM_FW_Type, true)->value();
+                    //Serial.printf("Update type: %s\n", tParam.c_str());
+                    if(tParam == VALUE_FIRMWARE) {
                         type = UpdateType::FIRMWARE;
-                    } else if(tParam == "filesystem") {
+                    } else if(tParam == VALUE_FILESYS) {
                         type = UpdateType::FILESYSTEM;
                     } else {
                         Serial.println("Invalid update type");
-                        request->send(400, "text/plain", "Invalid update type");
+                        request->send(400, CONTENT_TEXT, VALUE_ERROR);
                     }
                 }
                 //Serial.printf("Type: %u, Update: %s, Index: %u, Len: %u, Final: %u\n", type, filename.c_str(), index, len, final);
-                uploadHandlerCallback(type, filename, index, data, len, final); 
-              });
+                uploadHandlerCallback(type, filename, index, data, len, final); });
 
     // Other routes with sanitized handlers
     server.onNotFound([](AsyncWebServerRequest *request)
-                      { request->send(404, "text/plain", F("Not found")); });
+                      { request->send(404, CONTENT_TEXT, VALUE_ERROR); });
 
     // Serve Static CSS and JS only
-    server.serveStatic("/style.css", LittleFS, "/style.css").setCacheControl("max-age=3600");
-    server.serveStatic("/index.js", LittleFS, "/index.js").setCacheControl("max-age=3600");
-    server.serveStatic("favicon.ico", LittleFS, "/favicon.ico").setCacheControl("max-age=3600");
+    server.serveStatic(PATH_CSS, LittleFS, PATH_CSS).setCacheControl(CONTENT_CACHE);
+    server.serveStatic(PATH_JS, LittleFS, PATH_JS).setCacheControl(CONTENT_CACHE);
+    server.serveStatic(PATH_ICON, LittleFS, PATH_ICON).setCacheControl(CONTENT_CACHE);
     server.begin();
 }
 
@@ -153,40 +150,28 @@ void WebUI::initHostAP(const WiFiSetupCallback &wifiCb)
     server.on("/", HTTP_GET, [this](AsyncWebServerRequest *request)
               { request->send(
                     LittleFS,
-                    WebUI::WIFI_MANAGER_HTML,
-                    "text/html"); });
+                    WebUI::PATH_WIFI_HTML,
+                    CONTENT_HTML); });
 
     server.on("/", HTTP_POST, [this](AsyncWebServerRequest *request)
               {
         String ssid, password;
-        int params = request->params();
-        for (int i = 0; i < params; i++) {
-            const AsyncWebParameter* p = request->getParam(i);
-            if (p->isPost()) {
-                if (p->name() == WebUI::SSID_INPUT) {
-                    ssid = p->value();
-                    // Validate SSID length
-                    if (ssid.length() < 1 || ssid.length() > 32) {
-                        request->send(400, "text/plain", "Invalid SSID length");
-                        return;
-                    }
-                } else if (p->name() == WebUI::WIFI_PASS_INPUT) {
-                    password = p->value();
-                    // Validate password length
-                    if (password.length() < 8) {
-                        request->send(400, "text/plain", "Password too short");
-                        return;
-                    }
-                }
+        if(request->hasParam(PARAM_WIFI_SSID, true) && request->hasParam(PARAM_WIFI_PASS, true)) {
+            ssid = request->getParam(PARAM_WIFI_SSID, true)->value();
+            password = request->getParam(PARAM_WIFI_PASS, true)->value();
+            if (ssid.length() < 1 || ssid.length() > 32 || password.length() < 1) {
+                Serial.println("Invalid wifi parameters");
+                request->send(400, CONTENT_TEXT, VALUE_ERROR);
+                return;
             }
         }
         // Use the callback with the received SSID and password
         wifiCredentialsCallback(ssid, password);
-        request->send(200, "text/plain", "Done. ESP will restart, connect to your router and go to the new address");
+        request->send(200, CONTENT_TEXT, VALUE_SUCCESS);
         delay(3000);
         ESP.restart(); });
 
-    server.serveStatic("/", LittleFS, "/").setCacheControl("max-age=3600");
+    server.serveStatic("/", LittleFS, "/").setCacheControl(CONTENT_CACHE);
     server.begin();
 }
 
@@ -195,53 +180,55 @@ void WebUI::handleFirmwareUpdate(AsyncWebServerRequest *request)
     if (updateSuccessCallback())
     {
         Serial.println("Update successful");
-        String responseHtml = "<html><body><h1>Update Successful</h1><p>The device will restart shortly. Please wait...</p><script>setTimeout(function(){ window.location.reload(); }, 10000);</script></body></html>";
-        request->send(200, "text/html", responseHtml);
-        //auto response = request->beginResponse(200, "text/plain", responseHtml);
-        //response->addHeader("Connection", "close");
-        //request->send(response);
-        //request->client()->close();
+        // String responseHtml = "<html><body><h1>Update Successful</h1><p>The device will restart shortly. Please wait...</p><script>setTimeout(function(){ window.location.reload(); }, 10000);</script></body></html>";
+        // request->send(200, CONTENT_HTML, responseHtml);
+        //
+        // auto response = request->beginResponse(200, CONTENT_TEXT, responseHtml);
+        // response->addHeader("Connection", "close");
+        // request->send(response);
+        request->redirect("/system");
         Serial.println("Restarting...");
+        delay(2000);
         ESP.restart();
     }
     else
     {
         Serial.println("Update failed");
-        auto response = request->beginResponse(500, "text/plain", "ERROR");
-        response->addHeader("Connection", "close");
-        request->send(response);
+        request->send(500, CONTENT_TEXT, VALUE_ERROR);
     }
 }
 
 void WebUI::handleToggleLight(AsyncWebServerRequest *request)
 {
-    if (request->hasParam("status"))
+    if (request->hasParam(PARAM_ENABLED))
     {
-        String statusParam = request->getParam("status")->value();
+        String statusParam = request->getParam(PARAM_ENABLED)->value();
 
         // Validate status parameter
-        if (statusParam == "0" || statusParam == "1")
+        if (statusParam == VALUE_OFF || statusParam == VALUE_ON)
         {
             lightControlCallback(LightOperationType::ToggleStatus, statusParam);
 
-            request->send(200, "text/plain", "Light status updated");
+            request->send(200, CONTENT_TEXT, VALUE_SUCCESS);
         }
         else
         {
-            request->send(400, "text/plain", "Invalid status value");
+Serial.println("Invalid status value");
+            request->send(400, CONTENT_TEXT, VALUE_ERROR);
         }
     }
     else
     {
-        request->send(400, "text/plain", "Missing status parameter");
+Serial.println("Missing status parameter");
+        request->send(400, CONTENT_TEXT, VALUE_ERROR);
     }
 }
 
 void WebUI::handleSetLightColor(AsyncWebServerRequest *request)
 {
-    if (request->hasParam("color"))
+    if (request->hasParam(PARAM_COLOR))
     {
-        String colorParam = request->getParam("color")->value();
+        String colorParam = request->getParam(PARAM_COLOR)->value();
         // Validate color format (expecting #RRGGBB)
         if (colorParam.length() == 7 && colorParam[0] == '#')
         {
@@ -259,179 +246,198 @@ void WebUI::handleSetLightColor(AsyncWebServerRequest *request)
             if (valid)
             {
                 lightControlCallback(LightOperationType::SetColor, colorParam);
-                request->send(200, "text/plain", "Light color updated");
+                request->send(200, CONTENT_TEXT, VALUE_SUCCESS);
+                return;
             }
             else
             {
-                request->send(400, "text/plain", "Invalid color format");
+                Serial.println("Invalid color format");
+                request->send(400, CONTENT_TEXT, VALUE_ERROR);
+                return;
             }
         }
         else
         {
-            request->send(400, "text/plain", "Invalid color format");
+Serial.println("Invalid color format");
+            request->send(400, CONTENT_TEXT, VALUE_ERROR);
+            return;
         }
     }
     else
     {
-        request->send(400, "text/plain", "Missing color parameter");
+Serial.println("Missing color parameter");
+        request->send(400, CONTENT_TEXT, VALUE_ERROR);
+        return;
     }
 }
 
 void WebUI::handleSetAutoBrightness(AsyncWebServerRequest *request)
 {
-    if (request->hasParam("enabled"))
+    if (request->hasParam(PARAM_ENABLED))
     {
-        String enabledParam = request->getParam("enabled")->value();
+        String enabledParam = request->getParam(PARAM_ENABLED)->value();
 
         // Validate enabled parameter
-        if (enabledParam == "0" || enabledParam == "1")
+        if (enabledParam == VALUE_OFF || enabledParam == VALUE_ON)
         {
-            bool enabled = enabledParam == "1";
+            bool enabled = enabledParam == VALUE_ON;
             lightControlCallback(LightOperationType::SetAutoBrightness, enabledParam);
-            request->send(200, "text/plain", "Auto-brightness updated");
+            request->send(200, CONTENT_TEXT, VALUE_SUCCESS);
+            return;
         }
         else
         {
-            request->send(400, "text/plain", "Invalid enabled value");
+    Serial.println("Invalid enabled value");
+            request->send(400, CONTENT_TEXT, VALUE_ERROR);
+            return;
         }
     }
     else
     {
-        request->send(400, "text/plain", "Missing enabled parameter");
+Serial.println("Missing enabled parameter");
+        request->send(400, CONTENT_TEXT, VALUE_ERROR);
+        return;
     }
 }
 
 void WebUI::handleSetBrightness(AsyncWebServerRequest *request)
 {
-    if (request->hasParam("value"))
+    if (request->hasParam(PARAM_VALUE))
     {
-        String valueParam = request->getParam("value")->value();
+        String valueParam = request->getParam(PARAM_VALUE)->value();
 
         // Validate brightness value (should be an integer between 0 and 255)
         int brightness = valueParam.toInt();
         if (brightness >= 0 && brightness <= 255)
         {
             lightControlCallback(LightOperationType::SetBrightness, valueParam);
-            request->send(200, "text/plain", "Brightness updated");
+            request->send(200, CONTENT_TEXT, VALUE_SUCCESS);
+            return;
         }
         else
         {
-            request->send(400, "text/plain", "Invalid brightness value");
+            Serial.println("Invalid brightness value");
+            request->send(400, CONTENT_TEXT, VALUE_ERROR);
+            return;
         }
     }
     else
     {
-        request->send(400, "text/plain", "Missing value parameter");
+        Serial.println("Missing value parameter");
+        request->send(400, CONTENT_TEXT, VALUE_ERROR);
+        return;
     }
 }
 
 void WebUI::handleSetHAIntegration(AsyncWebServerRequest *request)
 {
-    if (request->hasParam("haIntegration"))
+    printAllParams(request);
+    if (request->hasParam(PARAM_ENABLED, true))
     {
-        char haIntegration[2] = {0};
-        strncpy(haIntegration, request->getParam("haIntegration")->value().c_str(), sizeof(haIntegration) - 1);
-        haIntegration[sizeof(haIntegration) - 1] = '\0';
-        int enabled = atoi(haIntegration);
-
-        if (enabled == 0)
+        String haIntegrationParam = request->getParam(PARAM_ENABLED, true)->value();
+        if (haIntegrationParam == VALUE_OFF)
         {
             std::map<String, String> params;
-            params["enabled"] = haIntegration;
+            params[PARAM_ENABLED] = VALUE_OFF;
+            params[PARAM_BROKER_HOST] = String();
+            params[PARAM_BROKER_PORT] = String();
+            params[PARAM_BROKER_USER] = String();
+            params[PARAM_BROKER_PASS] = String();
+            params[PARAM_BROKER_DEFAULT_TOPIC] = String();
             systemControlCallback(SystemOperationType::SetHaIntegration, params);
-            request->send(200, "text/plain", "Home Assistant integration disabled");
+            request->send(200, CONTENT_TEXT, VALUE_SUCCESS);
+            return;
         }
-        else if (enabled == 1)
+        else if (haIntegrationParam == VALUE_ON)
         {
-            if (request->hasParam("mqttHost") && request->hasParam("mqttPort"))
+            //TODO: check if parameters exist
+            if (!request->hasParam(PARAM_BROKER_HOST, true) ||
+                !request->hasParam(PARAM_BROKER_PORT, true) ||
+                !request->hasParam(PARAM_BROKER_DEFAULT_TOPIC, true))
             {
-                // these are somewhat optional
-                // && request->hasParam("mqttUsername") && request->hasParam("mqttPassword") && request->hasParam("mqttTopic")
+                Serial.println("Missing parameters");
+                request->send(400, CONTENT_TEXT, VALUE_ERROR);
+                return;
+            }
 
-                // GitHub copilot doesn't like my clean approach :(
-                // after 2nd thought, it's onto something here. lifetime of pointers and stuff.
-                // const char *mqttHost = request->getParam("mqttHost")->value().c_str();
-                // const char *mqttPort = request->getParam("mqttPort")->value().c_str();
-                // const char *mqttUsername = request->getParam("mqttUsername")->value().c_str();
-                // const char *mqttPassword = request->getParam("mqttPassword")->value().c_str();
-                // const char *mqttTopic = request->getParam("mqttTopic")->value().c_str();
-
-                char mqttHost[65] = {0};
-                char mqttPort[6] = {0};
-                char mqttUsername[65] = {0};
-                char mqttPassword[65] = {0};
-                char mqttTopic[65] = {0};
-
-                // Copy parameters to fixed-size buffers
-                strncpy(mqttHost, request->getParam("mqttHost")->value().c_str(), sizeof(mqttHost) - 1);
-                strncpy(mqttPort, request->getParam("mqttPort")->value().c_str(), sizeof(mqttPort) - 1);
-                strncpy(mqttUsername, request->getParam("mqttUsername")->value().c_str(), sizeof(mqttUsername) - 1);
-                strncpy(mqttPassword, request->getParam("mqttPassword")->value().c_str(), sizeof(mqttPassword) - 1);
-                strncpy(mqttTopic, request->getParam("mqttTopic")->value().c_str(), sizeof(mqttTopic) - 1);
-
-                // Ensure null-termination
-                mqttHost[sizeof(mqttHost) - 1] = '\0';
-                mqttPort[sizeof(mqttPort) - 1] = '\0';
-                mqttUsername[sizeof(mqttUsername) - 1] = '\0';
-                mqttPassword[sizeof(mqttPassword) - 1] = '\0';
-                mqttTopic[sizeof(mqttTopic) - 1] = '\0';
-
-                // Validate MQTT host
-                if (strlen(mqttHost) < 1 || strlen(mqttHost) > 64)
-                {
-                    request->send(400, "text/plain", "Invalid MQTT host");
-                    return;
-                }
-
-                // Validate MQTT port
-                int port = atoi(mqttPort);
-                if (port < 1 || port > 65535)
-                {
-                    request->send(400, "text/plain", "Invalid MQTT port");
-                    return;
-                }
-
-                // Optional parameters
-                // Validate MQTT username
-                if (strlen(mqttUsername) > 64)
-                {
-                    request->send(400, "text/plain", "Invalid MQTT username");
-                    return;
-                }
-
-                // Validate MQTT password
-                if (strlen(mqttPassword) > 64)
-                {
-                    request->send(400, "text/plain", "Invalid MQTT password");
-                    return;
-                }
-
-                // Validate MQTT topic
-                if (strlen(mqttTopic) > 64)
-                {
-                    request->send(400, "text/plain", "Invalid MQTT topic");
-                    return;
-                }
-
-                // Prepare parameters
+            String mqttHost = request->getParam(PARAM_BROKER_HOST, true)->value();
+            String mqttPort = request->getParam(PARAM_BROKER_PORT, true)->value();
+            String mqttTopic = request->getParam(PARAM_BROKER_DEFAULT_TOPIC, true)->value();
+            if (mqttHost.length() > 0)
+            {
                 std::map<String, String> params;
-                params["mqttHost"] = mqttHost;
-                params["mqttPort"] = mqttPort;
-                if (strlen(mqttUsername) > 0)
-                    params["mqttUsername"] = mqttUsername;
-                if (strlen(mqttPassword) > 0)
-                    params["mqttPassword"] = mqttPassword;
-                if (strlen(mqttTopic) > 0)
-                    params["defaultTopic"] = mqttTopic;
+                params[PARAM_ENABLED] = VALUE_ON;
+                params[PARAM_BROKER_HOST] = mqttHost;
+                if (mqttPort.length() > 0)
+                {
+                    params[PARAM_BROKER_PORT] = mqttPort;
+                }
+                else
+                {
+                    params[PARAM_BROKER_PORT] = Defaults::DEFAULT_MQTT_PORT;
+                }
 
-                // Call the system control callback
+                if(request->hasParam(PARAM_BROKER_USER, true))
+                {
+                    String mqttUsername = request->getParam(PARAM_BROKER_USER, true)->value();
+                    if (mqttUsername.length() > 0)
+                    {                        
+                        params[PARAM_BROKER_USER] = mqttUsername;
+                        if(request->hasParam(PARAM_BROKER_PASS, true))
+                        {
+                            String mqttPassword = request->getParam(PARAM_BROKER_PASS, true)->value();
+                            if (mqttPassword.length() > 0)
+                            {
+                                params[PARAM_BROKER_PASS] = mqttPassword;
+                            }
+                            else
+                            {
+                                params[PARAM_BROKER_PASS] = String();
+                            }
+                        }
+                        else
+                        {
+                            params[PARAM_BROKER_PASS] = String();
+                        }
+                    }
+                    else
+                    {
+                        params[PARAM_BROKER_USER] = String();
+                        params[PARAM_BROKER_PASS] = String();
+                    }
+                }            
+
+                
+                if (mqttTopic.length() > 0)
+                {
+                    params[PARAM_BROKER_DEFAULT_TOPIC] = mqttTopic;
+                }
+                else
+                {
+                    params[PARAM_BROKER_DEFAULT_TOPIC] = Defaults::DEFAULT_MQTT_TOPIC;
+                }
                 systemControlCallback(SystemOperationType::SetHaIntegration, params);
-
-                request->send(200, "text/plain", "Home Assistant integration settings updated");
+                request->send(200, CONTENT_TEXT, VALUE_SUCCESS);
+                return;
+            }
+            else
+            {
+                Serial.println("Invalid MQTT host");
+                request->send(400, CONTENT_TEXT, VALUE_ERROR);
+                return;
             }
         }
+        else
+        {
+            Serial.println("Invalid HA Integration value");
+            request->send(400, CONTENT_TEXT, VALUE_ERROR);
+            return;
+        }
+    } else {
+        Serial.println("Invalid request");
+        request->send(400, CONTENT_TEXT, VALUE_ERROR);
+        return;
     }
-    request->send(400, "text/plain", "Missing parameters");
 }
 
 String WebUI::pageProcessor(const String &var, Page page)
@@ -456,7 +462,7 @@ String WebUI::pageProcessor(const String &var, Page page)
 
 String WebUI::headerProcessor(Page page)
 {
-    String headerContent = readFile(HEADER_HTML);
+    String headerContent = readFile(PATH_NAVIGATION_HTML);
     if (headerContent.length() == 0)
     {
         return String();
@@ -473,7 +479,7 @@ String WebUI::headerProcessor(Page page)
         break;
     case Page::TIME:
         pageTitle = TIME_PAGE_TITLE;
-        break;        
+        break;
     case Page::FIRMWARE:
         pageTitle = FIRMWARE_PAGE_TITLE;
         break;
@@ -483,9 +489,9 @@ String WebUI::headerProcessor(Page page)
     }
 
     headerContent.replace("%PAGE_TITLE%", pageTitle);
-    headerContent.replace("%ACTIVE_LIGHT%", (page == Page::LIGHT) ? "active" : "");
-    headerContent.replace("%ACTIVE_TIME%", (page == Page::TIME) ? "active" : "");
-    headerContent.replace("%ACTIVE_SYSTEM%", (page == Page::SYSTEM) ? "active" : "");
+    headerContent.replace("%ACTIVE_LIGHT%", (page == Page::LIGHT) ? VALUE_ACTIVE : "");
+    headerContent.replace("%ACTIVE_TIME%", (page == Page::TIME) ? VALUE_ACTIVE : "");
+    headerContent.replace("%ACTIVE_SYSTEM%", (page == Page::SYSTEM) ? VALUE_ACTIVE : "");
 
     return headerContent;
 }
@@ -524,6 +530,12 @@ String WebUI::systemPageProcessor(const String &var)
     }
     else if (var == "BROKER_IP")
     {
+        Serial.printf("Broker IP: %d\n", strlen(systemConfiguration->mqttConfig.host));
+        if (strlen(systemConfiguration->mqttConfig.host) <= 1)
+        {
+            return String();
+        }
+
         return systemConfiguration->mqttConfig.host;
     }
     else if (var == "BROKER_PORT")
@@ -532,16 +544,14 @@ String WebUI::systemPageProcessor(const String &var)
     }
     else if (var == "MQTT_USERNAME")
     {
-        return systemConfiguration->mqttConfig.username;
+        if (strlen(systemConfiguration->mqttConfig.username) > 1)
+            return systemConfiguration->mqttConfig.username;
     }
     else if (var == "DEFAULT_TOPIC")
     {
         return systemConfiguration->mqttConfig.topic;
     }
-    else
-    {
-        return String();
-    }
+
     return String();
 }
 
@@ -568,4 +578,15 @@ String WebUI::readFile(const char *path)
     String fileContent = file.readString();
     file.close();
     return fileContent;
+}
+
+void WebUI::printAllParams(AsyncWebServerRequest *request)
+{
+    Serial.println("Parameters found in request:");
+    int params = request->params();
+    for (int i = 0; i < params; i++)
+    {
+        const AsyncWebParameter *p = request->getParam(i);
+        Serial.printf("PARAM[%s]: %s\n", p->name().c_str(), p->value().c_str());
+    }
 }

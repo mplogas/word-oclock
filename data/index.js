@@ -3,7 +3,7 @@
 function toggleLight(isChecked) {
   const status = isChecked ? '1' : '0';
 
-  fetch(`/toggleLight?status=${status}`)
+  fetch(`/toggleLight?enabled=${status}`)
     .then(response => response.text())
     .then(data => {
       console.log(`Light toggled: ${data}`);
@@ -138,13 +138,13 @@ function saveHaIntegration() {
   const mqttPassword = document.getElementById('mqttPassword').value;
   const mqttTopic = document.getElementById('defaultTopic').value;
 
-  if (!mqttHost || !mqttPort || !mqttUsername || !mqttPassword || !mqttTopic) {
-    alert('Please fill in all fields.');
+  if (!mqttHost || !mqttPort || !mqttTopic) {
+    alert('Please fill in all required fields.');
     return;
   }
 
   const formData = new FormData();
-  formData.append('haIntegration', haIntegrationToggle ? '1' : '0');
+  formData.append('enabled', haIntegrationToggle ? '1' : '0');
   if(haIntegrationToggle) {
     formData.append('mqttHost', mqttHost);
     formData.append('mqttPort', mqttPort);

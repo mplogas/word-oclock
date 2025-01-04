@@ -331,7 +331,8 @@ body {
   margin-right: 10px;
 }
 
-.navigation-container a.active {
+.navigation-container a.active,
+.navigation-container a.active:hover {
   color: var(--secondary-color);
   font-weight: bold;
 }

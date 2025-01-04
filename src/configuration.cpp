@@ -15,6 +15,7 @@ Configuration::~Configuration() {
 
 // Initialize Preferences namespaces
 void Configuration::init() {
+    // internalPreferences.begin("init", true);
     systemPreferences.begin("system", false); // Read and write access
     lightPreferences.begin("light", false);
 }
@@ -55,15 +56,18 @@ void Configuration::setMqttConfig(const MqttConfig& config) {
 Configuration::MqttConfig Configuration::getMqttConfig() {
     MqttConfig config;
 
-    // Initialize buffers to null characters
-    memset(config.topic, 0, sizeof(config.topic));
-
     config.enabled = systemPreferences.getBool(MQTT_ENABLED_KEY, Defaults::DEFAULT_MQTT_ENABLED);
+    if(systemPreferences.getBytes(MQTT_HOST_KEY, config.host, sizeof(config.host) - 1) == 0) {
+        strncpy(config.host, "", sizeof(config.host) - 1);
+    }
     config.port = systemPreferences.getUInt(MQTT_PORT_KEY, Defaults::DEFAULT_MQTT_PORT);
-
-    size_t topicLen = systemPreferences.getBytes(MQTT_TOPIC_KEY, config.topic, sizeof(config.topic) - 1);
-    if (topicLen == 0) {
-        // Property not set, assign default
+    if(systemPreferences.getBytes(MQTT_USERNAME_KEY, config.username, sizeof(config.username) - 1) == 0) {
+        strncpy(config.username, "", sizeof(config.username) - 1);
+    }
+    if(systemPreferences.getBytes(MQTT_PASSWORD_KEY, config.password, sizeof(config.password) - 1) == 0) {
+        strncpy(config.password, "", sizeof(config.password) - 1);
+    }
+    if(systemPreferences.getBytes(MQTT_TOPIC_KEY, config.topic, sizeof(config.topic) - 1) == 0) {
         strncpy(config.topic, Defaults::DEFAULT_MQTT_TOPIC, sizeof(config.topic) - 1);
     }
 
@@ -75,6 +79,7 @@ void Configuration::setNtpConfig(const NtpConfig& config) {
     systemPreferences.putBool(NTP_ENABLED_KEY, config.enabled);
     systemPreferences.putBytes(NTP_TIMEZONE_KEY, config.timezone, sizeof(config.timezone));
     systemPreferences.putBytes(NTP_SERVER_KEY, config.server, sizeof(config.server));
+    systemPreferences.putULong(NTP_UPDATE_INTERVAL_KEY, config.interval);
 }
 
 Configuration::NtpConfig Configuration::getNtpConfig() {
@@ -86,6 +91,7 @@ Configuration::NtpConfig Configuration::getNtpConfig() {
 
     // Enabled
     config.enabled = systemPreferences.getBool(NTP_ENABLED_KEY, Defaults::DEFAULT_NTP_ENABLED);
+    config.interval = systemPreferences.getULong(NTP_UPDATE_INTERVAL_KEY, Defaults::DEFAULT_NTP_UPDATE_INTERVAL); // Default interval: 24 hours
 
     // Timezone
     size_t tzLen = systemPreferences.getBytes(NTP_TIMEZONE_KEY, config.timezone, sizeof(config.timezone) - 1);
@@ -102,6 +108,8 @@ Configuration::NtpConfig Configuration::getNtpConfig() {
     return config;
 }
 
+
+
 // Light Schedule
 void Configuration::setLightSchedule(const LightScheduleConfig& schedule) {
     lightPreferences.putBool(LIGHT_SCHEDULE_ENABLED_KEY, schedule.enabled);
@@ -115,19 +123,6 @@ Configuration::LightScheduleConfig Configuration::getLightSchedule() {
     schedule.startTime = lightPreferences.getUInt(LIGHT_SCHEDULE_START_TIME_KEY, 0);
     schedule.endTime = lightPreferences.getUInt(LIGHT_SCHEDULE_END_TIME_KEY, 0);
     return schedule;
-}
-
-// NTP Update
-void Configuration::setNtpUpdate(const NtpUpdateConfig& update) {
-    systemPreferences.putBool(NTP_UPDATE_ENABLED_KEY, update.enabled);
-    systemPreferences.putULong(NTP_UPDATE_INTERVAL_KEY, update.interval);
-}
-
-Configuration::NtpUpdateConfig Configuration::getNtpUpdate() {
-    NtpUpdateConfig update;
-    update.enabled = systemPreferences.getBool(NTP_UPDATE_ENABLED_KEY, Defaults::DEFAULT_NTP_UPDATE_ENABLED);
-    update.interval = systemPreferences.getULong(NTP_UPDATE_INTERVAL_KEY, Defaults::DEFAULT_NTP_UPDATE_INTERVAL); // Default interval: 24 hours
-    return update;
 }
 
 // Auto Brightness
@@ -176,7 +171,7 @@ Configuration::LightConfig Configuration::getLightConfig() {
     LightConfig config;
 
     config.brightness = lightPreferences.getUChar(LIGHT_BRIGHTNESS_KEY, Defaults::DEFAULT_LIGHT_BRIGHTNESS);
-    config.state = lightPreferences.getBool(LIGHT_STATE_KEY, false);
+    config.state = lightPreferences.getBool(LIGHT_STATE_KEY, true);
 
     memset(config.color, 0, sizeof(config.color));
 
@@ -194,13 +189,64 @@ Configuration::SystemConfig Configuration::getSystemConfig() {
     SystemConfig config;
     config.mqttConfig = getMqttConfig();
     config.ntpConfig = getNtpConfig();
-    config.ntpUpdateConfig = getNtpUpdate();
     config.mode = getClockMode();
     return config;
 }
+
 
 // Reset all configurations
 void Configuration::reset() {
     systemPreferences.clear();
     lightPreferences.clear();
 }
+
+// void Configuration::initializeDefaultConfig(){
+//     Configuration::MqttConfig mqttConfig;
+//     mqttConfig.enabled = Defaults::DEFAULT_MQTT_ENABLED;
+//     strncpy(mqttConfig.host, "", sizeof(mqttConfig.host) - 1);
+//     mqttConfig.host[sizeof(mqttConfig.host) - 1] = '\0';
+//     mqttConfig.port = Defaults::DEFAULT_MQTT_PORT;
+//     strncpy(mqttConfig.username, "", sizeof(mqttConfig.username) - 1);
+//     mqttConfig.username[sizeof(mqttConfig.username) - 1] = '\0';
+//     strncpy(mqttConfig.password, "", sizeof(mqttConfig.password) - 1);
+//     mqttConfig.password[sizeof(mqttConfig.password) - 1] = '\0';
+//     strncpy(mqttConfig.topic, Defaults::DEFAULT_MQTT_TOPIC, sizeof(mqttConfig.topic) - 1);
+//     mqttConfig.topic[sizeof(mqttConfig.topic) - 1] = '\0';
+//     setMqttConfig(mqttConfig);
+
+//     Configuration::NtpConfig ntpConfig;
+//     ntpConfig.enabled = Defaults::DEFAULT_NTP_ENABLED;
+//     strncpy(ntpConfig.timezone, Defaults::DEFAULT_NTP_TIMEZONE, sizeof(ntpConfig.timezone) - 1);
+//     ntpConfig.timezone[sizeof(ntpConfig.timezone) - 1] = '\0';
+//     strncpy(ntpConfig.server, Defaults::DEFAULT_NTP_SERVER, sizeof(ntpConfig.server) - 1);
+//     ntpConfig.server[sizeof(ntpConfig.server) - 1] = '\0';
+//     setNtpConfig(ntpConfig);
+
+//     Configuration::NtpUpdateConfig ntpUpdateConfig;
+//     ntpUpdateConfig.enabled = Defaults::DEFAULT_NTP_UPDATE_ENABLED;
+//     ntpUpdateConfig.interval = Defaults::DEFAULT_NTP_UPDATE_INTERVAL;
+//     setNtpUpdate(ntpUpdateConfig);
+
+//     Configuration::LightScheduleConfig lightScheduleConfig;
+//     lightScheduleConfig.enabled = Defaults::DEFAULT_LIGHT_SCHEDULE_ENABLED;
+//     lightScheduleConfig.startTime = 0;
+//     lightScheduleConfig.endTime = 0;
+//     setLightSchedule(lightScheduleConfig);
+
+//     Configuration::LightConfig lightConfig;
+//     lightConfig.brightness = Defaults::DEFAULT_LIGHT_BRIGHTNESS;
+//     lightConfig.autoBrightnessConfig.enabled = Defaults::DEFAULT_AUTO_BRIGHTNESS_ENABLED;
+//     lightConfig.autoBrightnessConfig.illuminanceThresholdHigh = Defaults::DEFAULT_ILLUMINANCE_THRESHOLD_HIGH;
+//     lightConfig.autoBrightnessConfig.illuminanceThresholdLow = Defaults::DEFAULT_ILLUMINANCE_THRESHOLD_LOW;
+//     strncpy(lightConfig.color, Defaults::DEFAULT_LIGHT_COLOR, sizeof(lightConfig.color) - 1);
+//     lightConfig.color[sizeof(lightConfig.color) - 1] = '\0';
+//     lightConfig.state = false;
+//     setLightState(lightConfig.state);
+//     setLightBrightness(lightConfig.brightness);
+//     setLightColor(lightConfig.color);
+//     setAutoBrightness(lightConfig.autoBrightnessConfig);  
+
+//     setClockMode(Regular);
+
+//     setIsInitialized();
+// }

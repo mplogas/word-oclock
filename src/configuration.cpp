@@ -15,9 +15,19 @@ Configuration::~Configuration() {
 
 // Initialize Preferences namespaces
 void Configuration::init() {
-    // internalPreferences.begin("init", true);
-    systemPreferences.begin("system", false); // Read and write access
+    systemPreferences.begin("system", false); 
     lightPreferences.begin("light", false);
+    if(!getIsInitialized()) {
+        initializeDefaultConfig();
+    }
+}
+
+void Configuration::setIsInitialized(bool isInitialized) {
+    systemPreferences.putBool(IS_INITIALIZED_KEY, isInitialized);
+}
+
+bool Configuration::getIsInitialized() {
+    return systemPreferences.getBool(IS_INITIALIZED_KEY, false);
 }
 
 // ClockMode
@@ -46,7 +56,7 @@ Configuration::WifiConfig Configuration::getWifiConfig() {
 // MQTT Configuration
 void Configuration::setMqttConfig(const MqttConfig& config) {
     systemPreferences.putBool(MQTT_ENABLED_KEY, config.enabled);
-    systemPreferences.putBytes(MQTT_HOST_KEY, config.host, sizeof(config.host));
+    int size = systemPreferences.putBytes(MQTT_HOST_KEY, config.host, sizeof(config.host));
     systemPreferences.putUInt(MQTT_PORT_KEY, config.port);
     systemPreferences.putBytes(MQTT_USERNAME_KEY, config.username, sizeof(config.username));
     systemPreferences.putBytes(MQTT_PASSWORD_KEY, config.password, sizeof(config.password));
@@ -55,22 +65,14 @@ void Configuration::setMqttConfig(const MqttConfig& config) {
 
 Configuration::MqttConfig Configuration::getMqttConfig() {
     MqttConfig config;
-
     config.enabled = systemPreferences.getBool(MQTT_ENABLED_KEY, Defaults::DEFAULT_MQTT_ENABLED);
-    if(systemPreferences.getBytes(MQTT_HOST_KEY, config.host, sizeof(config.host) - 1) == 0) {
-        strncpy(config.host, "", sizeof(config.host) - 1);
+    if(systemPreferences.getBytes(MQTT_HOST_KEY, config.host, sizeof(config.host)) == 0) {
+        strncpy(config.host, "", sizeof(config.host));
     }
     config.port = systemPreferences.getUInt(MQTT_PORT_KEY, Defaults::DEFAULT_MQTT_PORT);
-    if(systemPreferences.getBytes(MQTT_USERNAME_KEY, config.username, sizeof(config.username) - 1) == 0) {
-        strncpy(config.username, "", sizeof(config.username) - 1);
-    }
-    if(systemPreferences.getBytes(MQTT_PASSWORD_KEY, config.password, sizeof(config.password) - 1) == 0) {
-        strncpy(config.password, "", sizeof(config.password) - 1);
-    }
-    if(systemPreferences.getBytes(MQTT_TOPIC_KEY, config.topic, sizeof(config.topic) - 1) == 0) {
-        strncpy(config.topic, Defaults::DEFAULT_MQTT_TOPIC, sizeof(config.topic) - 1);
-    }
-
+    systemPreferences.getBytes(MQTT_USERNAME_KEY, config.username, sizeof(config.username));
+    systemPreferences.getBytes(MQTT_PASSWORD_KEY, config.password, sizeof(config.password));
+    systemPreferences.getBytes(MQTT_TOPIC_KEY, config.topic, sizeof(config.topic));
     return config;
 }
 
@@ -86,23 +88,23 @@ Configuration::NtpConfig Configuration::getNtpConfig() {
     NtpConfig config;
 
     // Initialize buffers
-    memset(config.timezone, 0, sizeof(config.timezone));
-    memset(config.server, 0, sizeof(config.server));
+    // memset(config.timezone, 0, sizeof(config.timezone));
+    // memset(config.server, 0, sizeof(config.server));
 
     // Enabled
     config.enabled = systemPreferences.getBool(NTP_ENABLED_KEY, Defaults::DEFAULT_NTP_ENABLED);
     config.interval = systemPreferences.getULong(NTP_UPDATE_INTERVAL_KEY, Defaults::DEFAULT_NTP_UPDATE_INTERVAL); // Default interval: 24 hours
 
     // Timezone
-    size_t tzLen = systemPreferences.getBytes(NTP_TIMEZONE_KEY, config.timezone, sizeof(config.timezone) - 1);
+    size_t tzLen = systemPreferences.getBytes(NTP_TIMEZONE_KEY, config.timezone, sizeof(config.timezone));
     if (tzLen == 0) {
-        strncpy(config.timezone, Defaults::DEFAULT_NTP_TIMEZONE, sizeof(config.timezone) - 1);
+        strncpy(config.timezone, Defaults::DEFAULT_NTP_TIMEZONE, sizeof(config.timezone));
     }
 
     // Server
-    size_t serverLen = systemPreferences.getBytes(NTP_SERVER_KEY, config.server, sizeof(config.server) - 1);
+    size_t serverLen = systemPreferences.getBytes(NTP_SERVER_KEY, config.server, sizeof(config.server));
     if (serverLen == 0) {
-        strncpy(config.server, Defaults::DEFAULT_NTP_SERVER, sizeof(config.server) - 1);
+        strncpy(config.server, Defaults::DEFAULT_NTP_SERVER, sizeof(config.server));
     }
 
     return config;
@@ -175,9 +177,9 @@ Configuration::LightConfig Configuration::getLightConfig() {
 
     memset(config.color, 0, sizeof(config.color));
 
-    size_t colorLen = lightPreferences.getBytes(LIGHT_COLOR_KEY, config.color, sizeof(config.color) - 1);
+    size_t colorLen = lightPreferences.getBytes(LIGHT_COLOR_KEY, config.color, sizeof(config.color));
     if (colorLen == 0) {
-        strncpy(config.color, Defaults::DEFAULT_LIGHT_COLOR, sizeof(config.color) - 1);
+        strncpy(config.color, Defaults::DEFAULT_LIGHT_COLOR, sizeof(config.color));
     } 
 
     config.autoBrightnessConfig = getAutoBrightness();
@@ -200,53 +202,49 @@ void Configuration::reset() {
     lightPreferences.clear();
 }
 
-// void Configuration::initializeDefaultConfig(){
-//     Configuration::MqttConfig mqttConfig;
-//     mqttConfig.enabled = Defaults::DEFAULT_MQTT_ENABLED;
-//     strncpy(mqttConfig.host, "", sizeof(mqttConfig.host) - 1);
-//     mqttConfig.host[sizeof(mqttConfig.host) - 1] = '\0';
-//     mqttConfig.port = Defaults::DEFAULT_MQTT_PORT;
-//     strncpy(mqttConfig.username, "", sizeof(mqttConfig.username) - 1);
-//     mqttConfig.username[sizeof(mqttConfig.username) - 1] = '\0';
-//     strncpy(mqttConfig.password, "", sizeof(mqttConfig.password) - 1);
-//     mqttConfig.password[sizeof(mqttConfig.password) - 1] = '\0';
-//     strncpy(mqttConfig.topic, Defaults::DEFAULT_MQTT_TOPIC, sizeof(mqttConfig.topic) - 1);
-//     mqttConfig.topic[sizeof(mqttConfig.topic) - 1] = '\0';
-//     setMqttConfig(mqttConfig);
+void Configuration::initializeDefaultConfig(){
+    Configuration::WifiConfig wifiConfig;
+    strncpy(wifiConfig.ssid, "", sizeof(wifiConfig.ssid));
+    strncpy(wifiConfig.password, "", sizeof(wifiConfig.password));
+    setWifiConfig(wifiConfig);
 
-//     Configuration::NtpConfig ntpConfig;
-//     ntpConfig.enabled = Defaults::DEFAULT_NTP_ENABLED;
-//     strncpy(ntpConfig.timezone, Defaults::DEFAULT_NTP_TIMEZONE, sizeof(ntpConfig.timezone) - 1);
-//     ntpConfig.timezone[sizeof(ntpConfig.timezone) - 1] = '\0';
-//     strncpy(ntpConfig.server, Defaults::DEFAULT_NTP_SERVER, sizeof(ntpConfig.server) - 1);
-//     ntpConfig.server[sizeof(ntpConfig.server) - 1] = '\0';
-//     setNtpConfig(ntpConfig);
+    Configuration::MqttConfig mqttConfig;
+    mqttConfig.enabled = Defaults::DEFAULT_MQTT_ENABLED;
+    strncpy(mqttConfig.host, "", sizeof(mqttConfig.host));
+    mqttConfig.port = Defaults::DEFAULT_MQTT_PORT;
+    strncpy(mqttConfig.username, "", sizeof(mqttConfig.username));
+    strncpy(mqttConfig.password, "", sizeof(mqttConfig.password));
+    strncpy(mqttConfig.topic, Defaults::DEFAULT_MQTT_TOPIC, sizeof(mqttConfig.topic));
+    setMqttConfig(mqttConfig);
 
-//     Configuration::NtpUpdateConfig ntpUpdateConfig;
-//     ntpUpdateConfig.enabled = Defaults::DEFAULT_NTP_UPDATE_ENABLED;
-//     ntpUpdateConfig.interval = Defaults::DEFAULT_NTP_UPDATE_INTERVAL;
-//     setNtpUpdate(ntpUpdateConfig);
+    Configuration::NtpConfig ntpConfig;
+    ntpConfig.enabled = Defaults::DEFAULT_NTP_ENABLED;
+    strncpy(ntpConfig.timezone, Defaults::DEFAULT_NTP_TIMEZONE, sizeof(ntpConfig.timezone));
+    strncpy(ntpConfig.server, Defaults::DEFAULT_NTP_SERVER, sizeof(ntpConfig.server));
+    ntpConfig.interval = Defaults::DEFAULT_NTP_UPDATE_INTERVAL;
+    setNtpConfig(ntpConfig);
 
-//     Configuration::LightScheduleConfig lightScheduleConfig;
-//     lightScheduleConfig.enabled = Defaults::DEFAULT_LIGHT_SCHEDULE_ENABLED;
-//     lightScheduleConfig.startTime = 0;
-//     lightScheduleConfig.endTime = 0;
-//     setLightSchedule(lightScheduleConfig);
+    Configuration::LightScheduleConfig lightScheduleConfig;
+    lightScheduleConfig.enabled = Defaults::DEFAULT_LIGHT_SCHEDULE_ENABLED;
+    lightScheduleConfig.startTime = 0;
+    lightScheduleConfig.endTime = 0;
+    setLightSchedule(lightScheduleConfig);
 
-//     Configuration::LightConfig lightConfig;
-//     lightConfig.brightness = Defaults::DEFAULT_LIGHT_BRIGHTNESS;
-//     lightConfig.autoBrightnessConfig.enabled = Defaults::DEFAULT_AUTO_BRIGHTNESS_ENABLED;
-//     lightConfig.autoBrightnessConfig.illuminanceThresholdHigh = Defaults::DEFAULT_ILLUMINANCE_THRESHOLD_HIGH;
-//     lightConfig.autoBrightnessConfig.illuminanceThresholdLow = Defaults::DEFAULT_ILLUMINANCE_THRESHOLD_LOW;
-//     strncpy(lightConfig.color, Defaults::DEFAULT_LIGHT_COLOR, sizeof(lightConfig.color) - 1);
-//     lightConfig.color[sizeof(lightConfig.color) - 1] = '\0';
-//     lightConfig.state = false;
-//     setLightState(lightConfig.state);
-//     setLightBrightness(lightConfig.brightness);
-//     setLightColor(lightConfig.color);
-//     setAutoBrightness(lightConfig.autoBrightnessConfig);  
+    Configuration::LightConfig lightConfig;
+    lightConfig.brightness = Defaults::DEFAULT_LIGHT_BRIGHTNESS;
+    lightConfig.autoBrightnessConfig.enabled = Defaults::DEFAULT_AUTO_BRIGHTNESS_ENABLED;
+    lightConfig.autoBrightnessConfig.illuminanceThresholdHigh = Defaults::DEFAULT_ILLUMINANCE_THRESHOLD_HIGH;
+    lightConfig.autoBrightnessConfig.illuminanceThresholdLow = Defaults::DEFAULT_ILLUMINANCE_THRESHOLD_LOW;
+    strncpy(lightConfig.color, Defaults::DEFAULT_LIGHT_COLOR, sizeof(lightConfig.color));
+    lightConfig.color[sizeof(lightConfig.color)] = '\0';
+    lightConfig.state = false;
+    setLightState(lightConfig.state);
+    setLightBrightness(lightConfig.brightness);
+    setLightColor(lightConfig.color);
+    setAutoBrightness(lightConfig.autoBrightnessConfig);  
 
-//     setClockMode(Regular);
+    setClockMode(Regular);
 
-//     setIsInitialized();
-// }
+    setIsInitialized();
+    Serial.println("Default configuration initialized");
+}

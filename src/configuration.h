@@ -85,6 +85,7 @@ private:
     //Preferences internalPreferences;
 
     // System Preferences Keys
+    static constexpr const char* IS_INITIALIZED_KEY = "is_init";
     static constexpr const char* CLOCK_MODE_KEY = "clock_mode";
     static constexpr const char* WIFI_SSID_KEY = "wifi_ssid";
     static constexpr const char* WIFI_PASSWORD_KEY = "wifi_pass";
@@ -111,7 +112,9 @@ private:
     static constexpr const char* LIGHT_COLOR_KEY = "lght_color";
     static constexpr const char* LIGHT_STATE_KEY = "lght_state";
 
-
+    bool getIsInitialized();
+    void setIsInitialized(bool isInitialized = true);
+    void initializeDefaultConfig();
     ClockMode getClockMode();
     MqttConfig getMqttConfig();
     NtpConfig getNtpConfig();

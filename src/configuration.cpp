@@ -67,7 +67,7 @@ Configuration::MqttConfig Configuration::getMqttConfig() {
     MqttConfig config;
     config.enabled = systemPreferences.getBool(MQTT_ENABLED_KEY, Defaults::DEFAULT_MQTT_ENABLED);
     if(systemPreferences.getBytes(MQTT_HOST_KEY, config.host, sizeof(config.host)) == 0) {
-        strncpy(config.host, "", sizeof(config.host));
+        strlcpy(config.host, "", sizeof(config.host));
     }
     config.port = systemPreferences.getUInt(MQTT_PORT_KEY, Defaults::DEFAULT_MQTT_PORT);
     systemPreferences.getBytes(MQTT_USERNAME_KEY, config.username, sizeof(config.username));
@@ -98,13 +98,13 @@ Configuration::NtpConfig Configuration::getNtpConfig() {
     // Timezone
     size_t tzLen = systemPreferences.getBytes(NTP_TIMEZONE_KEY, config.timezone, sizeof(config.timezone));
     if (tzLen == 0) {
-        strncpy(config.timezone, Defaults::DEFAULT_NTP_TIMEZONE, sizeof(config.timezone));
+        strlcpy(config.timezone, Defaults::DEFAULT_NTP_TIMEZONE, sizeof(config.timezone));
     }
 
     // Server
     size_t serverLen = systemPreferences.getBytes(NTP_SERVER_KEY, config.server, sizeof(config.server));
     if (serverLen == 0) {
-        strncpy(config.server, Defaults::DEFAULT_NTP_SERVER, sizeof(config.server));
+        strlcpy(config.server, Defaults::DEFAULT_NTP_SERVER, sizeof(config.server));
     }
 
     return config;
@@ -179,7 +179,7 @@ Configuration::LightConfig Configuration::getLightConfig() {
 
     size_t colorLen = lightPreferences.getBytes(LIGHT_COLOR_KEY, config.color, sizeof(config.color));
     if (colorLen == 0) {
-        strncpy(config.color, Defaults::DEFAULT_LIGHT_COLOR, sizeof(config.color));
+        strlcpy(config.color, Defaults::DEFAULT_LIGHT_COLOR, sizeof(config.color));
     } 
 
     config.autoBrightnessConfig = getAutoBrightness();
@@ -204,23 +204,24 @@ void Configuration::reset() {
 
 void Configuration::initializeDefaultConfig(){
     Configuration::WifiConfig wifiConfig;
-    strncpy(wifiConfig.ssid, "", sizeof(wifiConfig.ssid));
-    strncpy(wifiConfig.password, "", sizeof(wifiConfig.password));
+    strlcpy(wifiConfig.ssid, "", sizeof(wifiConfig.ssid));
+    strlcpy(wifiConfig.ssid, "", sizeof(wifiConfig.ssid));
+    strlcpy(wifiConfig.password, "", sizeof(wifiConfig.password));
     setWifiConfig(wifiConfig);
 
     Configuration::MqttConfig mqttConfig;
     mqttConfig.enabled = Defaults::DEFAULT_MQTT_ENABLED;
-    strncpy(mqttConfig.host, "", sizeof(mqttConfig.host));
+    strlcpy(mqttConfig.host, "", sizeof(mqttConfig.host));
     mqttConfig.port = Defaults::DEFAULT_MQTT_PORT;
-    strncpy(mqttConfig.username, "", sizeof(mqttConfig.username));
-    strncpy(mqttConfig.password, "", sizeof(mqttConfig.password));
-    strncpy(mqttConfig.topic, Defaults::DEFAULT_MQTT_TOPIC, sizeof(mqttConfig.topic));
+    strlcpy(mqttConfig.username, "", sizeof(mqttConfig.username));
+    strlcpy(mqttConfig.password, "", sizeof(mqttConfig.password));
+    strlcpy(mqttConfig.topic, Defaults::DEFAULT_MQTT_TOPIC, sizeof(mqttConfig.topic));
     setMqttConfig(mqttConfig);
 
     Configuration::NtpConfig ntpConfig;
     ntpConfig.enabled = Defaults::DEFAULT_NTP_ENABLED;
-    strncpy(ntpConfig.timezone, Defaults::DEFAULT_NTP_TIMEZONE, sizeof(ntpConfig.timezone));
-    strncpy(ntpConfig.server, Defaults::DEFAULT_NTP_SERVER, sizeof(ntpConfig.server));
+    strlcpy(ntpConfig.timezone, Defaults::DEFAULT_NTP_TIMEZONE, sizeof(ntpConfig.timezone));
+    strlcpy(ntpConfig.server, Defaults::DEFAULT_NTP_SERVER, sizeof(ntpConfig.server));
     ntpConfig.interval = Defaults::DEFAULT_NTP_UPDATE_INTERVAL;
     setNtpConfig(ntpConfig);
 
@@ -235,9 +236,8 @@ void Configuration::initializeDefaultConfig(){
     lightConfig.autoBrightnessConfig.enabled = Defaults::DEFAULT_AUTO_BRIGHTNESS_ENABLED;
     lightConfig.autoBrightnessConfig.illuminanceThresholdHigh = Defaults::DEFAULT_ILLUMINANCE_THRESHOLD_HIGH;
     lightConfig.autoBrightnessConfig.illuminanceThresholdLow = Defaults::DEFAULT_ILLUMINANCE_THRESHOLD_LOW;
-    strncpy(lightConfig.color, Defaults::DEFAULT_LIGHT_COLOR, sizeof(lightConfig.color));
-    lightConfig.color[sizeof(lightConfig.color)] = '\0';
-    lightConfig.state = false;
+    strlcpy(lightConfig.color, Defaults::DEFAULT_LIGHT_COLOR, sizeof(lightConfig.color));
+    lightConfig.state = Defaults::DEFAULT_LIGHT_STATE;
     setLightState(lightConfig.state);
     setLightBrightness(lightConfig.brightness);
     setLightColor(lightConfig.color);

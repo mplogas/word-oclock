@@ -78,8 +78,9 @@ HomeAssistant::HomeAssistant(WiFiClient& client, const char* name, const char* f
     // Format the last two bytes as a hexadecimal string (4 characters)
     char macStr[5]; // 4 hex digits + null terminator
     snprintf(macStr, sizeof(macStr), "%02X%02X", lastTwoBytes[0], lastTwoBytes[1]);
-    char uniqueid[15]; // "wordclock-" (10) + "XXXX" (4) + null terminator (1) = 15
-    snprintf(uniqueid, sizeof(uniqueid), "wordclock-%s", macStr);
+    
+    char uniqueid[strlen(Defaults::PRODUCT)+5]; // PRODUCT + "XXXX" (4) + null terminator (1)
+    snprintf(uniqueid, sizeof(uniqueid), "%s_%s", Defaults::PRODUCT, macStr);
     Serial.print("Unique ID: ");
     Serial.println(uniqueid);
 
@@ -87,27 +88,30 @@ HomeAssistant::HomeAssistant(WiFiClient& client, const char* name, const char* f
     device.setUniqueId(uniqueid); 
     device.setName(name);
     device.setSoftwareVersion(firmware);
-    device.setModel("v1.0");
-    device.setManufacturer("digitalnatives Berlin");
+    device.setModel(Defaults::FW_VERSION);
+    device.setManufacturer("testwiese Berlin");
 
     // Initialize HAMqtt with the built device
     //HAMqtt test(client, device); // last number is the amount of devices/sensors implemented
-    mqtt.setDataPrefix("wc2");
 }
 
 // Destructor Implementation
 HomeAssistant::~HomeAssistant()
 {
-    mqtt.disconnect();
+    disconnect();
 
-    for (uint8_t i = 0; i < static_cast<uint8_t>(SensorType::SensorTypeCount); ++i)
-    {
-        delete sensors[i];
-    }
-    for (uint8_t i = 0; i < static_cast<uint8_t>(SwitchType::SwitchTypeCount); ++i)
-    {
-        delete switches[i];
-    }
+    // TODO: killing the sensors and switches causes a sigterm.
+    // not killing them creates dangling pointers to the switch callbacks
+    // meh, life sucks :(
+
+    // for (uint8_t i = 0; i < static_cast<uint8_t>(SensorType::SensorTypeCount); i++)
+    // {
+    //     if (sensors[i]!= nullptr) delete sensors[i];
+    // }
+    // for (uint8_t i = 0; i < static_cast<uint8_t>(SwitchType::SwitchTypeCount); i++)
+    // {
+    //     if (switches[i]!= nullptr) delete switches[i];
+    // }
 
     // Clear the static instance pointer if it points to this object
     if (instance == this) {
@@ -126,7 +130,8 @@ bool HomeAssistant::connect(
     const MqttConnectCallback& onConnected,
     const MqttDisconnectCallback& onDisconnected,
     const char* username,
-    const char* password
+    const char* password,
+    const char* defaultTopic
 )
 {
     // Store the callbacks
@@ -137,34 +142,49 @@ bool HomeAssistant::connect(
     mqtt.onConnected(&HomeAssistant::onMqttConnectedStatic);
     mqtt.onDisconnected(&HomeAssistant::onMqttDisconnectedStatic);
 
-    // Connect with or without credentials
-    // if (username && password) {
-    //     return mqtt->begin(broker, username, password);
-    // } else {
-    //     return mqtt->begin(broker);
-    // }
-    return mqtt.begin(broker);
+    if(defaultTopic) {
+        mqtt.setDataPrefix(defaultTopic);
+    } else {
+        mqtt.setDataPrefix(Defaults::DEFAULT_MQTT_TOPIC);
+    }
+
+    //Connect with or without credentials
+    if (username && password) {
+        return mqtt.begin(broker, username, password);
+    } else {
+        return mqtt.begin(broker);
+    }
+    //return mqtt.begin(broker);
 }
 
-// Build HADevice
-void HomeAssistant::setupDevice(const char* name, const char* firmware)
+void HomeAssistant::disconnect()
 {
-    byte mac[maclen];
-    WiFi.macAddress(mac);
-    
-    //HADevice haDevice(mac, sizeof(mac)); 
-    device = HADevice("TestDevice");
-    
-    device.setName(name);
-    device.setSoftwareVersion(firmware);
-    device.setModel("v1.0");
-    device.setManufacturer("digitalnatives Berlin");
+    mqtt.disconnect();
+    mqtt.onConnected(nullptr);
+    mqtt.onDisconnected(nullptr);
+    mqttConnectCallback = nullptr;
+    mqttDisconnectCallback = nullptr;
 }
+
+// // Build HADevice
+// void HomeAssistant::setupDevice(const char* name, const char* firmware)
+// {
+//     byte mac[maclen];
+//     WiFi.macAddress(mac);
+    
+//     //HADevice haDevice(mac, sizeof(mac)); 
+//     device = HADevice("TestDevice");
+    
+//     device.setName(name);
+//     device.setSoftwareVersion(firmware);
+//     device.setModel("v1.0");
+//     device.setManufacturer("digitalnatives Berlin");
+// }
 
 const char* HomeAssistant::generateUniqueId(const char* name)
 {
     // Static buffer to hold the unique ID
-    static char uniqueId[64]; // Adjust the size as needed
+    static char uniqueId[64]; 
 
     const char* deviceId = device.getUniqueId();
 

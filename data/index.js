@@ -120,8 +120,8 @@ function toggleNtpAutoUpdate(isChecked) {
 }
 
 function toggleHaIntegration(isChecked) {
-  const form = document.getElementById('haIntegrationContainer');
-  form.style.display = isChecked ? 'block' : 'none';
+  // const form = document.getElementById('haIntegrationContainer');
+  // form.style.display = isChecked ? 'block' : 'none';
 }
 
 function toggleResetConfiguration(isChecked) {
@@ -168,6 +168,24 @@ function saveHaIntegration() {
     })
     .catch(error => console.error('Error:', error));
 }
+
+function resetConfiguration(event) { 
+  const confirmation = confirm('Are you sure you want to reset the device? This action cannot be undone.');
+    if (!confirmation) {
+      event.preventDefault(); // Prevent form submission
+    } else {
+      fetch('/resetConfig',{
+        method: 'POST',
+        body: ""
+      })
+        .then(response => response.text())
+        .then(data => {
+          console.log(`Configuration reset: ${data}`);
+        })
+        .catch(error => console.error('Error:', error));
+    }
+}
+
 
 // Theme
 // Apply theme based on user's preference
@@ -237,12 +255,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Initialize Reset Configuration
   const resetButton = document.querySelector('.reset-button');
   if (resetButton) {
-    resetButton.addEventListener('click', function (event) {
-      const confirmation = confirm('Are you sure you want to reset the device? This action cannot be undone.');
-      if (!confirmation) {
-        event.preventDefault(); // Prevent form submission
-      }
-    });
+    resetButton.addEventListener('click', resetConfiguration);
   }
 
   const toggleSwitch = document.getElementById('theme-toggle');

@@ -28,7 +28,7 @@ public:
     static String RGBtoHex(const CRGB& color);
     static CRGB HexToRGB(const String& hex);
 private:
-    static const int NUM_LEDS = 47; // Number of LEDs (should be 121 (or 47 or 9 for prototyping))
+    static const int NUM_LEDS = 121; // Number of LEDs (should be 121 (or 47 or 9 for prototyping))
     static const int DATA_PIN = 25; // LED data pin
     static const int LDR_PIN = 35; // Pin for Light-Dependent Resistor
     static const uint8_t BRIGHTNESS_MIN = 10; // min brightness for auto brightness

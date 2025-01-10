@@ -100,6 +100,9 @@ void WebUI::init(const LightControlCallback &lightCtrlCb,
     server.on("/setHaIntegration", HTTP_POST, [this](AsyncWebServerRequest *request)
               { this->handleSetHAIntegration(request); });
 
+    server.on("/resetConfig", HTTP_POST, [this](AsyncWebServerRequest *request)
+              { systemControlCallback(SystemOperationType::ResetConfig, std::map<String, String>()); });
+
     server.on("/update", HTTP_GET, [this](AsyncWebServerRequest *request)
               { request->send(
                     LittleFS,
@@ -377,35 +380,25 @@ void WebUI::handleSetHAIntegration(AsyncWebServerRequest *request)
                     params[PARAM_BROKER_PORT] = Defaults::DEFAULT_MQTT_PORT;
                 }
 
+                params[PARAM_BROKER_USER] = String();
                 if(request->hasParam(PARAM_BROKER_USER, true))
                 {
                     String mqttUsername = request->getParam(PARAM_BROKER_USER, true)->value();
                     if (mqttUsername.length() > 0)
                     {                        
                         params[PARAM_BROKER_USER] = mqttUsername;
-                        if(request->hasParam(PARAM_BROKER_PASS, true))
-                        {
-                            String mqttPassword = request->getParam(PARAM_BROKER_PASS, true)->value();
-                            if (mqttPassword.length() > 0)
-                            {
-                                params[PARAM_BROKER_PASS] = mqttPassword;
-                            }
-                            else
-                            {
-                                params[PARAM_BROKER_PASS] = String();
-                            }
-                        }
-                        else
-                        {
-                            params[PARAM_BROKER_PASS] = String();
-                        }
                     }
-                    else
+                }
+                
+                params[PARAM_BROKER_PASS] = String();
+                if(request->hasParam(PARAM_BROKER_PASS, true))
+                {
+                    String mqttPassword = request->getParam(PARAM_BROKER_PASS, true)->value();
+                    if (mqttPassword.length() > 0)
                     {
-                        params[PARAM_BROKER_USER] = String();
-                        params[PARAM_BROKER_PASS] = String();
+                        params[PARAM_BROKER_PASS] = mqttPassword;
                     }
-                }            
+                }         
 
                 
                 if (mqttTopic.length() > 0)

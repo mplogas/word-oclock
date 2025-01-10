@@ -5,6 +5,7 @@
 #include <WiFi.h>
 #include <ArduinoHA.h>
 #include <functional>
+#include "defaults.h"
 
 // HA entities enums
 enum class SensorType {
@@ -70,8 +71,10 @@ public:
         const MqttConnectCallback& onConnected, 
         const MqttDisconnectCallback& onDisconnected,
         const char* username = nullptr,
-        const char* password = nullptr
+        const char* password = nullptr,
+        const char* defaultTopic = nullptr
     );
+    void disconnect();
 
         // Methods to add sensors and switches
     void addSensor(SensorType sensorType, const char * initialValue = nullptr, const char* icon = HomeAssistant::DEFAULT_ICON);

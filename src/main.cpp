@@ -96,12 +96,10 @@ bool isUpdateSuccess() {
 
 void handleWiFiCredentials(const String &ssid, const String &password) {
     Serial.printf("SSID set to: %s\n", ssid.c_str());
-    Serial.printf("Password set to: %s\n", password.c_str());
+    //Serial.printf("Password set to: %s\n", password.c_str());
 
-    strncpy(wifiConfig.ssid, ssid.c_str(), sizeof(wifiConfig.ssid) - 1);
-    wifiConfig.ssid[sizeof(wifiConfig.ssid) - 1] = '\0';
-    strncpy(wifiConfig.password, password.c_str(), sizeof(wifiConfig.password) - 1);
-    wifiConfig.password[sizeof(wifiConfig.password) - 1] = '\0';
+    strlcpy(wifiConfig.ssid, ssid.c_str(), sizeof(wifiConfig.ssid));
+    strlcpy(wifiConfig.password, password.c_str(), sizeof(wifiConfig.password));
     config.setWifiConfig(wifiConfig);
 }
 
@@ -115,6 +113,42 @@ void handleMqttConnected() {
 void handleMqttDisconnected() {
     Serial.println("MQTT Disconnected!");
     // Additional logic upon disconnection
+}
+
+// home assistant callbacks
+void handleSwitchCommand(SwitchType switchType, bool state) {
+    Serial.printf("Switch command received for %s: %s\n", switchType, state ? "ON" : "OFF");
+    // Additional logic to handle switch commands
+}
+
+void handleIlluminanceSensorUpdate(const int value) {
+    //Serial.printf("Illuminance sensor value: %d\n", value);
+
+    if (systemConfig.mqttConfig.enabled && homeAssistant != nullptr) {
+      char buf[8];
+      itoa(value, buf, 10);
+      homeAssistant->setSensorValue(SensorType::LightIntensity, buf);
+    }
+}
+
+void enableMqtt() {
+  if(systemConfig.mqttConfig.host != nullptr) {
+      homeAssistant = new HomeAssistant(client, Defaults::PRODUCT, Defaults::FW_VERSION);
+      homeAssistant->addSensor(SensorType::LightIntensity, "0", "mdi:brightness-5");
+      homeAssistant->addSwitch(SwitchType::LED, false, "mdi:lightbulb");
+      homeAssistant->setSwitchCommandCallback(handleSwitchCommand);
+
+      ledController.registerIlluminanceSensorCallback(handleIlluminanceSensorUpdate);
+      homeAssistant->connect(IPAddress(systemConfig.mqttConfig.host), handleMqttConnected, handleMqttDisconnected, systemConfig.mqttConfig.username, systemConfig.mqttConfig.password, systemConfig.mqttConfig.topic);
+  }
+}
+
+void disableMqtt() {
+  if(homeAssistant != nullptr) {
+    homeAssistant->disconnect();
+    delete homeAssistant;
+    homeAssistant = nullptr;
+  }
 }
 
 void lightOperationHandler(LightOperationType operation, const String& value) {
@@ -135,7 +169,7 @@ void lightOperationHandler(LightOperationType operation, const String& value) {
     case LightOperationType::SetColor: {
       ledController.setColor(ledController.HexToRGB(value));
       showCurrentTime();
-      strncpy(lightConfig.color, value.c_str(), sizeof(lightConfig.color) - 1);
+      strlcpy(lightConfig.color, value.c_str(), sizeof(lightConfig.color));
       config.setLightColor(lightConfig.color);
       break;
     }
@@ -171,16 +205,18 @@ void systemOperationHandler(SystemOperationType operation, const std::map<String
   switch (operation) {
     case SystemOperationType::SetHaIntegration: {
       systemConfig.mqttConfig.enabled = (params.at(WebUI::PARAM_ENABLED) == "1");
-      strncpy(systemConfig.mqttConfig.host, params.at(WebUI::PARAM_BROKER_HOST).c_str(), sizeof(systemConfig.mqttConfig.host) - 1);
-      systemConfig.mqttConfig.host[sizeof(systemConfig.mqttConfig.host) - 1] = '\0';
+      strlcpy(systemConfig.mqttConfig.host, params.at(WebUI::PARAM_BROKER_HOST).c_str(), sizeof(systemConfig.mqttConfig.host));
       systemConfig.mqttConfig.port = params.at(WebUI::PARAM_BROKER_PORT).toInt();
-      strncpy(systemConfig.mqttConfig.username, params.at(WebUI::PARAM_BROKER_USER).c_str(), sizeof(systemConfig.mqttConfig.username) - 1);
-      systemConfig.mqttConfig.username[sizeof(systemConfig.mqttConfig.username) - 1] = '\0';
-      strncpy(systemConfig.mqttConfig.password, params.at(WebUI::PARAM_BROKER_PASS).c_str(), sizeof(systemConfig.mqttConfig.password) - 1);
-      systemConfig.mqttConfig.password[sizeof(systemConfig.mqttConfig.password) - 1] = '\0';
-      strncpy(systemConfig.mqttConfig.topic, params.at(WebUI::PARAM_BROKER_DEFAULT_TOPIC).c_str(), sizeof(systemConfig.mqttConfig.topic) - 1);
-      systemConfig.mqttConfig.topic[sizeof(systemConfig.mqttConfig.topic) - 1] = '\0';
+      strlcpy(systemConfig.mqttConfig.username, params.at(WebUI::PARAM_BROKER_USER).c_str(), sizeof(systemConfig.mqttConfig.username));
+      strlcpy(systemConfig.mqttConfig.password, params.at(WebUI::PARAM_BROKER_PASS).c_str(), sizeof(systemConfig.mqttConfig.password));
+      strlcpy(systemConfig.mqttConfig.topic, params.at(WebUI::PARAM_BROKER_DEFAULT_TOPIC).c_str(), sizeof(systemConfig.mqttConfig.topic));
       config.setMqttConfig(systemConfig.mqttConfig);
+
+      if(systemConfig.mqttConfig.enabled) {
+        enableMqtt();
+      } else {
+        disableMqtt();
+      }
       break;
     }
     case SystemOperationType::SetNTPTime: {
@@ -200,39 +236,16 @@ void systemOperationHandler(SystemOperationType operation, const std::map<String
       break;
     }
     case SystemOperationType::ResetConfig: {
-      // Additional logic to reset configuration
+      config.reset();
+      Serial.println("Configuration reset. Restarting...");
+      delay(2000);  
+      ESP.restart();
       break;
     }
   }
 }
 
-// home assistant callbacks
-void handleSwitchCommand(SwitchType switchType, bool state) {
-    Serial.printf("Switch command received for %s: %s\n", switchType, state ? "ON" : "OFF");
-    // Additional logic to handle switch commands
-}
 
-void handleIlluminanceSensorUpdate(const int value) {
-    //Serial.printf("Illuminance sensor value: %d\n", value);
-
-    if (systemConfig.mqttConfig.enabled && homeAssistant != nullptr) {
-      char buf[8];
-      itoa(value, buf, 10);
-      homeAssistant->setSensorValue(SensorType::LightIntensity, buf);
-    }
-}
-
-void enableMqtt() {
-  if(systemConfig.mqttConfig.host != nullptr) {
-      homeAssistant = new HomeAssistant(client, Defaults::PRODUCT, Defaults::FW_VERSION);
-      homeAssistant->addSensor(SensorType::LightIntensity, "0", "mdi:brightness-5");
-      homeAssistant->addSwitch(SwitchType::LED, false, "mdi:lightbulb");
-      homeAssistant->setSwitchCommandCallback(handleSwitchCommand);
-
-      ledController.registerIlluminanceSensorCallback(handleIlluminanceSensorUpdate);
-      homeAssistant->connect(IPAddress(systemConfig.mqttConfig.host), handleMqttConnected, handleMqttDisconnected);
-  }
-}
 
 void setup()
 {

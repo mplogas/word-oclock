@@ -55,6 +55,7 @@ class WebUI
         void handleSetAutoBrightness(AsyncWebServerRequest *request);
         void handleSetBrightness(AsyncWebServerRequest *request);
         void handleSetHAIntegration(AsyncWebServerRequest *request);
+        void handleSetClockFace(AsyncWebServerRequest *request);
         void printAllParams(AsyncWebServerRequest *request);
         String readFile(const char* path);
 
@@ -98,6 +99,7 @@ class WebUI
         static constexpr const char* PARAM_WIFI_SSID = "ssid";
         static constexpr const char* PARAM_WIFI_PASS = "wifi-pass";
         static constexpr const char* PARAM_ENABLED = "enabled";
+        static constexpr const char* PARAM_OPTION = "option";
         static constexpr const char* PARAM_VALUE = "value";
         static constexpr const char* PARAM_COLOR = "color";
         static constexpr const char* PARAM_BROKER_HOST = "mqttHost";

@@ -132,22 +132,6 @@ void LED::handleAutoBrightness() {
 
 void LED::loop() {
     unsigned long currentMillis = millis();
-    if(currentMillis - this->lastIlluminanceUpdate > ILLUMINANCE_UPDATE_INTERVAL) {
-        this->lastIlluminanceUpdate = currentMillis;
-        this->illuminance = analogRead(LDR_PIN);
-    }
-
-    if(currentMillis - this->lastBrightnessUpdate > BRIGHTNESS_UPDATE_INTERVAL && this->autoBrightness == true) {
-        this->lastBrightnessUpdate = currentMillis;
-        handleAutoBrightness();
-    }
-
-    if(currentMillis - this->lastSensorUpdate > SENSOR_UPDATE_INTERVAL  && this->sensorCallback) 
-    {
-        this->lastSensorUpdate = currentMillis;    
-        int value = this->illuminance;
-        sensorCallback(value);
-    }
 
     if(this->testMode && currentMillis - this->lastTestLEDUpdate > TEST_LED_INTERVAL && this->testLED < NUM_LEDS) {
         this->lastTestLEDUpdate = currentMillis;
@@ -162,6 +146,24 @@ void LED::loop() {
         }
 
         FastLED.show();
+    } else {
+        if(currentMillis - this->lastIlluminanceUpdate > ILLUMINANCE_UPDATE_INTERVAL) {
+            this->lastIlluminanceUpdate = currentMillis;
+            this->illuminance = analogRead(LDR_PIN);
+            //Serial.printf("Illuminance: %d\n", this->illuminance);
+        }
+
+        if(currentMillis - this->lastBrightnessUpdate > BRIGHTNESS_UPDATE_INTERVAL && this->autoBrightness == true) {
+            this->lastBrightnessUpdate = currentMillis;
+            handleAutoBrightness();
+        }
+
+        if(currentMillis - this->lastSensorUpdate > SENSOR_UPDATE_INTERVAL  && this->sensorCallback) 
+        {
+            this->lastSensorUpdate = currentMillis;    
+            int value = this->illuminance;
+            sensorCallback(value);
+        }
     }
 
 }

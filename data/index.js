@@ -91,24 +91,6 @@ function updateCurrentTime() {
       .catch(error => console.error('Error fetching current time:', error));
 }
 
-// Call updateCurrentTime every 30 seconds
-//setInterval(updateCurrentTime, 30000);
-
-// Call it once immediately to set the initial time
-//updateCurrentTime();
-
-// system.html
-function toggleDisplayType(isChecked) {
-  const stateText = document.getElementById('displayTypeState');
-  stateText.innerText = isChecked ? 'Mode: Enhanced' : 'Mode: Standard';
-  // Additional logic to switch display types can be added here
-}
-
-function toggleLightSchedule(isChecked) {
-  const container = document.getElementById('lightScheduleContainer');
-  container.style.display = isChecked ? 'block' : 'none';
-}
-
 function toggleNtpTimeUpdate(isChecked) {
   const container = document.getElementById('ntpTimeUpdateContainer');
   container.style.display = isChecked ? 'block' : 'none';
@@ -117,6 +99,41 @@ function toggleNtpTimeUpdate(isChecked) {
 function toggleNtpAutoUpdate(isChecked) {
   const container = document.getElementById('ntpAutoUpdateContainer');
   container.style.display = isChecked ? 'block' : 'none';
+}
+
+function toggleLightSchedule(isChecked) {
+  const container = document.getElementById('lightScheduleContainer');
+  container.style.display = isChecked ? 'block' : 'none';
+}
+
+// Call updateCurrentTime every 30 seconds
+//setInterval(updateCurrentTime, 30000);
+
+// Call it once immediately to set the initial time
+//updateCurrentTime();
+
+// system.html
+function toggleClockFaceOption(isChecked) {
+  const stateText = document.getElementById('clockFaceOptionToggle');
+  stateText.innerText = isChecked ? 'Dreiviertel' : 'Viertel Vor';
+}
+
+function saveClockFace() { 
+  const clockFace = document.getElementById('clockFaceSelect').value;
+  const optionToggle = document.getElementById('clockFaceOptionToggle').checked;
+  const formData = new FormData();
+  formData.append('clockFace', clockFace);
+  formData.append('option', optionToggle ? '1' : '0');
+
+  fetch('/setClockFace', {
+    method: 'POST',
+    body: formData
+  })
+    .then(response => response.text())
+    .then(data => {
+      console.log(`Clock face saved: ${data}`);
+    })
+    .catch(error => console.error('Error saving clock face:', error));
 }
 
 function toggleHaIntegration(isChecked) {

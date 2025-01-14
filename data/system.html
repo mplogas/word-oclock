@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <title>WordClock System Configuration</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    
+
     <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">  
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -33,19 +33,20 @@
                         <form action="/saveMQTTSettings" method="POST">
                             <div class="toggle-row">
                                 <label for="brokerIP">Broker IP:*</label>
-                                <input type="text" id="brokerIP" name="mqttHost" placeholder="e.g., 192.168.1.100" value="%BROKER_IP%"
-                                    required>
+                                <input type="text" id="brokerIP" name="mqttHost" placeholder="e.g., 192.168.1.100"
+                                    value="%BROKER_IP%" required>
                             </div>
 
                             <div class="toggle-row">
                                 <label for="brokerPort">Port:*</label>
-                                <input type="number" id="brokerPort" name="mqttPort" placeholder="e.g., 1883" value="%BROKER_PORT%"
-                                    required>
+                                <input type="number" id="brokerPort" name="mqttPort" placeholder="e.g., 1883"
+                                    value="%BROKER_PORT%" required>
                             </div>
 
                             <div class="toggle-row">
                                 <label for="mqttUsername">Username:</label>
-                                <input type="text" id="mqttUsername" name="mqttUsername" placeholder="Your Username" value="%MQTT_USERNAME%"> 
+                                <input type="text" id="mqttUsername" name="mqttUsername" placeholder="Your Username"
+                                    value="%MQTT_USERNAME%">
                             </div>
 
                             <div class="toggle-row">
@@ -62,7 +63,8 @@
 
                             <!-- Submit Button -->
                             <div class="toggle-row">
-                                <button type="button" class="submit-button" onclick="saveHaIntegration()"><i class="fas fa-save"></i> Save</button>
+                                <button type="button" class="submit-button" onclick="saveHaIntegration()"><i
+                                        class="fas fa-save"></i> Save</button>
                             </div>
                         </form>
                     </div>
@@ -73,26 +75,34 @@
             <div class="card">
                 <p class="card-title"><i class="fas fa-clock"></i> Clock Face</p>
                 <div class="card-content">
-                    <div class="toggle-row">
-                        <label for="clockFaceSelect">Clock Face:</label>
-                        <select id="clockFaceSelect" name="Clockface" class="input-field">
-                            <option value="DE">German 11x11</option>
-                        </select>
-                    </div>
-                    <div class="toggle-row">
-                        <label for="displayTypeToggle">Alternate Clock Type:</label>
-                        <label class="switch">
-                            <input type="checkbox" id="displayTypeToggle" onchange="toggleDisplayType(this.checked)">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
+                    <form action="/setClockFace" method="POST">
+                        <div class="toggle-row">
+                            <label for="clockFaceSelect">Clock Face:</label>
+                            <select id="clockFaceSelect" name="Clockface" class="input-field">
+                                <option value="DE">German 11x11</option>
+                            </select>
+                        </div>
+                        <div class="toggle-row">
+                            <label for="clockFaceOptionToggle">Alternate Clock Type:</label>
+                            <label class="switch">
+                                <input type="checkbox" id="clockFaceOptionToggle"
+                                    onchange="toggleClockFaceOption(this.checked)">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <!-- Submit Button -->
+                        <div class="toggle-row">
+                            <button type="button" class="submit-button" onclick="saveClockFace()"><i
+                                    class="fas fa-save"></i> Save</button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
             <!-- Advanced Settings Card -->
             <div class="card">
                 <p class="card-title"><i class="fas fa-gears"></i> Advanced Settings</p>
-                <div class="card-content">                    
+                <div class="card-content">
 
                     <!-- Firmware Update button -->
                     <div class="toggle-row">
@@ -100,7 +110,7 @@
                         <label class="switch" style="width: 70px">
                             <a href="/update" class="link"><i class="fas fa-upload"></i> Update</a>
                         </label>
-                    </div> 
+                    </div>
 
 
                     <div class="toggle-row">
@@ -114,14 +124,14 @@
                     <!-- Reset Configuration Form -->
                     <div id="resetConfigurationContainer" class="system-container">
                         <form action="/reset" method="POST">
-                            <div >
+                            <div>
                                 <button type="reset" class="reset-button"><i class="fas fa-exclamation-triangle"></i>
                                     Really? <i class="fas fa-exclamation-triangle"></i></button>
                             </div>
                         </form>
                     </div>
                 </div>
-            </div> 
+            </div>
         </div>
     </div>
     <script src="index.js"></script>

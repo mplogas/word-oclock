@@ -53,7 +53,7 @@ void showCurrentTime() {
     uint8_t hour = wordClock->getHour();  
     uint8_t minute = wordClock->getMinute();
     // Serial.printf("Current time: %d:%d\n", hour, minute);
-    std::vector<std::pair<int, int>> leds = timeConverter->convertTime(hour, minute, true, true);
+    std::vector<std::pair<int, int>> leds = timeConverter->convertTime(hour, minute, (systemConfig.mode == Configuration::ClockMode::Regular), true);
     // Serial.printf("LEDs: %d\n", leds.size());
     ledController.setLEDs(leds);
   }
@@ -122,7 +122,7 @@ void handleSwitchCommand(SwitchType switchType, bool state) {
 }
 
 void handleIlluminanceSensorUpdate(const int value) {
-    //Serial.printf("Illuminance sensor value: %d\n", value);
+    Serial.printf("Illuminance sensor value: %d\n", value);
 
     if (systemConfig.mqttConfig.enabled && homeAssistant != nullptr) {
       char buf[8];
@@ -232,7 +232,14 @@ void systemOperationHandler(SystemOperationType operation, const std::map<String
       break;
     }
     case SystemOperationType::SetClockFormat: {
-      // Additional logic to handle clock format
+      if(params.at(WebUI::PARAM_OPTION) == "0") {
+        systemConfig.mode = Configuration::ClockMode::Regular;
+        Serial.println("Clock mode set to dreiviertel");
+      } else {
+        systemConfig.mode = Configuration::ClockMode::Option_1;
+        Serial.println("Clock mode set to viertel vor");
+      }
+      config.setClockMode(systemConfig.mode);
       break;
     }
     case SystemOperationType::ResetConfig: {

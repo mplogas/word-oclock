@@ -100,6 +100,11 @@ void WebUI::init(const LightControlCallback &lightCtrlCb,
     server.on("/setHaIntegration", HTTP_POST, [this](AsyncWebServerRequest *request)
               { this->handleSetHAIntegration(request); });
 
+    server.on("/setClockFace", HTTP_POST, [this](AsyncWebServerRequest *request)
+              {
+                  this->handleSetClockFace(request);
+              });
+
     server.on("/resetConfig", HTTP_POST, [this](AsyncWebServerRequest *request)
               { systemControlCallback(SystemOperationType::ResetConfig, std::map<String, String>()); });
 
@@ -428,6 +433,34 @@ void WebUI::handleSetHAIntegration(AsyncWebServerRequest *request)
         }
     } else {
         Serial.println("Invalid request");
+        request->send(400, CONTENT_TEXT, VALUE_ERROR);
+        return;
+    }
+}
+
+void WebUI::handleSetClockFace(AsyncWebServerRequest *request)
+{
+    //TODO: accept different clock faces (eg, languages, styles or sizes from the dropdown)
+    if (request->hasParam(PARAM_OPTION, true))
+    {
+        String option = request->getParam(PARAM_OPTION, true)->value();
+        if(option == VALUE_OFF || option == VALUE_ON) {
+            std::map<String, String> params;
+            params[PARAM_OPTION] = option;
+            systemControlCallback(SystemOperationType::SetClockFormat, params);
+            request->send(200, CONTENT_TEXT, VALUE_SUCCESS);
+            return;
+        } 
+        else
+        {
+            Serial.println("Invalid clock face option value");
+            request->send(400, CONTENT_TEXT, VALUE_ERROR);
+            return;
+        }
+    }
+    else
+    {
+        Serial.println("Missing clock face parameter");
         request->send(400, CONTENT_TEXT, VALUE_ERROR);
         return;
     }

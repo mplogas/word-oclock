@@ -24,7 +24,7 @@
                 <div class="card-content">
                     <div class="toggle-row">
                         <label for="currentTime">Current Time:</label>
-                        <span id="currentTime">--:--:--</span>
+                        <span id="currentTime">%CURRENT_TIME%</span>
                     </div>
                 </div>
             </div>
@@ -37,7 +37,7 @@
                         <label for="lightScheduleToggle">Light Schedule:</label>
                         <label class="switch">
                             <input type="checkbox" id="lightScheduleToggle"
-                                onchange="toggleLightSchedule(this.checked)">
+                                onchange="toggleLightSchedule(this.checked)" %LIGHT_SCHEDULE_STATE%>
                             <span class="slider round"></span>
                         </label>
                     </div>
@@ -47,12 +47,12 @@
                         <form action="/saveLightSchedule" method="POST">
                             <div class="toggle-row">
                                 <label for="startTime">Start Time:</label>
-                                <input type="time" id="startTime" name="startTime">
+                                <input type="time" id="startTime" name="startTime" value="%LIGHT_SCHEDULE_START%">
                             </div>
 
                             <div class="toggle-row">
                                 <label for="endTime">End Time:</label>
-                                <input type="time" id="endTime" name="endTime">
+                                <input type="time" id="endTime" name="endTime" value="%LIGHT_SCHEDULE_END%">
                             </div>
                             <!-- Submit Button -->
                             <div class="toggle-row">
@@ -71,7 +71,7 @@
                         <label for="ntpTimeUpdate">NTP Time:</label>
                         <label class="switch">
                             <input type="checkbox" id="ntpTimeUpdate" name="ntpTimeUpdate"
-                                onchange="toggleNtpTimeUpdate(this.checked)">
+                                onchange="toggleNtpTimeUpdate(this.checked)" %NTP_UPDATE_STATE%>
                             <span class="slider round"></span>
                         </label>
                     </div>
@@ -85,19 +85,16 @@
                             </div>
                             <div class="toggle-row">
                                 <label for="timezoneSelect">Timezone:</label>
-                                <select id="timezoneSelect" name="timezone" class="input-field">
-                                    <option value="UTC">UTC</option>
-                                    <option value="America/New_York">America/New_York</option>
-                                    <option value="Europe/London">Europe/London</option>
-                                    <option value="Asia/Tokyo">Asia/Tokyo</option>
-                                    <option value="Australia/Sydney">Australia/Sydney</option>
+                                <select id="timezoneSelect" name="timezone" class="input-field" >
+                                    %TIME_ZONES%
                                     <!-- Add more timezones as needed -->
                                 </select>
-                                
-                                <label for="ntpInterval">Update Interval (Hours):</label>
-                                <input type="number" id="ntpInterval" name="ntpInterval" placeholder="Hours" min="1">
                             </div>
-                            
+                            <div class="toggle-row">
+                                <label for="ntpUpdateInterval">Update Interval (hours):</label>
+                                <input type="number" id="ntpUpdateInterval" name="ntpUpdateInterval" min="1" max="72"
+                                    placeholder="1-72" value="%NTP_UPDATE_INTERVAL%">
+                            </div>                            
                             <!-- Submit Button -->
                             <div class="toggle-row">
                                 <button type="submit" class="submit-button"><i class="fas fa-save"></i> Save</button>

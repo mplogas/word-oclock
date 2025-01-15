@@ -481,6 +481,8 @@ String WebUI::pageProcessor(const String &var, Page page)
         return systemPageProcessor(var);
     case Page::FIRMWARE:
         return firmwarePageProcessor(var);
+    case Page::TIME:
+        return timePageProcessor(var);
     default:
         return String();
     }
@@ -548,6 +550,44 @@ String WebUI::lightPageProcessor(const String &var)
     }
 }
 
+String WebUI::timePageProcessor(const String &var)
+{
+    if(var == "CURRENT_TIME") {
+        return "12:30";
+    } else if (var == "TIME_ZONES") {
+        /*
+            <option value="Etc/UTC">UTC</option>
+            <option value="Europe/Berlin">Europe/Berlin</option>
+            <option value="Europe/London">Europe/London</option>
+            <option value="Europe/Paris">Europe/Paris</option>
+            <option value="Europe/Rome">Europe/Rome</option>
+            <option value="Atlantic/Reykjavik">Atlantic/Reykjavik</option>
+
+            Etc/UTC -> UTC0
+            Europe/Berlin -> CET-1CEST,M3.5.0,M10.5.0/3
+            Europe/London -> GMT0BST,M3.5.0/1,M10.5.0
+            Europe/Paris -> CET-1CEST,M3.5.0,M10.5.0/3
+            Europe/Rome -> CET-1CEST,M3.5.0,M10.5.0/3
+            Atlantic/Reykjavik -> GMT0
+        */
+       return "<option value=\"Europe/Berlin\">Europe/Berlin</option>";
+    } else if(var == "NTP_UPDATE_INTERVAL") {
+        return String(systemConfiguration->ntpConfig.interval);
+    } else if (var == "NTP_UPDATE_STATE") {
+        return systemConfiguration->ntpConfig.enabled ? "checked" : "";
+    } else if (var == "LIGHT_SCHEDULE_STATE") {
+        return systemConfiguration->lightScheduleConfig.enabled ? "checked" : "";
+    } else if (var == "LIGHT_SCHEDULE_START") {
+        return String(systemConfiguration->lightScheduleConfig.startTime);
+    } else if (var == "LIGHT_SCHEDULE_END") {
+        return String(systemConfiguration->lightScheduleConfig.endTime);
+    }
+    
+    else {
+        return String();
+    }
+}
+
 String WebUI::systemPageProcessor(const String &var)
 {
     if (var == "HA_INTEGRATION_STATE")
@@ -576,6 +616,13 @@ String WebUI::systemPageProcessor(const String &var)
     else if (var == "DEFAULT_TOPIC")
     {
         return systemConfiguration->mqttConfig.topic;
+    }
+    else if (var == "CLOCK_FACE_OPTION_STATE") {
+        return systemConfiguration->mode == Configuration::ClockMode::Regular ? "" : "checked";
+    }
+    else
+    {
+        return String();
     }
 
     return String();

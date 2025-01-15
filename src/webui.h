@@ -42,6 +42,7 @@ class WebUI
 
         // Page Processor functions
         String lightPageProcessor(const String &var);
+        String timePageProcessor(const String &var);
         String systemPageProcessor(const String &var);
         String firmwarePageProcessor(const String &var);
         String headerProcessor(Page page);

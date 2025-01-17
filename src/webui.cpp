@@ -9,39 +9,28 @@ WebUI::~WebUI()
     // Destructor implementation
     // check and cleanup callbacks
     updateSuccessCallback = nullptr;
-    uploadHandlerCallback = nullptr;
-    wifiCredentialsCallback = nullptr;
-    lightControlCallback = nullptr;
-    systemControlCallback = nullptr;
+    requestCallback = nullptr;
+    responseCallback = nullptr;
+    updateCallback = nullptr;
+    
 }
 
-void WebUI::init(const LightControlCallback &lightCtrlCb,
-                 const SystemControlCallback &systemCtrlCb,
-                 const UploadHandlerCallback &uploadCb,
-                 const UpdateSuccessCallback &updateCb,
-                 Configuration::LightConfig *lightConfig,
-                 Configuration::SystemConfig *systemConfig)
+void WebUI::init(const RequestCallback &requestCb,
+                 const ResponseCallback &responseCb,
+                 const UpdateCallback &updateCb,
+                 const UpdateSuccessCallback &updateSuccessCb)
 {
     // check if any of the callbacks is null
-    if (!lightCtrlCb || !systemCtrlCb || !uploadCb || !updateCb)
+    if (!requestCb || !responseCb || !updateCb || !updateSuccessCb)
     {
         Serial.println("One or more callbacks are null");
         return;
     }
 
-    if (!lightConfig || !systemConfig)
-    {
-        Serial.println("Light or System configuration is null");
-        return;
-    }
-
-    updateSuccessCallback = updateCb;
-    uploadHandlerCallback = uploadCb;
-    lightControlCallback = lightCtrlCb;
-    systemControlCallback = systemCtrlCb;
-
-    lightConfiguration = lightConfig;
-    systemConfiguration = systemConfig;
+    updateSuccessCallback = updateSuccessCb;
+    requestCallback = requestCb;
+    responseCallback = responseCb;
+    updateCallback = updateCb;
 
     server.on("/", HTTP_GET, [this](AsyncWebServerRequest *request)
               { request->redirect("/light"); });
@@ -106,7 +95,7 @@ void WebUI::init(const LightControlCallback &lightCtrlCb,
               });
 
     server.on("/resetConfig", HTTP_POST, [this](AsyncWebServerRequest *request)
-              { systemControlCallback(SystemOperationType::ResetConfig, std::map<String, String>()); });
+              { requestCallback(ControlType::ResetConfig, std::map<String, String>()); });
 
     server.on("/update", HTTP_GET, [this](AsyncWebServerRequest *request)
               { request->send(
@@ -138,7 +127,7 @@ void WebUI::init(const LightControlCallback &lightCtrlCb,
                     }
                 }
                 //Serial.printf("Type: %u, Update: %s, Index: %u, Len: %u, Final: %u\n", type, filename.c_str(), index, len, final);
-                uploadHandlerCallback(type, filename, index, data, len, final); });
+                updateCallback(type, filename, index, data, len, final); });
 
     // Other routes with sanitized handlers
     server.onNotFound([](AsyncWebServerRequest *request)
@@ -151,9 +140,9 @@ void WebUI::init(const LightControlCallback &lightCtrlCb,
     server.begin();
 }
 
-void WebUI::initHostAP(const WiFiSetupCallback &wifiCb)
+void WebUI::initHostAP(const RequestCallback &requestCb)
 {
-    wifiCredentialsCallback = wifiCb;
+    requestCallback = requestCb;
 
     server.on("/", HTTP_GET, [this](AsyncWebServerRequest *request)
               { request->send(
@@ -164,17 +153,21 @@ void WebUI::initHostAP(const WiFiSetupCallback &wifiCb)
     server.on("/", HTTP_POST, [this](AsyncWebServerRequest *request)
               {
         String ssid, password;
+
         if(request->hasParam(PARAM_WIFI_SSID, true) && request->hasParam(PARAM_WIFI_PASS, true)) {
-            ssid = request->getParam(PARAM_WIFI_SSID, true)->value();
-            password = request->getParam(PARAM_WIFI_PASS, true)->value();
             if (ssid.length() < 1 || ssid.length() > 32 || password.length() < 1) {
                 Serial.println("Invalid wifi parameters");
                 request->send(400, CONTENT_TEXT, VALUE_ERROR);
                 return;
             }
         }
+
+        std::map<String, String> params;
+        params[PARAM_ENABLED] = VALUE_OFF;
+        params[PARAM_WIFI_SSID] = request->getParam(PARAM_WIFI_SSID, true)->value();
+        params[PARAM_WIFI_PASS] = request->getParam(PARAM_WIFI_PASS, true)->value();
         // Use the callback with the received SSID and password
-        wifiCredentialsCallback(ssid, password);
+        requestCallback(ControlType::WiFi, params);
         request->send(200, CONTENT_TEXT, VALUE_SUCCESS);
         delay(3000);
         ESP.restart(); });

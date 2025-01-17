@@ -13,11 +13,21 @@
 #include "configuration.h"
 #include "callbacktypes.h"
 
+// TODO: consolidate callbacks into 3 callback types: 
+// RequestCallback (for wifi, light, system, time) -  std::function<void(ControlType type, const std::map<String, String>& params)>;
+// UpdateCallback (for firmware and filesystem) - std::function<void(UpdateType type, const String &filename, size_t index, uint8_t *data, size_t len, bool final)>;
+// ResponseCallback (for getting config, time etc) - std::function<const std::map<String, String>& params)(DetailsType type>;
+// Oh and UpdateSuccessCallback - std::function<bool()>;
+
+using RequestCallback = std::function<void(ControlType type, const std::map<String, String>& params)>;
+using ResponseCallback = std::function<std::map<String, String>>(DetailsType type);
+using UpdateCallback = std::function<void(UpdateType type, const String &filename, size_t index, uint8_t *data, size_t len, bool final)>;
 using UpdateSuccessCallback = std::function<bool()>;
-using UploadHandlerCallback = std::function<void(UpdateType type, const String &filename, size_t index, uint8_t *data, size_t len, bool final)>;
-using WiFiSetupCallback = std::function<void(const String &ssid, const String &password)>;
-using LightControlCallback = std::function<void(LightOperationType type, const String& value)>;
-using SystemControlCallback = std::function<void(SystemOperationType type, const std::map<String, String>& params)>;
+// using UploadHandlerCallback = std::function<void(UpdateType type, const String &filename, size_t index, uint8_t *data, size_t len, bool final)>;
+// using WiFiSetupCallback = std::function<void(const String &ssid, const String &password)>;
+// using LightControlCallback = std::function<void(LightOperationType type, const String& value)>;
+// using SystemControlCallback = std::function<void(SystemOperationType type, const std::map<String, String>& params)>;
+// using TimeControlCallback = std::function<void(TimeOperationType type, const std::map<String, String>& params)>;
 
 
 class WebUI
@@ -31,12 +41,16 @@ class WebUI
         };
         AsyncWebServer &server; 
         UpdateSuccessCallback updateSuccessCallback;
-        UploadHandlerCallback uploadHandlerCallback;
-        WiFiSetupCallback wifiCredentialsCallback;
-        LightControlCallback lightControlCallback;
-        SystemControlCallback systemControlCallback;
-        Configuration::LightConfig *lightConfiguration;
-        Configuration::SystemConfig *systemConfiguration;
+        RequestCallback requestCallback;
+        UpdateCallback updateCallback;
+        ResponseCallback responseCallback;
+        // UploadHandlerCallback uploadHandlerCallback;
+        // WiFiSetupCallback wifiCredentialsCallback;
+        // LightControlCallback lightControlCallback;
+        // SystemControlCallback systemControlCallback;
+        // TimeControlCallback timeControlCallback;
+        // Configuration::LightConfig *lightConfiguration;
+        // Configuration::SystemConfig *systemConfiguration;
         // const char* deviceName;
         // const char* firmwareVersion;
 
@@ -103,21 +117,25 @@ class WebUI
         static constexpr const char* PARAM_OPTION = "option";
         static constexpr const char* PARAM_VALUE = "value";
         static constexpr const char* PARAM_COLOR = "color";
+        static constexpr const char* PARAM_TIME = "time";
         static constexpr const char* PARAM_BROKER_HOST = "mqttHost";
         static constexpr const char* PARAM_BROKER_PORT = "mqttPort";
         static constexpr const char* PARAM_BROKER_USER = "mqttUsername";
         static constexpr const char* PARAM_BROKER_PASS = "mqttPassword";
         static constexpr const char* PARAM_BROKER_DEFAULT_TOPIC = "mqttTopic";
+        static constexpr const char* PARAM_NTP_HOST = "ntpHost";
+        static constexpr const char* PARAM_NTP_UPDATE_INTERVAL = "ntpInterval";
+        static constexpr const char* PARAM_NTP_TIMEZONE = "ntpTimezone";
+        static constexpr const char* PARAM_SCHEDULE_START = "scheduleStart";
+        static constexpr const char* PARAM_SCHEDULE_END = "scheduleEnd";
 
         WebUI(AsyncWebServer &server);
         ~WebUI();
-        void init(const LightControlCallback &lightCtrlCb, 
-        const SystemControlCallback &systemCtrlcb, 
-        const UploadHandlerCallback &uploadCb, 
-        const UpdateSuccessCallback &updateCb,
-        Configuration::LightConfig *lightConfig,
-        Configuration::SystemConfig *systemConfig);
-        void initHostAP(const WiFiSetupCallback &wifiCb);
+        void init(const RequestCallback &requestCb, 
+        const ResponseCallback &responseCb,
+        const UpdateCallback &updateCb, 
+        const UpdateSuccessCallback &updateSuccessCb);
+        void initHostAP(const RequestCallback &wrequestCb);
 };
 
 #endif

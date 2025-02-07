@@ -297,19 +297,19 @@ void httpRequestCallback(ControlType type, const std::map<String, String> &param
 
 }
 
-const std::map<String, String> httpResponseCallback(DetailsType type)
+const std::map<String, String> httpResponseCallback(PageType page)
 {
-  Serial.printf("Details type: %d\n", type);
+  Serial.printf("Details type: %d\n", page);
   std::map<String, String> params;
-  switch (type)
+  switch (page)
   {
-  case DetailsType::LightConfig:
+  case PageType::LIGHT:
     params[WebUI::PARAM_ENABLED] = lightConfig.state ? WebUI::VALUE_ON : WebUI::VALUE_OFF;
     params[WebUI::PARAM_COLOR] = lightConfig.color;
     params[WebUI::PARAM_BRIGHTNESS] = String(lightConfig.brightness);
     params[WebUI::PARAM_AUTO_BRIGHTNESS_ENABLED] = lightConfig.autoBrightnessConfig.enabled ? WebUI::VALUE_ON : WebUI::VALUE_OFF;
     break;
-  case DetailsType::SystemConfig:
+  case PageType::SYSTEM:
     params[WebUI::PARAM_BROKER_ENABLED] = systemConfig.mqttConfig.enabled ? WebUI::VALUE_ON : WebUI::VALUE_OFF;
     params[WebUI::PARAM_BROKER_HOST] = systemConfig.mqttConfig.host;
     params[WebUI::PARAM_BROKER_PORT] = String(systemConfig.mqttConfig.port);
@@ -318,7 +318,7 @@ const std::map<String, String> httpResponseCallback(DetailsType type)
     params[WebUI::PARAM_BROKER_DEFAULT_TOPIC] = systemConfig.mqttConfig.topic;
     params[WebUI::PARAM_CLOCKFACE_OPTION] = systemConfig.mode == Configuration::ClockMode::Option_1 ? WebUI::VALUE_ON : WebUI::VALUE_OFF;
     break;
-  case DetailsType::TimeConfig: {
+  case PageType::TIME: {
     uint8_t hour = wordClock->getHour();
     uint8_t minute = wordClock->getMinute();  
     char timeStr[6];
@@ -331,7 +331,7 @@ const std::map<String, String> httpResponseCallback(DetailsType type)
     params[WebUI::PARAM_SCHEDULE_END] = String(systemConfig.lightScheduleConfig.endTime);
     params[WebUI::PARAM_SCHEDULE_ENABLED] = systemConfig.lightScheduleConfig.enabled ? WebUI::VALUE_ON : WebUI::VALUE_OFF;
     break;}
-  case DetailsType::UpdateConfig:
+  case PageType::FWUPDATE:
     params[WebUI::PARAM_FW_VERSION] = Defaults::FW_VERSION;
     break;
   default:

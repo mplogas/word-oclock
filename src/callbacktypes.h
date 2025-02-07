@@ -1,25 +1,6 @@
 #ifndef CALLBACKTYPES_H
 #define CALLBACKTYPES_H
 
-// enum LightOperationType {
-//   ToggleStatus,
-//   SetColor,
-//   SetAutoBrightness,
-//   SetBrightness
-// };
-
-// enum SystemOperationType {
-//   SetHaIntegration,
-//   SetClockFormat,
-//   ResetConfig
-// };
-
-// enum TimeOperationType {
-//   SetTime,
-//   SetNTPSync,
-//   SetLightSchedule
-// };
-
 enum UpdateType {
     FIRMWARE,
     FILESYSTEM
@@ -39,11 +20,18 @@ enum ControlType {
   WiFiSetup
 };
 
-enum DetailsType {
-  LightConfig,
-  SystemConfig,
-  TimeConfig,
-  UpdateConfig
+enum PageType {
+    LIGHT,
+    TIME,
+    SYSTEM,
+    FWUPDATE
 };
+
+// enum DetailsType {
+//   LightConfig,
+//   SystemConfig,
+//   TimeConfig,
+//   UpdateConfig
+// };
 
 #endif // CALLBACKTYPES_H

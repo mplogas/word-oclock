@@ -9,53 +9,31 @@
 #include <LittleFS.h>
 #include <functional>
 #include <map>
-#include "defaults.h"
 #include "configuration.h"
 #include "callbacktypes.h"
 
 using RequestCallback = std::function<void(ControlType type, const std::map<String, String>& params)>;
-using ResponseCallback = std::function<const std::map<String, String>(DetailsType type)>;
+using ResponseCallback = std::function<const std::map<String, String>(PageType page)>;
 using UpdateCallback = std::function<void(UpdateType type, const String &filename, size_t index, uint8_t *data, size_t len, bool final)>;
 using UpdateSuccessCallback = std::function<bool()>;
-// using UploadHandlerCallback = std::function<void(UpdateType type, const String &filename, size_t index, uint8_t *data, size_t len, bool final)>;
-// using WiFiSetupCallback = std::function<void(const String &ssid, const String &password)>;
-// using LightControlCallback = std::function<void(LightOperationType type, const String& value)>;
-// using SystemControlCallback = std::function<void(SystemOperationType type, const std::map<String, String>& params)>;
-// using TimeControlCallback = std::function<void(TimeOperationType type, const std::map<String, String>& params)>;
-
 
 class WebUI
 {
     private:
-        enum Page {
-            LIGHT,
-            TIME,
-            SYSTEM,
-            FIRMWARE
-        };
         AsyncWebServer &server; 
         UpdateSuccessCallback updateSuccessCallback;
         RequestCallback requestCallback;
         UpdateCallback updateCallback;
         ResponseCallback responseCallback;
-        // UploadHandlerCallback uploadHandlerCallback;
-        // WiFiSetupCallback wifiCredentialsCallback;
-        // LightControlCallback lightControlCallback;
-        // SystemControlCallback systemControlCallback;
-        // TimeControlCallback timeControlCallback;
-        // Configuration::LightConfig *lightConfiguration;
-        // Configuration::SystemConfig *systemConfiguration;
-        // const char* deviceName;
-        // const char* firmwareVersion;
 
         // Page Processor functions
         String lightPageProcessor(const String &var, const std::map<String, String> &params);
         String timePageProcessor(const String &var, const std::map<String, String> &params);
         String systemPageProcessor(const String &var, const std::map<String, String> &params);
         String firmwarePageProcessor(const String &var, const std::map<String, String> &params);
-        String headerProcessor(Page page);
+        String headerProcessor(PageType page);
         //String includeProcessor(const String &var);
-        String pageProcessor(const String &var, Page page, const std::map<String, String> &params);
+        String pageProcessor(const String &var, PageType page, const std::map<String, String> &params);
 
         // Helper functions
         void handleFirmwareUpdate(AsyncWebServerRequest *request);
@@ -103,6 +81,7 @@ class WebUI
         static constexpr const char* PARAM_FW_Type = "updateType";
 
     public:
+
         static constexpr const char* VALUE_ON = "1";
         static constexpr const char* VALUE_OFF = "0";
 

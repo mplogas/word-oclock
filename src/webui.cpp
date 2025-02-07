@@ -35,7 +35,7 @@ void WebUI::init(const RequestCallback &requestCb,
               { request->redirect("/light"); });
     server.on("/light", HTTP_GET, [this](AsyncWebServerRequest *request)
               { 
-                const std::map<String, String> params = responseCallback(DetailsType::LightConfig);
+                const std::map<String, String> params = responseCallback(PageType::LIGHT);
                 request->send(
                     LittleFS,
                     WebUI::PATH_LIGHT_HTML,
@@ -43,7 +43,7 @@ void WebUI::init(const RequestCallback &requestCb,
                     false,
                     [this, params](const String &var) -> String
                     {
-                        return this->pageProcessor(var, Page::LIGHT, params);
+                        return this->pageProcessor(var, PageType::LIGHT, params);
                     }); 
                 });
 
@@ -65,7 +65,7 @@ void WebUI::init(const RequestCallback &requestCb,
 
     server.on("/time", HTTP_GET, [this](AsyncWebServerRequest *request)
               { 
-                const std::map<String, String> params = responseCallback(DetailsType::TimeConfig);
+                const std::map<String, String> params = responseCallback(PageType::TIME);
                 // TODO: call responseCallback to get the details only once and provide parameter list to page processor
                 request->send(
                     LittleFS,
@@ -74,7 +74,7 @@ void WebUI::init(const RequestCallback &requestCb,
                     false,
                     [this, params](const String &var) -> String
                     {
-                        return this->pageProcessor(var, Page::TIME, params);
+                        return this->pageProcessor(var, PageType::TIME, params);
                     }); });
 
     server.on("/getCurrentTime", HTTP_GET, [this](AsyncWebServerRequest *request)
@@ -82,7 +82,7 @@ void WebUI::init(const RequestCallback &requestCb,
 
     server.on("/system", HTTP_GET, [this](AsyncWebServerRequest *request)
               { 
-                const std::map<String, String> params = responseCallback(DetailsType::SystemConfig);
+                const std::map<String, String> params = responseCallback(PageType::SYSTEM);
                 request->send(
                     LittleFS,
                     WebUI::PATH_SYSTEM_HTML,
@@ -90,7 +90,7 @@ void WebUI::init(const RequestCallback &requestCb,
                     false,
                     [this, params](const String &var) -> String
                     {
-                        return this->pageProcessor(var, Page::SYSTEM, params);
+                        return this->pageProcessor(var, PageType::SYSTEM, params);
                     }); });
 
     server.on("/setHaIntegration", HTTP_POST, [this](AsyncWebServerRequest *request)
@@ -104,7 +104,7 @@ void WebUI::init(const RequestCallback &requestCb,
 
     server.on("/update", HTTP_GET, [this](AsyncWebServerRequest *request)
               { 
-                const std::map<String, String> params = responseCallback(DetailsType::UpdateConfig);
+                const std::map<String, String> params = responseCallback(PageType::FWUPDATE);
                 request->send(
                     LittleFS,
                     WebUI::PATH_FIRMWARE_HTML,
@@ -112,7 +112,7 @@ void WebUI::init(const RequestCallback &requestCb,
                     false,
                     [this, params](const String &var) -> String
                     {
-                        return this->pageProcessor(var, Page::FIRMWARE, params);
+                        return this->pageProcessor(var, PageType::FWUPDATE, params);
                     }); });
 
     server.on("/update", HTTP_POST, [this](AsyncWebServerRequest *request)
@@ -482,7 +482,7 @@ void WebUI::handleSetClockFace(AsyncWebServerRequest *request)
     }
 }
 
-String WebUI::pageProcessor(const String &var, Page page, const std::map<String, String> &params)
+String WebUI::pageProcessor(const String &var, PageType page, const std::map<String, String> &params)
 {
     if (var == "INCLUDE_HEADER")
     {
@@ -491,20 +491,20 @@ String WebUI::pageProcessor(const String &var, Page page, const std::map<String,
 
     switch (page)
     {
-    case Page::LIGHT:
+    case PageType::LIGHT:
         return lightPageProcessor(var, params);
-    case Page::SYSTEM:
+    case PageType::SYSTEM:
         return systemPageProcessor(var, params);
-    case Page::FIRMWARE:
+    case PageType::FWUPDATE:
         return firmwarePageProcessor(var, params);
-    case Page::TIME:
+    case PageType::TIME:
         return timePageProcessor(var, params);
     default:
         return String();
     }
 }
 
-String WebUI::headerProcessor(Page page)
+String WebUI::headerProcessor(PageType page)
 {
     String headerContent = readFile(PATH_NAVIGATION_HTML);
     if (headerContent.length() == 0)
@@ -515,16 +515,16 @@ String WebUI::headerProcessor(Page page)
     String pageTitle;
     switch (page)
     {
-    case Page::LIGHT:
+    case PageType::LIGHT:
         pageTitle = LIGHT_PAGE_TITLE;
         break;
-    case Page::SYSTEM:
+    case PageType::SYSTEM:
         pageTitle = SYSTEM_PAGE_TITLE;
         break;
-    case Page::TIME:
+    case PageType::TIME:
         pageTitle = TIME_PAGE_TITLE;
         break;
-    case Page::FIRMWARE:
+    case PageType::FWUPDATE:
         pageTitle = FIRMWARE_PAGE_TITLE;
         break;
     default:
@@ -533,9 +533,9 @@ String WebUI::headerProcessor(Page page)
     }
 
     headerContent.replace("%PAGE_TITLE%", pageTitle);
-    headerContent.replace("%ACTIVE_LIGHT%", (page == Page::LIGHT) ? VALUE_ACTIVE : "");
-    headerContent.replace("%ACTIVE_TIME%", (page == Page::TIME) ? VALUE_ACTIVE : "");
-    headerContent.replace("%ACTIVE_SYSTEM%", (page == Page::SYSTEM) ? VALUE_ACTIVE : "");
+    headerContent.replace("%ACTIVE_LIGHT%", (page == PageType::LIGHT) ? VALUE_ACTIVE : "");
+    headerContent.replace("%ACTIVE_TIME%", (page == PageType::TIME) ? VALUE_ACTIVE : "");
+    headerContent.replace("%ACTIVE_SYSTEM%", (page == PageType::SYSTEM) ? VALUE_ACTIVE : "");
 
     return headerContent;
 }

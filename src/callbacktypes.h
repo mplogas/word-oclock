@@ -36,13 +36,14 @@ enum ControlType {
   Time,
   NTPSync,
   LightSchedule,
-  WiFi
+  WiFiSetup
 };
 
 enum DetailsType {
   LightConfig,
   SystemConfig,
-  TimeConfig
+  TimeConfig,
+  UpdateConfig
 };
 
 #endif // CALLBACKTYPES_H

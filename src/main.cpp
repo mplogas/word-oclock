@@ -25,32 +25,32 @@ Configuration::LightConfig lightConfig;
 Configuration::WifiConfig wifiConfig;
 AsyncWebServer server(80);
 WebUI webui(server);
-WClock* wordClock;
-HomeAssistant* homeAssistant;
-ITimeConverter* timeConverter;
+WClock *wordClock;
+HomeAssistant *homeAssistant;
+ITimeConverter *timeConverter;
 LED ledController;
-
 
 bool initialized = false;
 unsigned long lastUpdate = 0;
 bool isDark = false;
 
-
 // this if for (reduced) testing purposes
 boolean isTick;
 std::vector<std::pair<int, int>> tickLEDs = {
-    {0,1},
-    {1, 1},   // From LED index 0, turn on 3 LEDs (0 to 2)
-    {6, 1}   // From LED index 6, turn on 3 LEDs (6 to 9)
+    {0, 1},
+    {1, 1}, // From LED index 0, turn on 3 LEDs (0 to 2)
+    {6, 1}  // From LED index 6, turn on 3 LEDs (6 to 9)
 };
 std::vector<std::pair<int, int>> tockLEDs = {
-  {0,1},
-    {3, 1}   // From LED index 3, turn on 5 LEDs (3 to 5)
+    {0, 1},
+    {3, 1} // From LED index 3, turn on 5 LEDs (3 to 5)
 };
 
-void showCurrentTime() {
-  if(!isDark) {
-    uint8_t hour = wordClock->getHour();  
+void showCurrentTime()
+{
+  if (!isDark)
+  {
+    uint8_t hour = wordClock->getHour();
     uint8_t minute = wordClock->getMinute();
     // Serial.printf("Current time: %d:%d\n", hour, minute);
     std::vector<std::pair<int, int>> leds = timeConverter->convertTime(hour, minute, (systemConfig.mode == Configuration::ClockMode::Regular), true);
@@ -66,21 +66,23 @@ void handleFWUpload(UpdateType updateType, const String filename, size_t index, 
   {
     Serial.printf("UploadStart: %s\n", filename.c_str());
     Serial.printf("Update type: %s\n", updateType == UpdateType::FIRMWARE ? "Firmware" : "Filesystem");
-    if (!Update.begin(UPDATE_SIZE_UNKNOWN, updateType == UpdateType::FIRMWARE ? U_FLASH : U_SPIFFS ))
+    if (!Update.begin(UPDATE_SIZE_UNKNOWN, updateType == UpdateType::FIRMWARE ? U_FLASH : U_SPIFFS))
     { // start with max available size
       Update.printError(Serial);
-    } else Serial.println("OTA update started!");
+    }
+    else
+      Serial.println("OTA update started!");
   }
 
   if (Update.write(data, len) != len)
   {
     Update.printError(Serial);
   } // else Serial.printf("Written: %u\n", index + len);
-  
+
   if (final)
   {
     if (Update.end(true))
-    { 
+    {
       Serial.printf("UpdateSuccess: %u\n", index + len);
     }
     else
@@ -90,169 +92,253 @@ void handleFWUpload(UpdateType updateType, const String filename, size_t index, 
   }
 }
 
-bool isUpdateSuccess() {
-    return !Update.hasError();
+bool isUpdateSuccess()
+{
+  return !Update.hasError();
 }
 
-void handleWiFiCredentials(const String &ssid, const String &password) {
-    Serial.printf("SSID set to: %s\n", ssid.c_str());
-    //Serial.printf("Password set to: %s\n", password.c_str());
+void handleWiFiCredentials(const String &ssid, const String &password)
+{
+  Serial.printf("SSID set to: %s\n", ssid.c_str());
+  // Serial.printf("Password set to: %s\n", password.c_str());
 
-    strlcpy(wifiConfig.ssid, ssid.c_str(), sizeof(wifiConfig.ssid));
-    strlcpy(wifiConfig.password, password.c_str(), sizeof(wifiConfig.password));
-    config.setWifiConfig(wifiConfig);
+  strlcpy(wifiConfig.ssid, ssid.c_str(), sizeof(wifiConfig.ssid));
+  strlcpy(wifiConfig.password, password.c_str(), sizeof(wifiConfig.password));
+  config.setWifiConfig(wifiConfig);
 }
 
 // Callback for MQTT connected
-void handleMqttConnected() {
-    Serial.println("MQTT Connected Successfully!");
-    // Additional logic upon successful connection
+void handleMqttConnected()
+{
+  Serial.println("MQTT Connected Successfully!");
+  // Additional logic upon successful connection
 }
 
 // Callback for MQTT disconnected
-void handleMqttDisconnected() {
-    Serial.println("MQTT Disconnected!");
-    // Additional logic upon disconnection
+void handleMqttDisconnected()
+{
+  Serial.println("MQTT Disconnected!");
+  // Additional logic upon disconnection
 }
 
 // home assistant callbacks
-void handleSwitchCommand(SwitchType switchType, bool state) {
-    Serial.printf("Switch command received for %s: %s\n", switchType, state ? "ON" : "OFF");
-    // Additional logic to handle switch commands
+void handleSwitchCommand(SwitchType switchType, bool state)
+{
+  Serial.printf("Switch command received for %s: %s\n", switchType, state ? "ON" : "OFF");
+  // Additional logic to handle switch commands
 }
 
-void handleIlluminanceSensorUpdate(const int value) {
-    Serial.printf("Illuminance sensor value: %d\n", value);
+void handleIlluminanceSensorUpdate(const int value)
+{
+  Serial.printf("Illuminance sensor value: %d\n", value);
 
-    if (systemConfig.mqttConfig.enabled && homeAssistant != nullptr) {
-      char buf[8];
-      itoa(value, buf, 10);
-      homeAssistant->setSensorValue(SensorType::LightIntensity, buf);
-    }
-}
-
-void enableMqtt() {
-  if(systemConfig.mqttConfig.host != nullptr) {
-      homeAssistant = new HomeAssistant(client, Defaults::PRODUCT, Defaults::FW_VERSION);
-      homeAssistant->addSensor(SensorType::LightIntensity, "0", "mdi:brightness-5");
-      homeAssistant->addSwitch(SwitchType::LED, false, "mdi:lightbulb");
-      homeAssistant->setSwitchCommandCallback(handleSwitchCommand);
-
-      ledController.registerIlluminanceSensorCallback(handleIlluminanceSensorUpdate);
-      homeAssistant->connect(IPAddress(systemConfig.mqttConfig.host), handleMqttConnected, handleMqttDisconnected, systemConfig.mqttConfig.username, systemConfig.mqttConfig.password, systemConfig.mqttConfig.topic);
+  if (systemConfig.mqttConfig.enabled && homeAssistant != nullptr)
+  {
+    char buf[8];
+    itoa(value, buf, 10);
+    homeAssistant->setSensorValue(SensorType::LightIntensity, buf);
   }
 }
 
-void disableMqtt() {
-  if(homeAssistant != nullptr) {
+void enableMqtt()
+{
+  if (systemConfig.mqttConfig.host != nullptr)
+  {
+    homeAssistant = new HomeAssistant(client, Defaults::PRODUCT, Defaults::FW_VERSION);
+    homeAssistant->addSensor(SensorType::LightIntensity, "0", "mdi:brightness-5");
+    homeAssistant->addSwitch(SwitchType::LED, false, "mdi:lightbulb");
+    homeAssistant->setSwitchCommandCallback(handleSwitchCommand);
+
+    ledController.registerIlluminanceSensorCallback(handleIlluminanceSensorUpdate);
+    homeAssistant->connect(IPAddress(systemConfig.mqttConfig.host), handleMqttConnected, handleMqttDisconnected, systemConfig.mqttConfig.username, systemConfig.mqttConfig.password, systemConfig.mqttConfig.topic);
+  }
+}
+
+void disableMqtt()
+{
+  if (homeAssistant != nullptr)
+  {
+    ledController.unregisterIlluminanceSensorCallback();
     homeAssistant->disconnect();
     delete homeAssistant;
     homeAssistant = nullptr;
   }
 }
 
-void lightOperationHandler(LightOperationType operation, const String& value) {
-  switch (operation) {
-    case LightOperationType::ToggleStatus: {
-      bool status = (value == "1");
-      if(status) {
-        isDark = false;
-        showCurrentTime();
-      } else {
-        isDark = true;
-        ledController.clearLEDs();
-      }
-      lightConfig.state = status;
-      config.setLightState(lightConfig.state);
-      break;
-    }
-    case LightOperationType::SetColor: {
-      ledController.setColor(ledController.HexToRGB(value));
-      showCurrentTime();
-      strlcpy(lightConfig.color, value.c_str(), sizeof(lightConfig.color));
-      config.setLightColor(lightConfig.color);
-      break;
-    }
-    case LightOperationType::SetAutoBrightness: {
-      bool enabled = (value == "1");
-      if(enabled) {
-        ledController.enableAutoBrightness(lightConfig.autoBrightnessConfig.illuminanceThresholdHigh, lightConfig.autoBrightnessConfig.illuminanceThresholdLow);
+void httpRequestCallback(ControlType type, const std::map<String, String> &params)
+{
+  // Serial.printf("Control type: %d\n", type);
+  // Serial.printf("Params: %d\n", params.size());
+  // for (auto const &x : params)
+  // {
+  //   Serial.printf("Key: %s, Value: %s\n", x.first.c_str(), x.second.c_str());
+  // }
 
-      } else {
-        ledController.disableAutoBrightness();
-      }
-      lightConfig.autoBrightnessConfig.enabled = enabled;
-      config.setAutoBrightness(lightConfig.autoBrightnessConfig);
-      break;
-    }
-    case LightOperationType::SetBrightness: {
-      uint8_t brightness = value.toInt();
-      ledController.setBrightness(brightness);
-      lightConfig.brightness = brightness;
-      config.setLightBrightness(lightConfig.brightness);
-      break;
-    }
-  }
-}
-
-void systemOperationHandler(SystemOperationType operation, const std::map<String, String>& params) {
-  Serial.printf("System operation: %d\n", operation);
-  Serial.printf("Params: %d\n", params.size());
-  for (auto const& x : params)
+  switch (type)
   {
-    Serial.printf("Key: %s, Value: %s\n", x.first.c_str(), x.second.c_str());
+  case ControlType::LightStatus:
+  {
+    bool status = params.at(WebUI::PARAM_ENABLED) == "1";
+    if (status)
+    {
+      isDark = false;
+      showCurrentTime();
+    }
+    else
+    {
+      isDark = true;
+      ledController.clearLEDs();
+    }
+    lightConfig.state = status;
+    config.setLightState(lightConfig.state);
+    break;
   }
-  switch (operation) {
-    case SystemOperationType::SetHaIntegration: {
-      systemConfig.mqttConfig.enabled = (params.at(WebUI::PARAM_ENABLED) == "1");
-      strlcpy(systemConfig.mqttConfig.host, params.at(WebUI::PARAM_BROKER_HOST).c_str(), sizeof(systemConfig.mqttConfig.host));
-      systemConfig.mqttConfig.port = params.at(WebUI::PARAM_BROKER_PORT).toInt();
-      strlcpy(systemConfig.mqttConfig.username, params.at(WebUI::PARAM_BROKER_USER).c_str(), sizeof(systemConfig.mqttConfig.username));
-      strlcpy(systemConfig.mqttConfig.password, params.at(WebUI::PARAM_BROKER_PASS).c_str(), sizeof(systemConfig.mqttConfig.password));
-      strlcpy(systemConfig.mqttConfig.topic, params.at(WebUI::PARAM_BROKER_DEFAULT_TOPIC).c_str(), sizeof(systemConfig.mqttConfig.topic));
-      config.setMqttConfig(systemConfig.mqttConfig);
+  case ControlType::Color:
+  {
+    ledController.setColor(ledController.HexToRGB(params.at(WebUI::PARAM_COLOR)));
+    showCurrentTime();
+    strlcpy(lightConfig.color, params.at(WebUI::PARAM_COLOR).c_str(), sizeof(lightConfig.color));
+    config.setLightColor(lightConfig.color);
+    break;
+  }
+  case ControlType::AutoBrightness:
+  {
+    bool enabled = params.at(WebUI::PARAM_AUTO_BRIGHTNESS_ENABLED) == "1";
+    if (enabled)
+    {
+      ledController.enableAutoBrightness(lightConfig.autoBrightnessConfig.illuminanceThresholdHigh, lightConfig.autoBrightnessConfig.illuminanceThresholdLow);
+    }
+    else
+    {
+      ledController.disableAutoBrightness();
+    }
+    lightConfig.autoBrightnessConfig.enabled = enabled;
+    config.setAutoBrightness(lightConfig.autoBrightnessConfig);
+    break;
+  }
+  case ControlType::Brightness:
+  {
+    uint8_t brightness = params.at(WebUI::PARAM_BRIGHTNESS).toInt();
+    ledController.setBrightness(brightness);
+    lightConfig.brightness = brightness;
+    config.setLightBrightness(lightConfig.brightness);
+    break;
+  }
+  case ControlType::HaIntegration:
+  {
+    systemConfig.mqttConfig.enabled = (params.at(WebUI::PARAM_ENABLED) == "1");
+    strlcpy(systemConfig.mqttConfig.host, params.at(WebUI::PARAM_BROKER_HOST).c_str(), sizeof(systemConfig.mqttConfig.host));
+    systemConfig.mqttConfig.port = params.at(WebUI::PARAM_BROKER_PORT).toInt();
+    strlcpy(systemConfig.mqttConfig.username, params.at(WebUI::PARAM_BROKER_USER).c_str(), sizeof(systemConfig.mqttConfig.username));
+    strlcpy(systemConfig.mqttConfig.password, params.at(WebUI::PARAM_BROKER_PASS).c_str(), sizeof(systemConfig.mqttConfig.password));
+    strlcpy(systemConfig.mqttConfig.topic, params.at(WebUI::PARAM_BROKER_DEFAULT_TOPIC).c_str(), sizeof(systemConfig.mqttConfig.topic));
+    config.setMqttConfig(systemConfig.mqttConfig);
 
-      if(systemConfig.mqttConfig.enabled) {
-        enableMqtt();
-      } else {
-        disableMqtt();
-      }
-      break;
+    if (systemConfig.mqttConfig.enabled)
+    {
+      enableMqtt();
     }
-    case SystemOperationType::SetNTPTime: {
-      // Additional logic to handle NTP time
-      break;
+    else
+    {
+      disableMqtt();
     }
-    case SystemOperationType::SetNtpAutoUpdate: {
-      // Additional logic to handle NTP auto update
-      break;
-    }
-    case SystemOperationType::SetLightSchedule: {
-      // Additional logic to handle light schedule
-      break;
-    }
-    case SystemOperationType::SetClockFormat: {
-      if(params.at(WebUI::PARAM_OPTION) == "0") {
-        systemConfig.mode = Configuration::ClockMode::Regular;
-        Serial.println("Clock mode set to dreiviertel");
-      } else {
-        systemConfig.mode = Configuration::ClockMode::Option_1;
-        Serial.println("Clock mode set to viertel vor");
-      }
-      config.setClockMode(systemConfig.mode);
-      break;
-    }
-    case SystemOperationType::ResetConfig: {
-      config.reset();
-      Serial.println("Configuration reset. Restarting...");
-      delay(2000);  
-      ESP.restart();
-      break;
-    }
+    break;
   }
+  case ControlType::ClockFace:
+  {
+    if (params.at(WebUI::PARAM_OPTION) == "0")
+    {
+      systemConfig.mode = Configuration::ClockMode::Regular;
+      Serial.println("Clock mode set to dreiviertel");
+    }
+    else
+    {
+      systemConfig.mode = Configuration::ClockMode::Option_1;
+      Serial.println("Clock mode set to viertel vor");
+    }
+    config.setClockMode(systemConfig.mode);
+    break;
+  }
+  case ControlType::ResetConfig:
+  {
+    config.reset();
+    Serial.println("Configuration reset. Restarting...");
+    delay(2000);
+    ESP.restart();
+    break;
+  }
+  case ControlType::Time:
+  {
+    // Additional logic to handle time configuration
+    break;
+  }
+  case ControlType::NTPSync:
+  {
+    // Additional logic to handle NTP sync
+    break;
+  }
+  case ControlType::LightSchedule:
+  {
+    // Additional logic to handle light schedule
+    break;
+  }
+  case ControlType::WiFiSetup:
+  {
+    strlcpy(wifiConfig.ssid, params.at(WebUI::PARAM_WIFI_SSID).c_str(), sizeof(wifiConfig.ssid));
+    strlcpy(wifiConfig.password, params.at(WebUI::PARAM_WIFI_PASS).c_str(), sizeof(wifiConfig.password));
+    config.setWifiConfig(wifiConfig);
+    break;
+  }
+  default:
+  {
+    break;
+  }
+  }
+
 }
 
-
+const std::map<String, String> httpResponseCallback(DetailsType type)
+{
+  Serial.printf("Details type: %d\n", type);
+  std::map<String, String> params;
+  switch (type)
+  {
+  case DetailsType::LightConfig:
+    params[WebUI::PARAM_ENABLED] = lightConfig.state ? WebUI::VALUE_ON : WebUI::VALUE_OFF;
+    params[WebUI::PARAM_COLOR] = lightConfig.color;
+    params[WebUI::PARAM_BRIGHTNESS] = String(lightConfig.brightness);
+    params[WebUI::PARAM_AUTO_BRIGHTNESS_ENABLED] = lightConfig.autoBrightnessConfig.enabled ? WebUI::VALUE_ON : WebUI::VALUE_OFF;
+    break;
+  case DetailsType::SystemConfig:
+    params[WebUI::PARAM_BROKER_ENABLED] = systemConfig.mqttConfig.enabled ? WebUI::VALUE_ON : WebUI::VALUE_OFF;
+    params[WebUI::PARAM_BROKER_HOST] = systemConfig.mqttConfig.host;
+    params[WebUI::PARAM_BROKER_PORT] = String(systemConfig.mqttConfig.port);
+    params[WebUI::PARAM_BROKER_USER] = systemConfig.mqttConfig.username;
+    params[WebUI::PARAM_BROKER_PASS] = systemConfig.mqttConfig.password;
+    params[WebUI::PARAM_BROKER_DEFAULT_TOPIC] = systemConfig.mqttConfig.topic;
+    params[WebUI::PARAM_CLOCKFACE_OPTION] = systemConfig.mode == Configuration::ClockMode::Option_1 ? WebUI::VALUE_ON : WebUI::VALUE_OFF;
+    break;
+  case DetailsType::TimeConfig: {
+    uint8_t hour = wordClock->getHour();
+    uint8_t minute = wordClock->getMinute();  
+    char timeStr[6];
+    sprintf(timeStr, "%02d:%02d", hour, minute);
+    params[WebUI::PARAM_TIME] = timeStr;
+    params[WebUI::PARAM_NTP_ENABLED] = systemConfig.ntpConfig.enabled ? WebUI::VALUE_ON : WebUI::VALUE_OFF;
+    params[WebUI::PARAM_NTP_HOST] = systemConfig.ntpConfig.server;
+    params[WebUI::PARAM_NTP_UPDATE_INTERVAL] = String(systemConfig.ntpConfig.interval);
+    params[WebUI::PARAM_SCHEDULE_START] = String(systemConfig.lightScheduleConfig.startTime);
+    params[WebUI::PARAM_SCHEDULE_END] = String(systemConfig.lightScheduleConfig.endTime);
+    params[WebUI::PARAM_SCHEDULE_ENABLED] = systemConfig.lightScheduleConfig.enabled ? WebUI::VALUE_ON : WebUI::VALUE_OFF;
+    break;}
+  case DetailsType::UpdateConfig:
+    params[WebUI::PARAM_FW_VERSION] = Defaults::FW_VERSION;
+    break;
+  default:
+    break;
+  }
+  return params;
+}
 
 void setup()
 {
@@ -276,24 +362,26 @@ void setup()
 
   if (!LittleFS.begin(true))
   {
-      Serial.println("An error has occurred while mounting LittleFS");
-      Serial.flush();
-      abort();
+    Serial.println("An error has occurred while mounting LittleFS");
+    Serial.flush();
+    abort();
   }
   Serial.println("LittleFS mounted successfully");
 
-
   WifiSetup wifiSetup = WifiSetup();
-  if (wifiConfig.ssid != nullptr && wifiConfig.password != nullptr && 
-        wifiSetup.connect(wifiConfig.ssid, wifiConfig.password, Defaults::WIFI_SCAN_TIMEOUT))
+  if (wifiConfig.ssid != nullptr && wifiConfig.password != nullptr &&
+      wifiSetup.connect(wifiConfig.ssid, wifiConfig.password, Defaults::WIFI_SCAN_TIMEOUT))
   {
     isSetup = false;
 
     bool clockResult = wordClock->begin(systemConfig.ntpConfig.timezone, systemConfig.ntpConfig.server);
 
-    if(!clockResult) {
+    if (!clockResult)
+    {
       Serial.println("Failed to initialize clock");
-    } else {
+    }
+    else
+    {
       Serial.println("Successfully intitialized clock");
     }
 
@@ -302,25 +390,26 @@ void setup()
     // Serial.printf("Light brightness recovered: %d\n", lightConfig.brightness);
     // Serial.printf("Auto brightness state recovered: %s\n", lightConfig.autoBrightnessConfig.enabled ? "true" : "false");
 
-
     ledController = LED();
     ledController.init();
-    if(lightConfig.autoBrightnessConfig.enabled) {
+    if (lightConfig.autoBrightnessConfig.enabled)
+    {
       ledController.enableAutoBrightness(lightConfig.autoBrightnessConfig.illuminanceThresholdHigh, lightConfig.autoBrightnessConfig.illuminanceThresholdLow);
-    } else {
+    }
+    else
+    {
       ledController.setBrightness(lightConfig.brightness);
-    } 
+    }
     ledController.setColor(ledController.HexToRGB(lightConfig.color));
 
     timeConverter = new TimeConverterDE();
-  
+
     if (systemConfig.mqttConfig.enabled)
     {
       enableMqtt();
     }
 
-
-    webui.init(lightOperationHandler, systemOperationHandler, handleFWUpload, isUpdateSuccess, &lightConfig, &systemConfig);
+    webui.init(httpRequestCallback, httpResponseCallback, handleFWUpload, isUpdateSuccess);
   }
   else
   {
@@ -330,16 +419,16 @@ void setup()
       Serial.println("Failed to start AP");
       Serial.flush();
       abort();
-    } else {
-        webui.initHostAP(handleWiFiCredentials);
+    }
+    else
+    {
+      webui.initHostAP(httpRequestCallback);
     }
   }
 
   initialized = true;
   ledController.test();
 }
-
-
 
 void loop()
 {
@@ -352,7 +441,7 @@ void loop()
       lastUpdate = now;
       showCurrentTime();
     }
-    
+
     ledController.loop();
     if (systemConfig.mqttConfig.enabled && homeAssistant != nullptr)
     {

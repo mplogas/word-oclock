@@ -12,7 +12,6 @@ WebUI::~WebUI()
     requestCallback = nullptr;
     responseCallback = nullptr;
     updateCallback = nullptr;
-    
 }
 
 void WebUI::init(const RequestCallback &requestCb,
@@ -35,15 +34,18 @@ void WebUI::init(const RequestCallback &requestCb,
     server.on("/", HTTP_GET, [this](AsyncWebServerRequest *request)
               { request->redirect("/light"); });
     server.on("/light", HTTP_GET, [this](AsyncWebServerRequest *request)
-              { request->send(
+              { 
+                const std::map<String, String> params = responseCallback(DetailsType::LightConfig);
+                request->send(
                     LittleFS,
                     WebUI::PATH_LIGHT_HTML,
                     CONTENT_HTML,
                     false,
-                    [this](const String &var) -> String
+                    [this, params](const String &var) -> String
                     {
-                        return this->pageProcessor(var, Page::LIGHT);
-                    }); });
+                        return this->pageProcessor(var, Page::LIGHT, params);
+                    }); 
+                });
 
     // Handle light status toggle
     server.on("/toggleLight", HTTP_GET, [this](AsyncWebServerRequest *request)
@@ -62,50 +64,55 @@ void WebUI::init(const RequestCallback &requestCb,
               { this->handleSetBrightness(request); });
 
     server.on("/time", HTTP_GET, [this](AsyncWebServerRequest *request)
-              { request->send(
+              { 
+                const std::map<String, String> params = responseCallback(DetailsType::TimeConfig);
+                // TODO: call responseCallback to get the details only once and provide parameter list to page processor
+                request->send(
                     LittleFS,
                     WebUI::PATH_TIME_HTML,
                     CONTENT_HTML,
                     false,
-                    [this](const String &var) -> String
+                    [this, params](const String &var) -> String
                     {
-                        return this->pageProcessor(var, Page::TIME);
+                        return this->pageProcessor(var, Page::TIME, params);
                     }); });
 
     server.on("/getCurrentTime", HTTP_GET, [this](AsyncWebServerRequest *request)
               { request->send(200, CONTENT_TEXT, "12:30"); });
 
     server.on("/system", HTTP_GET, [this](AsyncWebServerRequest *request)
-              { request->send(
+              { 
+                const std::map<String, String> params = responseCallback(DetailsType::SystemConfig);
+                request->send(
                     LittleFS,
                     WebUI::PATH_SYSTEM_HTML,
                     CONTENT_HTML,
                     false,
-                    [this](const String &var) -> String
+                    [this, params](const String &var) -> String
                     {
-                        return this->pageProcessor(var, Page::SYSTEM);
+                        return this->pageProcessor(var, Page::SYSTEM, params);
                     }); });
 
     server.on("/setHaIntegration", HTTP_POST, [this](AsyncWebServerRequest *request)
               { this->handleSetHAIntegration(request); });
 
     server.on("/setClockFace", HTTP_POST, [this](AsyncWebServerRequest *request)
-              {
-                  this->handleSetClockFace(request);
-              });
+              { this->handleSetClockFace(request); });
 
     server.on("/resetConfig", HTTP_POST, [this](AsyncWebServerRequest *request)
               { requestCallback(ControlType::ResetConfig, std::map<String, String>()); });
 
     server.on("/update", HTTP_GET, [this](AsyncWebServerRequest *request)
-              { request->send(
+              { 
+                const std::map<String, String> params = responseCallback(DetailsType::UpdateConfig);
+                request->send(
                     LittleFS,
                     WebUI::PATH_FIRMWARE_HTML,
                     CONTENT_HTML,
                     false,
-                    [this](const String &var) -> String
+                    [this, params](const String &var) -> String
                     {
-                        return this->pageProcessor(var, Page::FIRMWARE);
+                        return this->pageProcessor(var, Page::FIRMWARE, params);
                     }); });
 
     server.on("/update", HTTP_POST, [this](AsyncWebServerRequest *request)
@@ -154,25 +161,31 @@ void WebUI::initHostAP(const RequestCallback &requestCb)
               {
         String ssid, password;
 
-        if(request->hasParam(PARAM_WIFI_SSID, true) && request->hasParam(PARAM_WIFI_PASS, true)) {
-            if (ssid.length() < 1 || ssid.length() > 32 || password.length() < 1) {
-                Serial.println("Invalid wifi parameters");
+        if(request->hasParam(PARAM_WIFI_SSID, true)) {
+            std::map<String, String> params;
+            params[PARAM_ENABLED] = VALUE_ON;
+            params[PARAM_WIFI_SSID] = request->getParam(PARAM_WIFI_SSID, true)->value();
+            if(request->hasParam(PARAM_WIFI_PASS, true)) {
+                params[PARAM_WIFI_PASS] = request->getParam(PARAM_WIFI_PASS, true)->value();
+            } else {
+                params[PARAM_WIFI_PASS] = String();
+            }
+
+            // Use the callback with the received SSID and password
+            requestCallback(ControlType::WiFiSetup, params);
+            request->send(200, CONTENT_TEXT, VALUE_SUCCESS);
+            delay(3000);
+            ESP.restart();
+        } else {
+                Serial.println("Missing SSID parameter");
                 request->send(400, CONTENT_TEXT, VALUE_ERROR);
                 return;
-            }
-        }
+        } });
 
-        std::map<String, String> params;
-        params[PARAM_ENABLED] = VALUE_OFF;
-        params[PARAM_WIFI_SSID] = request->getParam(PARAM_WIFI_SSID, true)->value();
-        params[PARAM_WIFI_PASS] = request->getParam(PARAM_WIFI_PASS, true)->value();
-        // Use the callback with the received SSID and password
-        requestCallback(ControlType::WiFi, params);
-        request->send(200, CONTENT_TEXT, VALUE_SUCCESS);
-        delay(3000);
-        ESP.restart(); });
-
-    server.serveStatic("/", LittleFS, "/").setCacheControl(CONTENT_CACHE);
+    // Serve Static CSS and JS only
+    server.serveStatic(PATH_CSS, LittleFS, PATH_CSS).setCacheControl(CONTENT_CACHE);
+    server.serveStatic(PATH_JS, LittleFS, PATH_JS).setCacheControl(CONTENT_CACHE);
+    server.serveStatic(PATH_ICON, LittleFS, PATH_ICON).setCacheControl(CONTENT_CACHE);
     server.begin();
 }
 
@@ -208,19 +221,21 @@ void WebUI::handleToggleLight(AsyncWebServerRequest *request)
         // Validate status parameter
         if (statusParam == VALUE_OFF || statusParam == VALUE_ON)
         {
-            lightControlCallback(LightOperationType::ToggleStatus, statusParam);
+            std::map<String, String> params;
+            params[PARAM_ENABLED] = statusParam;
+            requestCallback(ControlType::LightStatus, params);
 
             request->send(200, CONTENT_TEXT, VALUE_SUCCESS);
         }
         else
         {
-Serial.println("Invalid status value");
+            Serial.println("Invalid status value");
             request->send(400, CONTENT_TEXT, VALUE_ERROR);
         }
     }
     else
     {
-Serial.println("Missing status parameter");
+        Serial.println("Missing status parameter");
         request->send(400, CONTENT_TEXT, VALUE_ERROR);
     }
 }
@@ -246,7 +261,9 @@ void WebUI::handleSetLightColor(AsyncWebServerRequest *request)
 
             if (valid)
             {
-                lightControlCallback(LightOperationType::SetColor, colorParam);
+                std::map<String, String> params;
+                params[PARAM_COLOR] = colorParam;
+                requestCallback(ControlType::Color, params);
                 request->send(200, CONTENT_TEXT, VALUE_SUCCESS);
                 return;
             }
@@ -259,14 +276,14 @@ void WebUI::handleSetLightColor(AsyncWebServerRequest *request)
         }
         else
         {
-Serial.println("Invalid color format");
+            Serial.println("Invalid color format");
             request->send(400, CONTENT_TEXT, VALUE_ERROR);
             return;
         }
     }
     else
     {
-Serial.println("Missing color parameter");
+        Serial.println("Missing color parameter");
         request->send(400, CONTENT_TEXT, VALUE_ERROR);
         return;
     }
@@ -281,21 +298,23 @@ void WebUI::handleSetAutoBrightness(AsyncWebServerRequest *request)
         // Validate enabled parameter
         if (enabledParam == VALUE_OFF || enabledParam == VALUE_ON)
         {
-            bool enabled = enabledParam == VALUE_ON;
-            lightControlCallback(LightOperationType::SetAutoBrightness, enabledParam);
+            std::map<String, String> params;
+            params[PARAM_AUTO_BRIGHTNESS_ENABLED] = enabledParam;
+
+            requestCallback(ControlType::AutoBrightness, params);
             request->send(200, CONTENT_TEXT, VALUE_SUCCESS);
             return;
         }
         else
         {
-    Serial.println("Invalid enabled value");
+            Serial.println("Invalid enabled value");
             request->send(400, CONTENT_TEXT, VALUE_ERROR);
             return;
         }
     }
     else
     {
-Serial.println("Missing enabled parameter");
+        Serial.println("Missing enabled parameter");
         request->send(400, CONTENT_TEXT, VALUE_ERROR);
         return;
     }
@@ -311,7 +330,9 @@ void WebUI::handleSetBrightness(AsyncWebServerRequest *request)
         int brightness = valueParam.toInt();
         if (brightness >= 0 && brightness <= 255)
         {
-            lightControlCallback(LightOperationType::SetBrightness, valueParam);
+            std::map<String, String> params;
+            params[PARAM_BRIGHTNESS] = valueParam;
+            requestCallback(ControlType::Brightness, params);
             request->send(200, CONTENT_TEXT, VALUE_SUCCESS);
             return;
         }
@@ -345,13 +366,13 @@ void WebUI::handleSetHAIntegration(AsyncWebServerRequest *request)
             params[PARAM_BROKER_USER] = String();
             params[PARAM_BROKER_PASS] = String();
             params[PARAM_BROKER_DEFAULT_TOPIC] = String();
-            systemControlCallback(SystemOperationType::SetHaIntegration, params);
+            requestCallback(ControlType::HaIntegration, params);
             request->send(200, CONTENT_TEXT, VALUE_SUCCESS);
             return;
         }
         else if (haIntegrationParam == VALUE_ON)
         {
-            //TODO: check if parameters exist
+            // TODO: check if parameters exist
             if (!request->hasParam(PARAM_BROKER_HOST, true) ||
                 !request->hasParam(PARAM_BROKER_PORT, true) ||
                 !request->hasParam(PARAM_BROKER_DEFAULT_TOPIC, true))
@@ -379,26 +400,25 @@ void WebUI::handleSetHAIntegration(AsyncWebServerRequest *request)
                 }
 
                 params[PARAM_BROKER_USER] = String();
-                if(request->hasParam(PARAM_BROKER_USER, true))
+                if (request->hasParam(PARAM_BROKER_USER, true))
                 {
                     String mqttUsername = request->getParam(PARAM_BROKER_USER, true)->value();
                     if (mqttUsername.length() > 0)
-                    {                        
+                    {
                         params[PARAM_BROKER_USER] = mqttUsername;
                     }
                 }
-                
+
                 params[PARAM_BROKER_PASS] = String();
-                if(request->hasParam(PARAM_BROKER_PASS, true))
+                if (request->hasParam(PARAM_BROKER_PASS, true))
                 {
                     String mqttPassword = request->getParam(PARAM_BROKER_PASS, true)->value();
                     if (mqttPassword.length() > 0)
                     {
                         params[PARAM_BROKER_PASS] = mqttPassword;
                     }
-                }         
+                }
 
-                
                 if (mqttTopic.length() > 0)
                 {
                     params[PARAM_BROKER_DEFAULT_TOPIC] = mqttTopic;
@@ -407,7 +427,7 @@ void WebUI::handleSetHAIntegration(AsyncWebServerRequest *request)
                 {
                     params[PARAM_BROKER_DEFAULT_TOPIC] = Defaults::DEFAULT_MQTT_TOPIC;
                 }
-                systemControlCallback(SystemOperationType::SetHaIntegration, params);
+                requestCallback(ControlType::HaIntegration, params);
                 request->send(200, CONTENT_TEXT, VALUE_SUCCESS);
                 return;
             }
@@ -424,7 +444,9 @@ void WebUI::handleSetHAIntegration(AsyncWebServerRequest *request)
             request->send(400, CONTENT_TEXT, VALUE_ERROR);
             return;
         }
-    } else {
+    }
+    else
+    {
         Serial.println("Invalid request");
         request->send(400, CONTENT_TEXT, VALUE_ERROR);
         return;
@@ -433,17 +455,18 @@ void WebUI::handleSetHAIntegration(AsyncWebServerRequest *request)
 
 void WebUI::handleSetClockFace(AsyncWebServerRequest *request)
 {
-    //TODO: accept different clock faces (eg, languages, styles or sizes from the dropdown)
+    // TODO: accept different clock faces (eg, languages, styles or sizes from the dropdown)
     if (request->hasParam(PARAM_OPTION, true))
     {
         String option = request->getParam(PARAM_OPTION, true)->value();
-        if(option == VALUE_OFF || option == VALUE_ON) {
+        if (option == VALUE_OFF || option == VALUE_ON)
+        {
             std::map<String, String> params;
             params[PARAM_OPTION] = option;
-            systemControlCallback(SystemOperationType::SetClockFormat, params);
+            requestCallback(ControlType::ClockFace, params);
             request->send(200, CONTENT_TEXT, VALUE_SUCCESS);
             return;
-        } 
+        }
         else
         {
             Serial.println("Invalid clock face option value");
@@ -459,7 +482,7 @@ void WebUI::handleSetClockFace(AsyncWebServerRequest *request)
     }
 }
 
-String WebUI::pageProcessor(const String &var, Page page)
+String WebUI::pageProcessor(const String &var, Page page, const std::map<String, String> &params)
 {
     if (var == "INCLUDE_HEADER")
     {
@@ -469,13 +492,13 @@ String WebUI::pageProcessor(const String &var, Page page)
     switch (page)
     {
     case Page::LIGHT:
-        return lightPageProcessor(var);
+        return lightPageProcessor(var, params);
     case Page::SYSTEM:
-        return systemPageProcessor(var);
+        return systemPageProcessor(var, params);
     case Page::FIRMWARE:
-        return firmwarePageProcessor(var);
+        return firmwarePageProcessor(var, params);
     case Page::TIME:
-        return timePageProcessor(var);
+        return timePageProcessor(var, params);
     default:
         return String();
     }
@@ -517,25 +540,24 @@ String WebUI::headerProcessor(Page page)
     return headerContent;
 }
 
-String WebUI::lightPageProcessor(const String &var)
+String WebUI::lightPageProcessor(const String &var, const std::map<String, String> &params)
 {
     if (var == "LIGHT_STATE")
     {
-        Serial.printf("Light status: %s\n", lightConfiguration->state ? "ON" : "OFF");
-        return lightConfiguration->state ? "checked" : "";
+        return params.at(PARAM_ENABLED) == VALUE_ON ? "checked" : "";
     }
     else if (var == "LIGHT_COLOR")
     {
-        return lightConfiguration->color;
+        return params.at(PARAM_COLOR); 
     }
     else if (var == "AUTO_BRIGHTNESS_STATE")
     {
-        Serial.printf("Auto brightness: %s\n", lightConfiguration->autoBrightnessConfig.enabled ? "ON" : "OFF");
-        return lightConfiguration->autoBrightnessConfig.enabled ? "checked" : "";
+
+        return params.at(PARAM_AUTO_BRIGHTNESS_ENABLED) == VALUE_ON ? "checked" : "";
     }
     else if (var == "LIGHT_BRIGHTNESS")
     {
-        return String(lightConfiguration->brightness);
+        return params.at(PARAM_BRIGHTNESS);
     }
     else
     {
@@ -543,11 +565,15 @@ String WebUI::lightPageProcessor(const String &var)
     }
 }
 
-String WebUI::timePageProcessor(const String &var)
+String WebUI::timePageProcessor(const String &var, const std::map<String, String> &params)
 {
-    if(var == "CURRENT_TIME") {
-        return "12:30";
-    } else if (var == "TIME_ZONES") {
+    //std::map<String, String> params = responseCallback(DetailsType::TimeConfig);
+    if (var == "CURRENT_TIME")
+    {
+        return params.at(PARAM_TIME);
+    }
+    else if (var == "TIME_ZONES")
+    {
         /*
             <option value="Etc/UTC">UTC</option>
             <option value="Europe/Berlin">Europe/Berlin</option>
@@ -563,55 +589,69 @@ String WebUI::timePageProcessor(const String &var)
             Europe/Rome -> CET-1CEST,M3.5.0,M10.5.0/3
             Atlantic/Reykjavik -> GMT0
         */
-       return "<option value=\"Europe/Berlin\">Europe/Berlin</option>";
-    } else if(var == "NTP_UPDATE_INTERVAL") {
-        return String(systemConfiguration->ntpConfig.interval);
-    } else if (var == "NTP_UPDATE_STATE") {
-        return systemConfiguration->ntpConfig.enabled ? "checked" : "";
-    } else if (var == "LIGHT_SCHEDULE_STATE") {
-        return systemConfiguration->lightScheduleConfig.enabled ? "checked" : "";
-    } else if (var == "LIGHT_SCHEDULE_START") {
-        return String(systemConfiguration->lightScheduleConfig.startTime);
-    } else if (var == "LIGHT_SCHEDULE_END") {
-        return String(systemConfiguration->lightScheduleConfig.endTime);
+        // return params[PARAM_NTP_TIMEZONE];
+        return "<option value=\"Europe/Berlin\">Europe/Berlin</option>";
     }
-    
-    else {
+    else if (var == "NTP_UPDATE_INTERVAL")
+    {
+        return params.at(PARAM_NTP_UPDATE_INTERVAL);
+    }
+    else if (var == "NTP_UPDATE_STATE")
+    {
+        return params.at(PARAM_NTP_ENABLED) == VALUE_ON ? "checked" : "";
+    }
+    else if (var == "LIGHT_SCHEDULE_STATE")
+    {
+        return params.at(PARAM_SCHEDULE_ENABLED) == VALUE_ON ? "checked" : "";
+    }
+    else if (var == "LIGHT_SCHEDULE_START")
+    {
+        return params.at(PARAM_SCHEDULE_START);
+    }
+    else if (var == "LIGHT_SCHEDULE_END")
+    {
+        return params.at(PARAM_SCHEDULE_END);
+    }
+
+    else
+    {
         return String();
     }
 }
 
-String WebUI::systemPageProcessor(const String &var)
+String WebUI::systemPageProcessor(const String &var, const std::map<String, String> &params)
 {
+    //std::map<String, String> params = responseCallback(DetailsType::SystemConfig);
     if (var == "HA_INTEGRATION_STATE")
     {
-        return systemConfiguration->mqttConfig.enabled ? "checked" : "";
+        return params.at(PARAM_BROKER_ENABLED) == VALUE_ON ? "checked" : "";
     }
     else if (var == "BROKER_IP")
     {
-        Serial.printf("Broker IP: %d\n", strlen(systemConfiguration->mqttConfig.host));
-        if (strlen(systemConfiguration->mqttConfig.host) <= 1)
-        {
-            return String();
-        }
+        // Serial.printf("Broker IP: %d\n", strlen(systemConfiguration->mqttConfig.host));
+        // if (strlen(systemConfiguration->mqttConfig.host) <= 1)
+        // {
+        //     return String();
+        // }
 
-        return systemConfiguration->mqttConfig.host;
+        return params.at(PARAM_BROKER_HOST);
     }
     else if (var == "BROKER_PORT")
     {
-        return String(systemConfiguration->mqttConfig.port);
+        return params.at(PARAM_BROKER_PORT);
     }
     else if (var == "MQTT_USERNAME")
     {
-        if (strlen(systemConfiguration->mqttConfig.username) > 1)
-            return systemConfiguration->mqttConfig.username;
+        if (params.at(PARAM_BROKER_USER).length() > 0)
+            return params.at(PARAM_BROKER_USER);
     }
     else if (var == "DEFAULT_TOPIC")
     {
-        return systemConfiguration->mqttConfig.topic;
+        return params.at(PARAM_BROKER_DEFAULT_TOPIC);
     }
-    else if (var == "CLOCK_FACE_OPTION_STATE") {
-        return systemConfiguration->mode == Configuration::ClockMode::Regular ? "" : "checked";
+    else if (var == "CLOCK_FACE_OPTION_STATE")
+    {
+        return params.at(PARAM_CLOCKFACE_OPTION) == VALUE_OFF ? "" : "checked";
     }
     else
     {
@@ -621,11 +661,11 @@ String WebUI::systemPageProcessor(const String &var)
     return String();
 }
 
-String WebUI::firmwarePageProcessor(const String &var)
+String WebUI::firmwarePageProcessor(const String &var, const std::map<String, String> &params)
 {
     if (var == "FW_VERSION")
     {
-        return Defaults::FW_VERSION;
+        return params.at(PARAM_FW_VERSION);
     }
     else
     {

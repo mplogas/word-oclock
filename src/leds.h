@@ -23,6 +23,7 @@ public:
     void enableAutoBrightness(int illuminanceThresholdHigh, int illuminanceThresholdLow);
     void disableAutoBrightness();
     void registerIlluminanceSensorCallback(const IlluminanceSensorCallback &callback);
+    void unregisterIlluminanceSensorCallback();
     void test();
     void loop();
     static String RGBtoHex(const CRGB& color);

@@ -178,7 +178,7 @@ void httpRequestCallback(ControlType type, const std::map<String, String> &param
   {
   case ControlType::LightStatus:
   {
-    bool status = params.at(WebUI::PARAM_ENABLED) == "1";
+    bool status = params.at(FPSTR(WebUI::PARAM_ENABLED)) == "1";
     if (status)
     {
       isDark = false;
@@ -195,15 +195,15 @@ void httpRequestCallback(ControlType type, const std::map<String, String> &param
   }
   case ControlType::Color:
   {
-    ledController.setColor(ledController.HexToRGB(params.at(WebUI::PARAM_COLOR)));
+    ledController.setColor(ledController.HexToRGB(params.at(FPSTR(WebUI::PARAM_COLOR))));
     showCurrentTime();
-    strlcpy(lightConfig.color, params.at(WebUI::PARAM_COLOR).c_str(), sizeof(lightConfig.color));
+    strlcpy(lightConfig.color, params.at(FPSTR(WebUI::PARAM_COLOR)).c_str(), sizeof(lightConfig.color));
     config.setLightColor(lightConfig.color);
     break;
   }
   case ControlType::AutoBrightness:
   {
-    bool enabled = params.at(WebUI::PARAM_AUTO_BRIGHTNESS_ENABLED) == "1";
+    bool enabled = params.at(FPSTR(WebUI::PARAM_AUTO_BRIGHTNESS_ENABLED)) == "1";
     if (enabled)
     {
       ledController.enableAutoBrightness(lightConfig.autoBrightnessConfig.illuminanceThresholdHigh, lightConfig.autoBrightnessConfig.illuminanceThresholdLow);
@@ -218,7 +218,7 @@ void httpRequestCallback(ControlType type, const std::map<String, String> &param
   }
   case ControlType::Brightness:
   {
-    uint8_t brightness = params.at(WebUI::PARAM_BRIGHTNESS).toInt();
+    uint8_t brightness = params.at(FPSTR(WebUI::PARAM_BRIGHTNESS)).toInt();
     ledController.setBrightness(brightness);
     lightConfig.brightness = brightness;
     config.setLightBrightness(lightConfig.brightness);
@@ -226,12 +226,12 @@ void httpRequestCallback(ControlType type, const std::map<String, String> &param
   }
   case ControlType::HaIntegration:
   {
-    systemConfig.mqttConfig.enabled = (params.at(WebUI::PARAM_ENABLED) == "1");
-    strlcpy(systemConfig.mqttConfig.host, params.at(WebUI::PARAM_BROKER_HOST).c_str(), sizeof(systemConfig.mqttConfig.host));
-    systemConfig.mqttConfig.port = params.at(WebUI::PARAM_BROKER_PORT).toInt();
-    strlcpy(systemConfig.mqttConfig.username, params.at(WebUI::PARAM_BROKER_USER).c_str(), sizeof(systemConfig.mqttConfig.username));
-    strlcpy(systemConfig.mqttConfig.password, params.at(WebUI::PARAM_BROKER_PASS).c_str(), sizeof(systemConfig.mqttConfig.password));
-    strlcpy(systemConfig.mqttConfig.topic, params.at(WebUI::PARAM_BROKER_DEFAULT_TOPIC).c_str(), sizeof(systemConfig.mqttConfig.topic));
+    systemConfig.mqttConfig.enabled = (params.at(FPSTR(WebUI::PARAM_ENABLED)) == "1");
+    strlcpy(systemConfig.mqttConfig.host, params.at(FPSTR(WebUI::PARAM_BROKER_HOST)).c_str(), sizeof(systemConfig.mqttConfig.host));
+    systemConfig.mqttConfig.port = params.at(FPSTR(WebUI::PARAM_BROKER_PORT)).toInt();
+    strlcpy(systemConfig.mqttConfig.username, params.at(FPSTR(WebUI::PARAM_BROKER_USER)).c_str(), sizeof(systemConfig.mqttConfig.username));
+    strlcpy(systemConfig.mqttConfig.password, params.at(FPSTR(WebUI::PARAM_BROKER_PASS)).c_str(), sizeof(systemConfig.mqttConfig.password));
+    strlcpy(systemConfig.mqttConfig.topic, params.at(FPSTR(WebUI::PARAM_BROKER_DEFAULT_TOPIC)).c_str(), sizeof(systemConfig.mqttConfig.topic));
     config.setMqttConfig(systemConfig.mqttConfig);
 
     if (systemConfig.mqttConfig.enabled)
@@ -246,7 +246,7 @@ void httpRequestCallback(ControlType type, const std::map<String, String> &param
   }
   case ControlType::ClockFace:
   {
-    if (params.at(WebUI::PARAM_OPTION) == "0")
+    if (params.at(FPSTR(WebUI::PARAM_OPTION)) == "0")
     {
       systemConfig.mode = Configuration::ClockMode::Regular;
       Serial.println("Clock mode set to dreiviertel");
@@ -284,8 +284,8 @@ void httpRequestCallback(ControlType type, const std::map<String, String> &param
   }
   case ControlType::WiFiSetup:
   {
-    strlcpy(wifiConfig.ssid, params.at(WebUI::PARAM_WIFI_SSID).c_str(), sizeof(wifiConfig.ssid));
-    strlcpy(wifiConfig.password, params.at(WebUI::PARAM_WIFI_PASS).c_str(), sizeof(wifiConfig.password));
+    strlcpy(wifiConfig.ssid, params.at(FPSTR(WebUI::PARAM_WIFI_SSID)).c_str(), sizeof(wifiConfig.ssid));
+    strlcpy(wifiConfig.password, params.at(FPSTR(WebUI::PARAM_WIFI_PASS)).c_str(), sizeof(wifiConfig.password));
     config.setWifiConfig(wifiConfig);
     break;
   }
@@ -304,35 +304,35 @@ const std::map<String, String> httpResponseCallback(PageType page)
   switch (page)
   {
   case PageType::LIGHT:
-    params[WebUI::PARAM_ENABLED] = lightConfig.state ? WebUI::VALUE_ON : WebUI::VALUE_OFF;
-    params[WebUI::PARAM_COLOR] = lightConfig.color;
-    params[WebUI::PARAM_BRIGHTNESS] = String(lightConfig.brightness);
-    params[WebUI::PARAM_AUTO_BRIGHTNESS_ENABLED] = lightConfig.autoBrightnessConfig.enabled ? WebUI::VALUE_ON : WebUI::VALUE_OFF;
+    params[FPSTR(WebUI::PARAM_ENABLED)] = lightConfig.state ? FPSTR(WebUI::VALUE_ON) : FPSTR(WebUI::VALUE_OFF);
+    params[FPSTR(WebUI::PARAM_COLOR)] = lightConfig.color;
+    params[FPSTR(WebUI::PARAM_BRIGHTNESS)] = String(lightConfig.brightness);
+    params[FPSTR(WebUI::PARAM_AUTO_BRIGHTNESS_ENABLED)] = lightConfig.autoBrightnessConfig.enabled ? FPSTR(WebUI::VALUE_ON) : FPSTR(WebUI::VALUE_OFF);
     break;
   case PageType::SYSTEM:
-    params[WebUI::PARAM_BROKER_ENABLED] = systemConfig.mqttConfig.enabled ? WebUI::VALUE_ON : WebUI::VALUE_OFF;
-    params[WebUI::PARAM_BROKER_HOST] = systemConfig.mqttConfig.host;
-    params[WebUI::PARAM_BROKER_PORT] = String(systemConfig.mqttConfig.port);
-    params[WebUI::PARAM_BROKER_USER] = systemConfig.mqttConfig.username;
-    params[WebUI::PARAM_BROKER_PASS] = systemConfig.mqttConfig.password;
-    params[WebUI::PARAM_BROKER_DEFAULT_TOPIC] = systemConfig.mqttConfig.topic;
-    params[WebUI::PARAM_CLOCKFACE_OPTION] = systemConfig.mode == Configuration::ClockMode::Option_1 ? WebUI::VALUE_ON : WebUI::VALUE_OFF;
+    params[FPSTR(WebUI::PARAM_BROKER_ENABLED)] = systemConfig.mqttConfig.enabled ? FPSTR(WebUI::VALUE_ON) : FPSTR(WebUI::VALUE_OFF);
+    params[FPSTR(WebUI::PARAM_BROKER_HOST)] = systemConfig.mqttConfig.host;
+    params[FPSTR(WebUI::PARAM_BROKER_PORT)] = String(systemConfig.mqttConfig.port);
+    params[FPSTR(WebUI::PARAM_BROKER_USER)] = systemConfig.mqttConfig.username;
+    params[FPSTR(WebUI::PARAM_BROKER_PASS)] = systemConfig.mqttConfig.password;
+    params[FPSTR(WebUI::PARAM_BROKER_DEFAULT_TOPIC)] = systemConfig.mqttConfig.topic;
+    params[FPSTR(WebUI::PARAM_CLOCKFACE_OPTION)] = systemConfig.mode == Configuration::ClockMode::Option_1 ? FPSTR(WebUI::VALUE_ON) : FPSTR(WebUI::VALUE_OFF);
     break;
   case PageType::TIME: {
     uint8_t hour = wordClock->getHour();
     uint8_t minute = wordClock->getMinute();  
     char timeStr[6];
     sprintf(timeStr, "%02d:%02d", hour, minute);
-    params[WebUI::PARAM_TIME] = timeStr;
-    params[WebUI::PARAM_NTP_ENABLED] = systemConfig.ntpConfig.enabled ? WebUI::VALUE_ON : WebUI::VALUE_OFF;
-    params[WebUI::PARAM_NTP_HOST] = systemConfig.ntpConfig.server;
-    params[WebUI::PARAM_NTP_UPDATE_INTERVAL] = String(systemConfig.ntpConfig.interval);
-    params[WebUI::PARAM_SCHEDULE_START] = String(systemConfig.lightScheduleConfig.startTime);
-    params[WebUI::PARAM_SCHEDULE_END] = String(systemConfig.lightScheduleConfig.endTime);
-    params[WebUI::PARAM_SCHEDULE_ENABLED] = systemConfig.lightScheduleConfig.enabled ? WebUI::VALUE_ON : WebUI::VALUE_OFF;
+    params[FPSTR(WebUI::PARAM_TIME)] = timeStr;
+    params[FPSTR(WebUI::PARAM_NTP_ENABLED)] = systemConfig.ntpConfig.enabled ? FPSTR(WebUI::VALUE_ON) : FPSTR(WebUI::VALUE_OFF);
+    params[FPSTR(WebUI::PARAM_NTP_HOST)] = systemConfig.ntpConfig.server;
+    params[FPSTR(WebUI::PARAM_NTP_UPDATE_INTERVAL)] = String(systemConfig.ntpConfig.interval);
+    params[FPSTR(WebUI::PARAM_SCHEDULE_START)] = String(systemConfig.lightScheduleConfig.startTime);
+    params[FPSTR(WebUI::PARAM_SCHEDULE_END)] = String(systemConfig.lightScheduleConfig.endTime);
+    params[FPSTR(WebUI::PARAM_SCHEDULE_ENABLED)] = systemConfig.lightScheduleConfig.enabled ? FPSTR(WebUI::VALUE_ON) : FPSTR(WebUI::VALUE_OFF);
     break;}
   case PageType::FWUPDATE:
-    params[WebUI::PARAM_FW_VERSION] = Defaults::FW_VERSION;
+    params[FPSTR(WebUI::PARAM_FW_VERSION)] = Defaults::FW_VERSION;
     break;
   default:
     break;

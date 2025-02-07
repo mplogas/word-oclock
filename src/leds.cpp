@@ -40,6 +40,10 @@ void LED::registerIlluminanceSensorCallback(const IlluminanceSensorCallback &cal
         this->sensorCallback = callback;
 }
 
+void LED::unregisterIlluminanceSensorCallback() {
+    this->sensorCallback = nullptr;
+}
+
 void LED::setLEDs(const std::vector<std::pair<int, int>>& ledRanges) {
     if(ledRanges.empty()) return;
     if(this->testMode) {

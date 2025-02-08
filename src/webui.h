@@ -68,10 +68,37 @@ class WebUI
         static const char PROC_PAGE_TITLE[] PROGMEM;
         static const char PROC_FW_VERS[] PROGMEM;
 
+        static const char PROC_ACTIVE_LIGHT[] PROGMEM;
+        static const char PROC_ACTIVE_TIME[] PROGMEM;
+        static const char PROC_ACTIVE_SYSTEM[] PROGMEM;
+
+        static const char PROC_LIGHT_STATE[] PROGMEM;
+        static const char PROC_LIGHT_COLOR[] PROGMEM;
+        static const char PROC_LIGHT_BRIGHTNESS[] PROGMEM;
+        static const char PROC_AUTO_BRIGHTNESS_ENABLED[] PROGMEM;
+        static const char PROC_TIME[] PROGMEM;
+        static const char PROC_NTP_ENABLED[] PROGMEM;
+        static const char PROC_NTP_HOST[] PROGMEM;
+        static const char PROC_NTP_UPDATE_INTERVAL[] PROGMEM;
+        static const char PROC_NTP_TIMEZONE[] PROGMEM;
+        static const char PROC_BROKER_ENABLED[] PROGMEM;
+        static const char PROC_BROKER_HOST[] PROGMEM;
+        static const char PROC_BROKER_PORT[] PROGMEM;
+        static const char PROC_BROKER_USER[] PROGMEM;
+        static const char PROC_BROKER_PASS[] PROGMEM;
+        static const char PROC_BROKER_DEFAULT_TOPIC[] PROGMEM;
+        static const char PROC_SCHEDULE_ENABLED[] PROGMEM;
+        static const char PROC_SCHEDULE_START[] PROGMEM;
+        static const char PROC_SCHEDULE_END[] PROGMEM;
+        static const char PROC_CLOCKFACE[] PROGMEM;
+        static const char PROC_CLOCKFACE_OPTION_STATE[] PROGMEM;
+
         // values
         static const char VALUE_SUCCESS[] PROGMEM;
         static const char VALUE_ERROR[] PROGMEM;
         static constexpr const char* VALUE_ACTIVE = "active";
+        static const char VALUE_CHECKED[] PROGMEM;
+        static const char VALUE_EMPTY[] PROGMEM;
         static const char VALUE_FIRMWARE[] PROGMEM;
         static const char VALUE_FILESYS[] PROGMEM;
 

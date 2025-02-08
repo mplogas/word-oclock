@@ -37,7 +37,7 @@
                         <label for="lightScheduleToggle">Light Schedule:</label>
                         <label class="switch">
                             <input type="checkbox" id="lightScheduleToggle"
-                                onchange="toggleLightSchedule(this.checked)" %LIGHT_SCHEDULE_STATE%>
+                                onchange="toggleLightSchedule(this.checked)" %SCHEDULE_ENABLED%>
                             <span class="slider round"></span>
                         </label>
                     </div>
@@ -47,12 +47,12 @@
                         <form action="/saveLightSchedule" method="POST">
                             <div class="toggle-row">
                                 <label for="startTime">Start Time:</label>
-                                <input type="time" id="startTime" name="startTime" value="%LIGHT_SCHEDULE_START%">
+                                <input type="time" id="startTime" name="startTime" value="%SCHEDULE_START%">
                             </div>
 
                             <div class="toggle-row">
                                 <label for="endTime">End Time:</label>
-                                <input type="time" id="endTime" name="endTime" value="%LIGHT_SCHEDULE_END%">
+                                <input type="time" id="endTime" name="endTime" value="%SCHEDULE_END%">
                             </div>
                             <!-- Submit Button -->
                             <div class="toggle-row">
@@ -71,7 +71,7 @@
                         <label for="ntpTimeUpdate">NTP Time:</label>
                         <label class="switch">
                             <input type="checkbox" id="ntpTimeUpdate" name="ntpTimeUpdate"
-                                onchange="toggleNtpTimeUpdate(this.checked)" %NTP_UPDATE_STATE%>
+                                onchange="toggleNtpTimeUpdate(this.checked)" %NTP_ENABLED%>
                             <span class="slider round"></span>
                         </label>
                     </div>
@@ -81,12 +81,12 @@
                         <form action="/saveNTPSettings" method="POST">
                             <div class="toggle-row">
                                 <label for="ntpServer">NTP Server:</label>
-                                <input type="text" id="ntpServer" name="ntpServer" placeholder="e.g., pool.ntp.org">
+                                <input type="text" id="ntpServer" name="ntpServer" placeholder="e.g., pool.ntp.org" value="%NTP_HOST%">
                             </div>
                             <div class="toggle-row">
                                 <label for="timezoneSelect">Timezone:</label>
                                 <select id="timezoneSelect" name="timezone" class="input-field" >
-                                    %TIME_ZONES%
+                                    %NTP_TIMEZONE%
                                     <!-- Add more timezones as needed -->
                                 </select>
                             </div>

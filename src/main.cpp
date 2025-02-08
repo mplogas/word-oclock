@@ -440,6 +440,10 @@ void loop()
     {
       lastUpdate = now;
       showCurrentTime();
+
+      
+      Serial.printf("Free heap: %d\n", ESP.getFreeHeap());
+      Serial.printf("Free min heap: %d\n", ESP.getMinFreeHeap());
     }
 
     ledController.loop();

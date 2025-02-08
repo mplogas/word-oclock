@@ -25,7 +25,7 @@
                         <label for="haIntegrationToggle">HomeAssistant:</label>
                         <label class="switch">
                             <input type="checkbox" id="haIntegrationToggle" name="enabled"
-                                onchange="toggleHaIntegration(this.checked)" %HA_INTEGRATION_STATE%>
+                                onchange="toggleHaIntegration(this.checked)" %BROKER_ENABLED%>
                             <span class="slider round"></span>
                         </label>
                     </div>
@@ -34,7 +34,7 @@
                             <div class="toggle-row">
                                 <label for="brokerIP">Broker IP:*</label>
                                 <input type="text" id="brokerIP" name="mqttHost" placeholder="e.g., 192.168.1.100"
-                                    value="%BROKER_IP%" required>
+                                    value="%BROKER_HOST%" required>
                             </div>
 
                             <div class="toggle-row">
@@ -46,7 +46,7 @@
                             <div class="toggle-row">
                                 <label for="mqttUsername">Username:</label>
                                 <input type="text" id="mqttUsername" name="mqttUsername" placeholder="Your Username"
-                                    value="%MQTT_USERNAME%">
+                                    value="%BROKER_USER%">
                             </div>
 
                             <div class="toggle-row">
@@ -58,7 +58,7 @@
                             <div class="toggle-row">
                                 <label for="defaultTopic">Default Topic:*</label>
                                 <input type="text" id="defaultTopic" name="defaultTopic"
-                                    placeholder="e.g., home/wordclock" value="%DEFAULT_TOPIC%">
+                                    placeholder="e.g., home/wordclock" value="%BROKER_DEFAULT_TOPIC%">
                             </div>
 
                             <!-- Submit Button -->

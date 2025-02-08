@@ -13,6 +13,8 @@ TimeConverterDE::~TimeConverterDE() {
 std::vector<std::pair<int, int>> TimeConverterDE::convertTime(const uint8_t hours, const uint8_t minutes, bool isRegionalFormat, bool optionAsMinutes) {
     std::vector<std::pair<int, int>> ledArray;
 
+    // TODO: 20 vor eins funktioniert nicht
+
     // Normalize hours
     uint8_t normalizedHours = (hours % 12 == 0) ? 12 : (hours % 12);
 

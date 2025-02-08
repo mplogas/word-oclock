@@ -15,12 +15,37 @@ const char WebUI::TIME_PAGE_TITLE[] PROGMEM = "Time Configuration";
 const char WebUI::FIRMWARE_PAGE_TITLE[] PROGMEM = "Firmware Update";
 
 // processor variables
-const char WebUI::PROC_PAGE_TITLE[] PROGMEM = "PAGE_TITLE";
+const char WebUI::PROC_PAGE_TITLE[] PROGMEM = "%PAGE_TITLE%";
+const char WebUI::PROC_ACTIVE_LIGHT[] PROGMEM = "%ACTIVE_LIGHT%";
+const char WebUI::PROC_ACTIVE_TIME[] PROGMEM = "%ACTIVE_TIME%";
+const char WebUI::PROC_ACTIVE_SYSTEM[] PROGMEM = "%ACTIVE_SYSTEM%";
+const char WebUI::PROC_LIGHT_STATE[] PROGMEM = "LIGHT_STATE";
+const char WebUI::PROC_LIGHT_COLOR[] PROGMEM = "LIGHT_COLOR";
+const char WebUI::PROC_LIGHT_BRIGHTNESS[] PROGMEM = "LIGHT_BRIGHTNESS";
+const char WebUI::PROC_AUTO_BRIGHTNESS_ENABLED[] PROGMEM = "AUTO_BRIGHTNESS_ENABLED";
+const char WebUI::PROC_TIME[] PROGMEM = "CURRENT_TIME"; 
+const char WebUI::PROC_NTP_ENABLED[] PROGMEM = "NTP_ENABLED";
+const char WebUI::PROC_NTP_HOST[] PROGMEM = "NTP_HOST";
+const char WebUI::PROC_NTP_UPDATE_INTERVAL[] PROGMEM = "NTP_UPDATE_INTERVAL";
+const char WebUI::PROC_NTP_TIMEZONE[] PROGMEM = "NTP_TIMEZONE";
+const char WebUI::PROC_BROKER_ENABLED[] PROGMEM = "BROKER_ENABLED";
+const char WebUI::PROC_BROKER_HOST[] PROGMEM = "BROKER_HOST";
+const char WebUI::PROC_BROKER_PORT[] PROGMEM = "BROKER_PORT";
+const char WebUI::PROC_BROKER_USER[] PROGMEM = "BROKER_USER";
+const char WebUI::PROC_BROKER_PASS[] PROGMEM = "BROKER_PASS";
+const char WebUI::PROC_BROKER_DEFAULT_TOPIC[] PROGMEM = "BROKER_DEFAULT_TOPIC";
+const char WebUI::PROC_SCHEDULE_ENABLED[] PROGMEM = "SCHEDULE_ENABLED";
+const char WebUI::PROC_SCHEDULE_START[] PROGMEM = "SCHEDULE_START";
+const char WebUI::PROC_SCHEDULE_END[] PROGMEM = "SCHEDULE_END";
+const char WebUI::PROC_CLOCKFACE[] PROGMEM = "CLOCKFACE";
+const char WebUI::PROC_CLOCKFACE_OPTION_STATE[] PROGMEM = "CLOCKFACE_OPTION_STATE";
 const char WebUI::PROC_FW_VERS[] PROGMEM = "FW_VERSION";
 
 // values
 const char WebUI::VALUE_SUCCESS[] PROGMEM = "Success";
 const char WebUI::VALUE_ERROR[] PROGMEM = "Error!";
+const char WebUI::VALUE_CHECKED[] PROGMEM = "checked";
+const char WebUI::VALUE_EMPTY[] PROGMEM = "";
 const char WebUI::VALUE_FIRMWARE[] PROGMEM = "firmware";
 const char WebUI::VALUE_FILESYS[] PROGMEM = "filesystem";
 
@@ -591,30 +616,29 @@ String WebUI::headerProcessor(PageType page)
         break;
     }
 
-    headerContent.replace("%PAGE_TITLE%", pageTitle);
-    headerContent.replace("%ACTIVE_LIGHT%", (page == PageType::LIGHT) ? VALUE_ACTIVE : "");
-    headerContent.replace("%ACTIVE_TIME%", (page == PageType::TIME) ? VALUE_ACTIVE : "");
-    headerContent.replace("%ACTIVE_SYSTEM%", (page == PageType::SYSTEM) ? VALUE_ACTIVE : "");
+    headerContent.replace(FPSTR(PROC_PAGE_TITLE), pageTitle);
+    headerContent.replace(FPSTR(PROC_ACTIVE_LIGHT), (page == PageType::LIGHT) ? FPSTR(VALUE_ACTIVE) : FPSTR(VALUE_EMPTY));
+    headerContent.replace(FPSTR(PROC_ACTIVE_TIME), (page == PageType::TIME) ? FPSTR(VALUE_ACTIVE) : FPSTR(VALUE_EMPTY));
+    headerContent.replace(FPSTR(PROC_ACTIVE_SYSTEM), (page == PageType::SYSTEM) ? FPSTR(VALUE_ACTIVE) : FPSTR(VALUE_EMPTY));
 
     return headerContent;
 }
 
 String WebUI::lightPageProcessor(const String &var, const std::map<String, String> &params)
 {
-    if (var == "LIGHT_STATE")
+    if (var == FPSTR(PROC_LIGHT_STATE))
     {
-        return params.at(FPSTR(PARAM_ENABLED)) == FPSTR(VALUE_ON) ? "checked" : "";
+        return params.at(FPSTR(PARAM_ENABLED)) == FPSTR(VALUE_ON) ? FPSTR(VALUE_CHECKED) : FPSTR(VALUE_EMPTY);
     }
-    else if (var == "LIGHT_COLOR")
+    else if (var == FPSTR(PROC_LIGHT_COLOR))
     {
         return params.at(FPSTR(PARAM_COLOR)); 
     }
-    else if (var == "AUTO_BRIGHTNESS_STATE")
+    else if (var == FPSTR(PROC_AUTO_BRIGHTNESS_ENABLED))
     {
-
-        return params.at(FPSTR(PARAM_AUTO_BRIGHTNESS_ENABLED)) == FPSTR(VALUE_ON) ? "checked" : "";
+        return params.at(FPSTR(PARAM_AUTO_BRIGHTNESS_ENABLED)) == FPSTR(VALUE_ON) ? FPSTR(VALUE_CHECKED) : FPSTR(VALUE_EMPTY);
     }
-    else if (var == "LIGHT_BRIGHTNESS")
+    else if (var == FPSTR(PROC_LIGHT_BRIGHTNESS))
     {
         return params.at(FPSTR(PARAM_BRIGHTNESS));
     }
@@ -627,11 +651,19 @@ String WebUI::lightPageProcessor(const String &var, const std::map<String, Strin
 String WebUI::timePageProcessor(const String &var, const std::map<String, String> &params)
 {
     //std::map<String, String> params = responseCallback(DetailsType::TimeConfig);
-    if (var == "CURRENT_TIME")
+    if (var == FPSTR(PROC_TIME))
     {
         return params.at(FPSTR(PARAM_TIME));
     }
-    else if (var == "TIME_ZONES")
+    else if (var == FPSTR(PROC_NTP_ENABLED))
+    {
+        return params.at(FPSTR(PARAM_NTP_ENABLED)) == FPSTR(VALUE_ON) ? FPSTR(VALUE_CHECKED) : FPSTR(VALUE_EMPTY);
+    }
+    else if (var == FPSTR(PROC_NTP_HOST))
+    {
+        return params.at(FPSTR(PARAM_NTP_HOST));
+    }
+    else if (var == FPSTR(PROC_NTP_TIMEZONE))
     {
         /*
             <option value="Etc/UTC">UTC</option>
@@ -651,27 +683,22 @@ String WebUI::timePageProcessor(const String &var, const std::map<String, String
         // return params[FPSTR(PARAM_NTP_TIMEZONE)];
         return "<option value=\"Europe/Berlin\">Europe/Berlin</option>";
     }
-    else if (var == "NTP_UPDATE_INTERVAL")
+    else if (var == FPSTR(PROC_NTP_UPDATE_INTERVAL))
     {
         return params.at(FPSTR(PARAM_NTP_UPDATE_INTERVAL));
     }
-    else if (var == "NTP_UPDATE_STATE")
+    else if (var == FPSTR(PROC_SCHEDULE_ENABLED))
     {
-        return params.at(FPSTR(PARAM_NTP_ENABLED)) == FPSTR(VALUE_ON) ? "checked" : "";
+        return params.at(FPSTR(PARAM_SCHEDULE_ENABLED)) == FPSTR(VALUE_ON) ? FPSTR(VALUE_CHECKED) : FPSTR(VALUE_EMPTY);
     }
-    else if (var == "LIGHT_SCHEDULE_STATE")
-    {
-        return params.at(FPSTR(PARAM_SCHEDULE_ENABLED)) == FPSTR(VALUE_ON) ? "checked" : "";
-    }
-    else if (var == "LIGHT_SCHEDULE_START")
+    else if (var == FPSTR(PROC_SCHEDULE_START))
     {
         return params.at(FPSTR(PARAM_SCHEDULE_START));
     }
-    else if (var == "LIGHT_SCHEDULE_END")
+    else if (var == FPSTR(PROC_SCHEDULE_END))
     {
         return params.at(FPSTR(PARAM_SCHEDULE_END));
     }
-
     else
     {
         return String();
@@ -681,36 +708,34 @@ String WebUI::timePageProcessor(const String &var, const std::map<String, String
 String WebUI::systemPageProcessor(const String &var, const std::map<String, String> &params)
 {
     //std::map<String, String> params = responseCallback(DetailsType::SystemConfig);
-    if (var == "HA_INTEGRATION_STATE")
+    if (var == FPSTR(PROC_BROKER_ENABLED))
     {
-        return params.at(FPSTR(PARAM_BROKER_ENABLED)) == FPSTR(VALUE_ON) ? "checked" : "";
+        return params.at(FPSTR(PARAM_BROKER_ENABLED)) == FPSTR(VALUE_ON) ? FPSTR(VALUE_CHECKED) : FPSTR(VALUE_EMPTY);
     }
-    else if (var == "BROKER_IP")
+    else if (var == FPSTR(PROC_BROKER_HOST))
     {
-        // Serial.printf("Broker IP: %d\n", strlen(systemConfiguration->mqttConfig.host));
-        // if (strlen(systemConfiguration->mqttConfig.host) <= 1)
-        // {
-        //     return String();
-        // }
-
         return params.at(FPSTR(PARAM_BROKER_HOST));
     }
-    else if (var == "BROKER_PORT")
+    else if (var == FPSTR(PROC_BROKER_PORT))
     {
         return params.at(FPSTR(PARAM_BROKER_PORT));
     }
-    else if (var == "MQTT_USERNAME")
+    else if (var == FPSTR(PROC_BROKER_USER))
     {
         if (params.at(FPSTR(PARAM_BROKER_USER)).length() > 0)
             return params.at(FPSTR(PARAM_BROKER_USER));
     }
-    else if (var == "DEFAULT_TOPIC")
+    else if (var == FPSTR(PROC_BROKER_DEFAULT_TOPIC))
     {
         return params.at(FPSTR(PARAM_BROKER_DEFAULT_TOPIC));
     }
-    else if (var == "CLOCK_FACE_OPTION_STATE")
+    // else if (var == FPSTR(PROC_CLOCKFACE))
+    // {
+    //     return params.at(FPSTR(PARAM_CLOCKFACE));
+    // }
+    else if (var == FPSTR(PROC_CLOCKFACE_OPTION_STATE))
     {
-        return params.at(FPSTR(PARAM_CLOCKFACE_OPTION)) == FPSTR(VALUE_OFF) ? "" : "checked";
+        return params.at(FPSTR(PARAM_CLOCKFACE_OPTION)) == FPSTR(VALUE_ON) ? FPSTR(VALUE_CHECKED) : FPSTR(VALUE_EMPTY);
     }
     else
     {
@@ -722,7 +747,7 @@ String WebUI::systemPageProcessor(const String &var, const std::map<String, Stri
 
 String WebUI::firmwarePageProcessor(const String &var, const std::map<String, String> &params)
 {
-    if (var == "FW_VERSION")
+    if (var == FPSTR(PROC_FW_VERS))
     {
         return params.at(FPSTR(PARAM_FW_VERSION));
     }

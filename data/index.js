@@ -82,13 +82,20 @@ function saveTimezone() {
       .catch(error => console.error('Error saving timezone:', error));
 }
 
-function updateCurrentTime() {
-  fetch('/getCurrentTime')
-      .then(response => response.json())
+function saveTime() {
+  const time = document.getElementById('setTime').value;
+  const formData = new FormData();
+  formData.append('time', time);
+
+  fetch('/setTime', {
+      method: 'POST',
+      body: formData
+  })
+      .then(response => response.text())
       .then(data => {
-          document.getElementById('currentTime').innerText = data.time;
+          console.log(`Time saved: ${data}`);
       })
-      .catch(error => console.error('Error fetching current time:', error));
+      .catch(error => console.error('Error saving time:', error));
 }
 
 function toggleNtpTimeUpdate(isChecked) {

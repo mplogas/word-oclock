@@ -25,7 +25,21 @@
                     <div class="toggle-row">
                         <label for="currentTime">Current Time:</label>
                         <span id="currentTime">%CURRENT_TIME%</span>
-                    </div>
+                    </div> 
+                    <form action="/setTime" method="POST">
+                        <div class="toggle-row">
+                            <label for="setTime">Set Time manually:</label>
+                            <input type="time" id="setTime" name="time" value="%CURRENT_TIME%">
+                        </div>
+                        <!-- Submit Button -->
+                        <!-- <div class="toggle-row">
+                            <button type="submit" class="submit-button"><i class="fas fa-save"></i> Save</button>
+                        </div> -->
+                        <div class="toggle-row">
+                            <button type="button" class="submit-button" onclick="saveTime()"><i
+                                    class="fas fa-save"></i> Save</button>
+                        </div>
+                    </form>
                 </div>
             </div>
 

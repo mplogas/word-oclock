@@ -269,7 +269,10 @@ void httpRequestCallback(ControlType type, const std::map<String, String> &param
   }
   case ControlType::Time:
   {
-    // Additional logic to handle time configuration
+    auto muh = params.at(FPSTR(WebUI::PARAM_TIME));
+    // Serial.printf("Hour: %d\n", muh.substring(0,2).toInt());
+    // Serial.printf("Minute: %d\n", muh.substring(3,5).toInt());
+    wordClock->setTime(muh.substring(0,2).toInt(), muh.substring(3,5).toInt());
     break;
   }
   case ControlType::NTPSync:
@@ -353,7 +356,7 @@ void setup()
   lightConfig = config.getLightConfig();
 
   wordClock = new WClock(rtc);
-  if (!wordClock->init())
+  if (!wordClock->initRTC())
   {
     Serial.println("RTC may lack power or may be missing");
     Serial.flush();
@@ -374,7 +377,15 @@ void setup()
   {
     isSetup = false;
 
-    bool clockResult = wordClock->begin(systemConfig.ntpConfig.timezone, systemConfig.ntpConfig.server);
+    bool clockResult = true;
+    if(systemConfig.ntpConfig.enabled)
+    {
+      clockResult = wordClock->enableNTP(systemConfig.ntpConfig.timezone, systemConfig.ntpConfig.server, systemConfig.ntpConfig.interval);
+    }
+    else
+    {
+      wordClock->setTime(12, 0);
+    }
 
     if (!clockResult)
     {
@@ -441,7 +452,7 @@ void loop()
       lastUpdate = now;
       showCurrentTime();
 
-      
+
       Serial.printf("Free heap: %d\n", ESP.getFreeHeap());
       Serial.printf("Free min heap: %d\n", ESP.getMinFreeHeap());
     }

@@ -40,6 +40,9 @@ class WebUI
         void handleSetLightColor(AsyncWebServerRequest *request);
         void handleSetAutoBrightness(AsyncWebServerRequest *request);
         void handleSetBrightness(AsyncWebServerRequest *request);
+        void handleSetTime(AsyncWebServerRequest *request);
+        void handleSetLightSchedule(AsyncWebServerRequest *request);
+        void handleSetNTPConfig(AsyncWebServerRequest *request);
         void handleSetHAIntegration(AsyncWebServerRequest *request);
         void handleSetClockFace(AsyncWebServerRequest *request);
         void printAllParams(AsyncWebServerRequest *request);

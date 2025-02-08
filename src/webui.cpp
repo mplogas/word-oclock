@@ -161,8 +161,10 @@ void WebUI::init(const RequestCallback &requestCb,
                         return this->pageProcessor(var, PageType::TIME, params);
                     }); });
 
-    server.on("/getCurrentTime", HTTP_GET, [this](AsyncWebServerRequest *request)
-              { request->send(200, FPSTR(CONTENT_TEXT), "12:30"); });
+    // server.on("/getCurrentTime", HTTP_GET, [this](AsyncWebServerRequest *request)
+    //           { request->send(200, FPSTR(CONTENT_TEXT), "12:30"); });
+    server.on("/setTime", HTTP_POST, [this](AsyncWebServerRequest *request)
+    { this->handleSetTime(request); });
 
     server.on("/system", HTTP_GET, [this](AsyncWebServerRequest *request)
               { 
@@ -309,18 +311,18 @@ void WebUI::handleToggleLight(AsyncWebServerRequest *request)
             params[FPSTR(PARAM_ENABLED)] = statusParam;
             requestCallback(ControlType::LightStatus, params);
 
-            request->send(200, CONTENT_TEXT, FPSTR(VALUE_SUCCESS));
+            request->send(200, FPSTR(CONTENT_TEXT), FPSTR(VALUE_SUCCESS));
         }
         else
         {
             Serial.println("Invalid status value");
-            request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+            request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
         }
     }
     else
     {
         Serial.println("Missing status parameter");
-        request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+        request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
     }
 }
 
@@ -348,27 +350,27 @@ void WebUI::handleSetLightColor(AsyncWebServerRequest *request)
                 std::map<String, String> params;
                 params[FPSTR(PARAM_COLOR)] = colorParam;
                 requestCallback(ControlType::Color, params);
-                request->send(200, CONTENT_TEXT, FPSTR(VALUE_SUCCESS));
+                request->send(200, FPSTR(CONTENT_TEXT), FPSTR(VALUE_SUCCESS));
                 return;
             }
             else
             {
                 Serial.println("Invalid color format");
-                request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+                request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
                 return;
             }
         }
         else
         {
             Serial.println("Invalid color format");
-            request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+            request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
             return;
         }
     }
     else
     {
         Serial.println("Missing color parameter");
-        request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+        request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
         return;
     }
 }
@@ -386,20 +388,20 @@ void WebUI::handleSetAutoBrightness(AsyncWebServerRequest *request)
             params[FPSTR(PARAM_AUTO_BRIGHTNESS_ENABLED)] = enabledParam;
 
             requestCallback(ControlType::AutoBrightness, params);
-            request->send(200, CONTENT_TEXT, FPSTR(VALUE_SUCCESS));
+            request->send(200, FPSTR(CONTENT_TEXT), FPSTR(VALUE_SUCCESS));
             return;
         }
         else
         {
             Serial.println("Invalid enabled value");
-            request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+            request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
             return;
         }
     }
     else
     {
         Serial.println("Missing enabled parameter");
-        request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+        request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
         return;
     }
 }
@@ -417,20 +419,58 @@ void WebUI::handleSetBrightness(AsyncWebServerRequest *request)
             std::map<String, String> params;
             params[FPSTR(PARAM_BRIGHTNESS)] = valueParam;
             requestCallback(ControlType::Brightness, params);
-            request->send(200, CONTENT_TEXT, FPSTR(VALUE_SUCCESS));
+            request->send(200, FPSTR(CONTENT_TEXT), FPSTR(VALUE_SUCCESS));
             return;
         }
         else
         {
             Serial.println("Invalid brightness value");
-            request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+            request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
             return;
         }
     }
     else
     {
         Serial.println("Missing value parameter");
-        request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+        request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
+        return;
+    }
+}
+
+void WebUI::handleSetTime(AsyncWebServerRequest *request) {
+    printAllParams(request);
+    if (request->hasParam(FPSTR(PARAM_TIME), true)) {
+        String timeParam = request->getParam(FPSTR(PARAM_TIME), true)->value();
+        // Validate time format (expecting HH:MM)
+        if (timeParam.length() == 5 && timeParam[2] == ':') {
+            bool valid = true;
+            for (size_t i = 0; i < timeParam.length(); i++) {
+                char c = timeParam[i];
+                if (i == 2) {
+                    continue;
+                }
+                if (!isdigit(c)) {
+                    valid = false;
+                    break;
+                }
+            }
+
+            if (valid) {
+                std::map<String, String> params;
+                params[FPSTR(PARAM_TIME)] = timeParam;
+                requestCallback(ControlType::Time, params);
+                request->send(200, FPSTR(CONTENT_TEXT), FPSTR(VALUE_SUCCESS));
+                return;
+            } 
+        } 
+
+        Serial.println("Invalid time format");
+        request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
+        return;
+
+    } else {
+        Serial.println("Missing time parameter");
+        request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
         return;
     }
 }
@@ -451,7 +491,7 @@ void WebUI::handleSetHAIntegration(AsyncWebServerRequest *request)
             params[FPSTR(PARAM_BROKER_PASS)] = String();
             params[FPSTR(PARAM_BROKER_DEFAULT_TOPIC)] = String();
             requestCallback(ControlType::HaIntegration, params);
-            request->send(200, CONTENT_TEXT, FPSTR(VALUE_SUCCESS));
+            request->send(200, FPSTR(CONTENT_TEXT), FPSTR(VALUE_SUCCESS));
             return;
         }
         else if (haIntegrationParam == FPSTR(VALUE_ON))
@@ -462,7 +502,7 @@ void WebUI::handleSetHAIntegration(AsyncWebServerRequest *request)
                 !request->hasParam(FPSTR(PARAM_BROKER_DEFAULT_TOPIC), true))
             {
                 Serial.println("Missing parameters");
-                request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+                request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
                 return;
             }
 
@@ -512,27 +552,27 @@ void WebUI::handleSetHAIntegration(AsyncWebServerRequest *request)
                     params[FPSTR(PARAM_BROKER_DEFAULT_TOPIC)] = Defaults::DEFAULT_MQTT_TOPIC;
                 }
                 requestCallback(ControlType::HaIntegration, params);
-                request->send(200, CONTENT_TEXT, FPSTR(VALUE_SUCCESS));
+                request->send(200, FPSTR(CONTENT_TEXT), FPSTR(VALUE_SUCCESS));
                 return;
             }
             else
             {
                 Serial.println("Invalid MQTT host");
-                request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+                request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
                 return;
             }
         }
         else
         {
             Serial.println("Invalid HA Integration value");
-            request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+            request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
             return;
         }
     }
     else
     {
         Serial.println("Invalid request");
-        request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+        request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
         return;
     }
 }
@@ -548,20 +588,20 @@ void WebUI::handleSetClockFace(AsyncWebServerRequest *request)
             std::map<String, String> params;
             params[FPSTR(PARAM_OPTION)] = option;
             requestCallback(ControlType::ClockFace, params);
-            request->send(200, CONTENT_TEXT, FPSTR(VALUE_SUCCESS));
+            request->send(200, FPSTR(CONTENT_TEXT), FPSTR(VALUE_SUCCESS));
             return;
         }
         else
         {
             Serial.println("Invalid clock face option value");
-            request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+            request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
             return;
         }
     }
     else
     {
         Serial.println("Missing clock face parameter");
-        request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+        request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
         return;
     }
 }

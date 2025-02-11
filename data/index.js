@@ -66,21 +66,21 @@ function updateBrightnessValue(value) {
 }
 
 // time.html
-function saveTimezone() {
-  const timezone = document.getElementById('timezoneSelect').value;
-  const formData = new FormData();
-  formData.append('timezone', timezone);
+// function saveTimezone() {
+//   const timezone = document.getElementById('timezoneSelect').value;
+//   const formData = new FormData();
+//   formData.append('timezone', timezone);
 
-  fetch('/saveTimezone', {
-      method: 'POST',
-      body: formData
-  })
-      .then(response => response.text())
-      .then(data => {
-          console.log(`Timezone saved: ${data}`);
-      })
-      .catch(error => console.error('Error saving timezone:', error));
-}
+//   fetch('/saveTimezone', {
+//       method: 'POST',
+//       body: formData
+//   })
+//       .then(response => response.text())
+//       .then(data => {
+//           console.log(`Timezone saved: ${data}`);
+//       })
+//       .catch(error => console.error('Error saving timezone:', error));
+// }
 
 function saveTime() {
   const time = document.getElementById('setTime').value;
@@ -98,19 +98,68 @@ function saveTime() {
       .catch(error => console.error('Error saving time:', error));
 }
 
-function toggleNtpTimeUpdate(isChecked) {
+
+function saveNTP() {
+  const ntpEnable = document.getElementById('ntpTimeUpdate').checked;
+  const ntpServer = document.getElementById('ntpServer').value;
+  const ntpInterval = document.getElementById('ntpUpdateInterval').value;
+  const timezone = document.getElementById('timezoneSelect').value;
+  const formData = new FormData();
+  formData.append('enabled', ntpEnable ? '1' : '0');
+  if(ntpEnable) {
+    formData.append('ntpHost', ntpServer);
+    formData.append('ntpInterval', ntpInterval);
+    formData.append('ntpTimezone', timezone);
+  }
+
+  fetch('/setNTPConfig', {
+      method: 'POST',
+      body: formData
+  })
+      .then(response => response.text())
+      .then(data => {
+          console.log(`NTP saved: ${data}`);
+      })
+      .catch(error => console.error('Error saving NTP:', error));
+}
+
+function toggleNtpTimeUpdate(isChecked, firstLoad = false) {
   const container = document.getElementById('ntpTimeUpdateContainer');
   container.style.display = isChecked ? 'block' : 'none';
+
+  if(!firstLoad && !isChecked) {
+    saveNTP();
+  }
 }
 
-function toggleNtpAutoUpdate(isChecked) {
-  const container = document.getElementById('ntpAutoUpdateContainer');
-  container.style.display = isChecked ? 'block' : 'none';
+function saveLightSchedule() {
+  const lightScheduleToggle = document.getElementById('lightScheduleToggle').checked;
+  const scheduleStart = document.getElementById('startTime').value;
+  const scheduleEnd = document.getElementById('endTime').value;
+  const formData = new FormData();
+  formData.append('enabled', lightScheduleToggle ? '1' : '0');
+  if(lightScheduleToggle) {
+    formData.append('scheduleStart', scheduleStart);
+    formData.append('scheduleEnd', scheduleEnd);
+  }
+  fetch('/setLightSchedule', {
+    method: 'POST',
+    body: formData
+  })
+    .then(response => response.text())
+    .then(data => {
+      console.log(`Light schedule saved: ${data}`);
+    })
+    .catch(error => console.error('Error saving light schedule:', error));   
 }
 
-function toggleLightSchedule(isChecked) {
+function toggleLightSchedule(isChecked, firstLoad = false) {
   const container = document.getElementById('lightScheduleContainer');
   container.style.display = isChecked ? 'block' : 'none';
+
+  if(!firstLoad && !isChecked) {
+    saveLightSchedule();
+  }
 }
 
 // Call updateCurrentTime every 30 seconds
@@ -239,24 +288,19 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
 
-  // System Page
+  // Time  Page
   const ntpToggle = document.getElementById('ntpTimeUpdate');
   if (ntpToggle) {
-    toggleNtpTimeUpdate(ntpToggle.checked);
-  }
-
-  // Initialize NTP Auto Update
-  const ntpAutoUpdateToggle = document.getElementById('ntpAutoUpdate');
-  if (ntpAutoUpdateToggle) {
-    toggleNtpAutoUpdate(ntpAutoUpdateToggle.checked);
+    toggleNtpTimeUpdate(ntpToggle.checked, true);
   }
 
   // Initialize Light Schedule
   const lightScheduleToggle = document.getElementById('lightScheduleToggle');
   if (lightScheduleToggle) {
-    toggleLightSchedule(lightScheduleToggle.checked);
+    toggleLightSchedule(lightScheduleToggle.checked, true);
   }
 
+  // System page
   // Initialize HomeAssistant Integration
   const haIntegrationToggle = document.getElementById('haIntegrationToggle');
   if (haIntegrationToggle) {

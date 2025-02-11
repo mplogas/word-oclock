@@ -33,6 +33,8 @@ LED ledController;
 bool initialized = false;
 unsigned long lastUpdate = 0;
 bool isDark = false;
+uint8_t lastHour = 0;
+uint8_t lastMinute = 0;
 
 // this if for (reduced) testing purposes
 boolean isTick;
@@ -46,17 +48,20 @@ std::vector<std::pair<int, int>> tockLEDs = {
     {3, 1} // From LED index 3, turn on 5 LEDs (3 to 5)
 };
 
-void showCurrentTime()
+void showCurrentTime(uint8_t hour, uint8_t minute)
 {
   if (!isDark)
   {
-    uint8_t hour = wordClock->getHour();
-    uint8_t minute = wordClock->getMinute();
     // Serial.printf("Current time: %d:%d\n", hour, minute);
     std::vector<std::pair<int, int>> leds = timeConverter->convertTime(hour, minute, (systemConfig.mode == Configuration::ClockMode::Regular), true);
     // Serial.printf("LEDs: %d\n", leds.size());
     ledController.setLEDs(leds);
   }
+}
+
+void showCurrentTime()
+{
+  showCurrentTime(lastHour, lastMinute);
 }
 
 // callbacks
@@ -178,7 +183,7 @@ void httpRequestCallback(ControlType type, const std::map<String, String> &param
   {
   case ControlType::LightStatus:
   {
-    bool status = params.at(FPSTR(WebUI::PARAM_ENABLED)) == "1";
+    bool status = params.at(FPSTR(WebUI::PARAM_ENABLED)) == FPSTR(WebUI::VALUE_ON);
     if (status)
     {
       isDark = false;
@@ -203,17 +208,17 @@ void httpRequestCallback(ControlType type, const std::map<String, String> &param
   }
   case ControlType::AutoBrightness:
   {
-    bool enabled = params.at(FPSTR(WebUI::PARAM_AUTO_BRIGHTNESS_ENABLED)) == "1";
-    if (enabled)
+    lightConfig.autoBrightnessConfig.enabled = params.at(FPSTR(WebUI::PARAM_AUTO_BRIGHTNESS_ENABLED)) == FPSTR(WebUI::VALUE_ON);
+    config.setAutoBrightness(lightConfig.autoBrightnessConfig);
+    if (lightConfig.autoBrightnessConfig.enabled)
     {
       ledController.enableAutoBrightness(lightConfig.autoBrightnessConfig.illuminanceThresholdHigh, lightConfig.autoBrightnessConfig.illuminanceThresholdLow);
     }
     else
     {
       ledController.disableAutoBrightness();
+      ledController.setBrightness(lightConfig.brightness);
     }
-    lightConfig.autoBrightnessConfig.enabled = enabled;
-    config.setAutoBrightness(lightConfig.autoBrightnessConfig);
     break;
   }
   case ControlType::Brightness:
@@ -226,27 +231,29 @@ void httpRequestCallback(ControlType type, const std::map<String, String> &param
   }
   case ControlType::HaIntegration:
   {
-    systemConfig.mqttConfig.enabled = (params.at(FPSTR(WebUI::PARAM_ENABLED)) == "1");
-    strlcpy(systemConfig.mqttConfig.host, params.at(FPSTR(WebUI::PARAM_BROKER_HOST)).c_str(), sizeof(systemConfig.mqttConfig.host));
-    systemConfig.mqttConfig.port = params.at(FPSTR(WebUI::PARAM_BROKER_PORT)).toInt();
-    strlcpy(systemConfig.mqttConfig.username, params.at(FPSTR(WebUI::PARAM_BROKER_USER)).c_str(), sizeof(systemConfig.mqttConfig.username));
-    strlcpy(systemConfig.mqttConfig.password, params.at(FPSTR(WebUI::PARAM_BROKER_PASS)).c_str(), sizeof(systemConfig.mqttConfig.password));
-    strlcpy(systemConfig.mqttConfig.topic, params.at(FPSTR(WebUI::PARAM_BROKER_DEFAULT_TOPIC)).c_str(), sizeof(systemConfig.mqttConfig.topic));
-    config.setMqttConfig(systemConfig.mqttConfig);
+    systemConfig.mqttConfig.enabled = (params.at(FPSTR(WebUI::PARAM_ENABLED)) == FPSTR(WebUI::VALUE_ON));
 
     if (systemConfig.mqttConfig.enabled)
     {
+      strlcpy(systemConfig.mqttConfig.host, params.at(FPSTR(WebUI::PARAM_BROKER_HOST)).c_str(), sizeof(systemConfig.mqttConfig.host));
+      systemConfig.mqttConfig.port = params.at(FPSTR(WebUI::PARAM_BROKER_PORT)).toInt();
+      strlcpy(systemConfig.mqttConfig.username, params.at(FPSTR(WebUI::PARAM_BROKER_USER)).c_str(), sizeof(systemConfig.mqttConfig.username));
+      strlcpy(systemConfig.mqttConfig.password, params.at(FPSTR(WebUI::PARAM_BROKER_PASS)).c_str(), sizeof(systemConfig.mqttConfig.password));
+      strlcpy(systemConfig.mqttConfig.topic, params.at(FPSTR(WebUI::PARAM_BROKER_DEFAULT_TOPIC)).c_str(), sizeof(systemConfig.mqttConfig.topic));
+      config.setMqttConfig(systemConfig.mqttConfig);
+
       enableMqtt();
     }
     else
     {
+      config.setMqttConfig(systemConfig.mqttConfig);
       disableMqtt();
     }
     break;
   }
   case ControlType::ClockFace:
   {
-    if (params.at(FPSTR(WebUI::PARAM_OPTION)) == "0")
+    if (params.at(FPSTR(WebUI::PARAM_OPTION)) == FPSTR(WebUI::VALUE_OFF))
     {
       systemConfig.mode = Configuration::ClockMode::Regular;
       Serial.println("Clock mode set to dreiviertel");
@@ -269,20 +276,46 @@ void httpRequestCallback(ControlType type, const std::map<String, String> &param
   }
   case ControlType::Time:
   {
-    auto muh = params.at(FPSTR(WebUI::PARAM_TIME));
+    // auto muh = params.at(FPSTR(WebUI::PARAM_TIME));
     // Serial.printf("Hour: %d\n", muh.substring(0,2).toInt());
     // Serial.printf("Minute: %d\n", muh.substring(3,5).toInt());
-    wordClock->setTime(muh.substring(0,2).toInt(), muh.substring(3,5).toInt());
+    wordClock->setTime(params.at(FPSTR(WebUI::PARAM_TIME)).substring(0, 2).toInt(), params.at(FPSTR(WebUI::PARAM_TIME)).substring(3, 5).toInt());
     break;
   }
   case ControlType::NTPSync:
   {
-    // Additional logic to handle NTP sync
+    systemConfig.ntpConfig.enabled = params.at(FPSTR(WebUI::PARAM_NTP_ENABLED)) == FPSTR(WebUI::VALUE_ON);
+
+    if(systemConfig.ntpConfig.enabled) {
+      strlcpy(systemConfig.ntpConfig.server, params.at(FPSTR(WebUI::PARAM_NTP_HOST)).c_str(), sizeof(systemConfig.ntpConfig.server));
+      systemConfig.ntpConfig.interval = params.at(FPSTR(WebUI::PARAM_NTP_UPDATE_INTERVAL)).toInt();
+      strlcpy(systemConfig.ntpConfig.timezone, params.at(FPSTR(WebUI::PARAM_NTP_TIMEZONE)).c_str(), sizeof(systemConfig.ntpConfig.timezone));
+      config.setNtpConfig(systemConfig.ntpConfig);
+  
+      Serial.printf("NTP enabled with server: %s, interval: %d, timezone: %s\n", systemConfig.ntpConfig.server, systemConfig.ntpConfig.interval, systemConfig.ntpConfig.timezone);
+      wordClock->enableNTP(systemConfig.ntpConfig.timezone, systemConfig.ntpConfig.server, systemConfig.ntpConfig.interval);
+    } else {
+      config.setNtpConfig(systemConfig.ntpConfig);
+      wordClock->disableNTP();
+    }
+
     break;
   }
   case ControlType::LightSchedule:
   {
-    // Additional logic to handle light schedule
+    systemConfig.lightScheduleConfig.enabled = params.at(FPSTR(WebUI::PARAM_SCHEDULE_ENABLED)) == FPSTR(WebUI::VALUE_ON);
+
+    if(systemConfig.lightScheduleConfig.enabled) {    
+      systemConfig.lightScheduleConfig.startTime = params.at(FPSTR(WebUI::PARAM_SCHEDULE_START)).toInt();
+      systemConfig.lightScheduleConfig.endTime = params.at(FPSTR(WebUI::PARAM_SCHEDULE_END)).toInt();
+
+      config.setLightSchedule(systemConfig.lightScheduleConfig);
+      wordClock->enableSchedule(systemConfig.lightScheduleConfig.startTime, systemConfig.lightScheduleConfig.endTime);
+    } else {
+
+      config.setLightSchedule(systemConfig.lightScheduleConfig);
+      wordClock->disableSchedule();
+    }
     break;
   }
   case ControlType::WiFiSetup:
@@ -297,7 +330,6 @@ void httpRequestCallback(ControlType type, const std::map<String, String> &param
     break;
   }
   }
-
 }
 
 const std::map<String, String> httpResponseCallback(PageType page)
@@ -321,19 +353,20 @@ const std::map<String, String> httpResponseCallback(PageType page)
     params[FPSTR(WebUI::PARAM_BROKER_DEFAULT_TOPIC)] = systemConfig.mqttConfig.topic;
     params[FPSTR(WebUI::PARAM_CLOCKFACE_OPTION)] = systemConfig.mode == Configuration::ClockMode::Option_1 ? FPSTR(WebUI::VALUE_ON) : FPSTR(WebUI::VALUE_OFF);
     break;
-  case PageType::TIME: {
-    uint8_t hour = wordClock->getHour();
-    uint8_t minute = wordClock->getMinute();  
+  case PageType::TIME:
+  {
     char timeStr[6];
-    sprintf(timeStr, "%02d:%02d", hour, minute);
+    sprintf(timeStr, "%02d:%02d", lastHour, lastMinute);
     params[FPSTR(WebUI::PARAM_TIME)] = timeStr;
     params[FPSTR(WebUI::PARAM_NTP_ENABLED)] = systemConfig.ntpConfig.enabled ? FPSTR(WebUI::VALUE_ON) : FPSTR(WebUI::VALUE_OFF);
     params[FPSTR(WebUI::PARAM_NTP_HOST)] = systemConfig.ntpConfig.server;
     params[FPSTR(WebUI::PARAM_NTP_UPDATE_INTERVAL)] = String(systemConfig.ntpConfig.interval);
-    params[FPSTR(WebUI::PARAM_SCHEDULE_START)] = String(systemConfig.lightScheduleConfig.startTime);
+    params[FPSTR(WebUI::PARAM_NTP_TIMEZONE)] = systemConfig.ntpConfig.timezone;
+    params[FPSTR(WebUI::PARAM_SCHEDULE_START)] = String(systemConfig.lightScheduleConfig.startTime); 
     params[FPSTR(WebUI::PARAM_SCHEDULE_END)] = String(systemConfig.lightScheduleConfig.endTime);
     params[FPSTR(WebUI::PARAM_SCHEDULE_ENABLED)] = systemConfig.lightScheduleConfig.enabled ? FPSTR(WebUI::VALUE_ON) : FPSTR(WebUI::VALUE_OFF);
-    break;}
+    break;
+  }
   case PageType::FWUPDATE:
     params[FPSTR(WebUI::PARAM_FW_VERSION)] = Defaults::FW_VERSION;
     break;
@@ -341,6 +374,31 @@ const std::map<String, String> httpResponseCallback(PageType page)
     break;
   }
   return params;
+}
+
+void clockSchedulerCallback(SchedulerType type, uint8_t hour, uint8_t minute)
+{
+  lastHour = hour;
+  lastMinute = minute;
+
+  switch (type)
+  {
+  case SchedulerType::Timestamp:
+    showCurrentTime(hour, minute);
+    break;
+  case SchedulerType::ScheduleStart:
+    Serial.printf("Schedule start: %d:%d\n", hour, minute);
+    isDark = false;
+    showCurrentTime(hour, minute);
+    break;
+  case SchedulerType::ScheduleEnd:
+    Serial.printf("Schedule end: %d:%d\n", hour, minute);
+    isDark = true;
+    ledController.clearLEDs();
+    break;
+  default:
+    break;
+  }
 }
 
 void setup()
@@ -356,7 +414,7 @@ void setup()
   lightConfig = config.getLightConfig();
 
   wordClock = new WClock(rtc);
-  if (!wordClock->initRTC())
+  if (!wordClock->init(clockSchedulerCallback))
   {
     Serial.println("RTC may lack power or may be missing");
     Serial.flush();
@@ -377,23 +435,15 @@ void setup()
   {
     isSetup = false;
 
-    bool clockResult = true;
-    if(systemConfig.ntpConfig.enabled)
+    if (systemConfig.ntpConfig.enabled)
     {
-      clockResult = wordClock->enableNTP(systemConfig.ntpConfig.timezone, systemConfig.ntpConfig.server, systemConfig.ntpConfig.interval);
+      Serial.printf("NTP enabled with server: %s, interval: %d, timezone: %s\n", systemConfig.ntpConfig.server, systemConfig.ntpConfig.interval, systemConfig.ntpConfig.timezone);
+      wordClock->enableNTP(systemConfig.ntpConfig.timezone, systemConfig.ntpConfig.server, systemConfig.ntpConfig.interval);
     }
     else
     {
-      wordClock->setTime(12, 0);
-    }
-
-    if (!clockResult)
-    {
-      Serial.println("Failed to initialize clock");
-    }
-    else
-    {
-      Serial.println("Successfully intitialized clock");
+      wordClock->setTimeZone(systemConfig.ntpConfig.timezone);
+      //wordClock->setTime(12, 0);
     }
 
     // Serial.printf("Light state recovered: %s\n", lightConfig.state ? "ON" : "OFF");
@@ -446,17 +496,14 @@ void loop()
   if (!isSetup && initialized)
   {
     unsigned long now = millis();
-    wordClock->loop();
     if (now - lastUpdate > Defaults::LED_INTERVAL)
     {
       lastUpdate = now;
       showCurrentTime();
-
-
-      Serial.printf("Free heap: %d\n", ESP.getFreeHeap());
-      Serial.printf("Free min heap: %d\n", ESP.getMinFreeHeap());
+      Serial.printf("Free heap / min heap: %d / %d\n", ESP.getFreeHeap(), ESP.getMinFreeHeap());
     }
 
+    wordClock->loop();
     ledController.loop();
     if (systemConfig.mqttConfig.enabled && homeAssistant != nullptr)
     {

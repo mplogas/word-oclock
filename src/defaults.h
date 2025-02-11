@@ -15,11 +15,11 @@ public:
     static constexpr uint16_t DEFAULT_MQTT_PORT = 1883;
     static constexpr const char* DEFAULT_MQTT_TOPIC = "woc";
     static constexpr bool DEFAULT_NTP_ENABLED = true;
-    static constexpr const char* DEFAULT_NTP_TIMEZONE = "CET-1CEST,M3.5.0,M10.5.0/3"; // https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv for UI
+    static constexpr const char* DEFAULT_NTP_TIMEZONE = "Etc/UTC"; // see timezone_data.h
     static constexpr const char* DEFAULT_NTP_SERVER = "0.pool.ntp.org";
-    static constexpr bool DEFAULT_LIGHT_SCHEDULE_ENABLED = true;
+    static constexpr bool DEFAULT_LIGHT_SCHEDULE_ENABLED = false;
     static constexpr bool DEFAULT_NTP_UPDATE_ENABLED = true;
-    static constexpr uint32_t DEFAULT_NTP_UPDATE_INTERVAL = 86400; // 24 hours
+    static constexpr uint32_t DEFAULT_NTP_UPDATE_INTERVAL = 60; // minutes
     static constexpr bool DEFAULT_AUTO_BRIGHTNESS_ENABLED = true;
     static constexpr uint16_t DEFAULT_ILLUMINANCE_THRESHOLD_HIGH = 4095;
     static constexpr uint16_t DEFAULT_ILLUMINANCE_THRESHOLD_LOW = 300;

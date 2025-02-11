@@ -21,8 +21,10 @@ std::vector<std::pair<int, int>> TimeConverterDE::convertTime(const uint8_t hour
     // Round minutes down to nearest 5
     uint8_t roundedMinutes = (minutes / 5) * 5;
 
-    
     uint8_t displayHour = (minutes >= 25) ? normalizedHours + 1 : normalizedHours;
+    if(displayHour == 13) {
+        displayHour = 1;
+    }
 
     // Add "es ist"
     ledArray.push_back(LEDS_ES); // "es"

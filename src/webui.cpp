@@ -161,8 +161,16 @@ void WebUI::init(const RequestCallback &requestCb,
                         return this->pageProcessor(var, PageType::TIME, params);
                     }); });
 
-    server.on("/getCurrentTime", HTTP_GET, [this](AsyncWebServerRequest *request)
-              { request->send(200, FPSTR(CONTENT_TEXT), "12:30"); });
+    // server.on("/getCurrentTime", HTTP_GET, [this](AsyncWebServerRequest *request)
+    //           { request->send(200, FPSTR(CONTENT_TEXT), "12:30"); });
+    server.on("/setTime", HTTP_POST, [this](AsyncWebServerRequest *request)
+    { this->handleSetTime(request); });
+
+    server.on("/setLightSchedule", HTTP_POST, [this](AsyncWebServerRequest *request)
+    { this->handleSetLightSchedule(request); });
+
+    server.on("/setNTPConfig", HTTP_POST, [this](AsyncWebServerRequest *request)
+    { this->handleSetNTPConfig(request); });
 
     server.on("/system", HTTP_GET, [this](AsyncWebServerRequest *request)
               { 
@@ -309,18 +317,18 @@ void WebUI::handleToggleLight(AsyncWebServerRequest *request)
             params[FPSTR(PARAM_ENABLED)] = statusParam;
             requestCallback(ControlType::LightStatus, params);
 
-            request->send(200, CONTENT_TEXT, FPSTR(VALUE_SUCCESS));
+            request->send(200, FPSTR(CONTENT_TEXT), FPSTR(VALUE_SUCCESS));
         }
         else
         {
             Serial.println("Invalid status value");
-            request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+            request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
         }
     }
     else
     {
         Serial.println("Missing status parameter");
-        request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+        request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
     }
 }
 
@@ -348,27 +356,27 @@ void WebUI::handleSetLightColor(AsyncWebServerRequest *request)
                 std::map<String, String> params;
                 params[FPSTR(PARAM_COLOR)] = colorParam;
                 requestCallback(ControlType::Color, params);
-                request->send(200, CONTENT_TEXT, FPSTR(VALUE_SUCCESS));
+                request->send(200, FPSTR(CONTENT_TEXT), FPSTR(VALUE_SUCCESS));
                 return;
             }
             else
             {
                 Serial.println("Invalid color format");
-                request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+                request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
                 return;
             }
         }
         else
         {
             Serial.println("Invalid color format");
-            request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+            request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
             return;
         }
     }
     else
     {
         Serial.println("Missing color parameter");
-        request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+        request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
         return;
     }
 }
@@ -386,20 +394,20 @@ void WebUI::handleSetAutoBrightness(AsyncWebServerRequest *request)
             params[FPSTR(PARAM_AUTO_BRIGHTNESS_ENABLED)] = enabledParam;
 
             requestCallback(ControlType::AutoBrightness, params);
-            request->send(200, CONTENT_TEXT, FPSTR(VALUE_SUCCESS));
+            request->send(200, FPSTR(CONTENT_TEXT), FPSTR(VALUE_SUCCESS));
             return;
         }
         else
         {
             Serial.println("Invalid enabled value");
-            request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+            request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
             return;
         }
     }
     else
     {
         Serial.println("Missing enabled parameter");
-        request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+        request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
         return;
     }
 }
@@ -417,27 +425,194 @@ void WebUI::handleSetBrightness(AsyncWebServerRequest *request)
             std::map<String, String> params;
             params[FPSTR(PARAM_BRIGHTNESS)] = valueParam;
             requestCallback(ControlType::Brightness, params);
-            request->send(200, CONTENT_TEXT, FPSTR(VALUE_SUCCESS));
+            request->send(200, FPSTR(CONTENT_TEXT), FPSTR(VALUE_SUCCESS));
             return;
         }
         else
         {
             Serial.println("Invalid brightness value");
-            request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+            request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
             return;
         }
     }
     else
     {
         Serial.println("Missing value parameter");
-        request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+        request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
         return;
     }
 }
 
+void WebUI::handleSetTime(AsyncWebServerRequest *request) {
+    printAllParams(request);
+    if (request->hasParam(FPSTR(PARAM_TIME), true)) {
+        String timeParam = request->getParam(FPSTR(PARAM_TIME), true)->value();
+        // Validate time format (expecting HH:MM)
+        if (timeParam.length() == 5 && timeParam[2] == ':') {
+            bool valid = true;
+            for (size_t i = 0; i < timeParam.length(); i++) {
+                char c = timeParam[i];
+                if (i == 2) {
+                    continue;
+                }
+                if (!isdigit(c)) {
+                    valid = false;
+                    break;
+                }
+            }
+
+            if (valid) {
+                std::map<String, String> params;
+                params[FPSTR(PARAM_TIME)] = timeParam;
+                requestCallback(ControlType::Time, params);
+                request->send(200, FPSTR(CONTENT_TEXT), FPSTR(VALUE_SUCCESS));
+                return;
+            } 
+        } 
+
+        Serial.println("Invalid time format");
+        request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
+        return;
+
+    } else {
+        Serial.println("Missing time parameter");
+        request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
+        return;
+    }
+}
+
+void WebUI::handleSetLightSchedule(AsyncWebServerRequest *request)
+{
+    if (request->hasParam(FPSTR(PARAM_ENABLED), true))
+    {
+        String scheduleEnabledParam = request->getParam(FPSTR(PARAM_ENABLED), true)->value();
+        if (scheduleEnabledParam == FPSTR(VALUE_OFF)) {
+            std::map<String, String> params;
+            params[FPSTR(PARAM_SCHEDULE_ENABLED)] = FPSTR(VALUE_OFF);
+            params[FPSTR(PARAM_SCHEDULE_START)] = String();
+            params[FPSTR(PARAM_SCHEDULE_END)] = String();
+            requestCallback(ControlType::LightSchedule, params);
+            request->send(200, FPSTR(CONTENT_TEXT), FPSTR(VALUE_SUCCESS));
+            return;
+        } else if (scheduleEnabledParam == FPSTR(VALUE_ON)) {
+            if (!request->hasParam(FPSTR(PARAM_SCHEDULE_START), true) || !request->hasParam(FPSTR(PARAM_SCHEDULE_END), true)) {
+                Serial.println("Missing parameters");
+                request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
+                return;
+            }
+            String scheduleStart = request->getParam(FPSTR(PARAM_SCHEDULE_START), true)->value();
+            String scheduleEnd = request->getParam(FPSTR(PARAM_SCHEDULE_END), true)->value();
+            Serial.printf("Start: %s, End: %s\n", scheduleStart.c_str(), scheduleEnd.c_str());
+            // Start: 15:10, End: 19:25
+            // Validate schedule format (expecting HH:MM)
+
+
+
+            if (scheduleStart.length() == 5 && scheduleStart[2] == ':' && scheduleEnd.length() == 5 && scheduleEnd[2] == ':') {
+                bool valid = true;
+                for (size_t i = 0; i < scheduleStart.length(); i++) {
+                    char c = scheduleStart[i];
+                    if (i == 2) {
+                        continue;
+                    }
+                    if (!isdigit(c)) {
+                        valid = false;
+                        break;
+                    }
+                }
+
+                for (size_t i = 0; i < scheduleEnd.length(); i++) {
+                    char c = scheduleEnd[i];
+                    if (i == 2) {
+                        continue;
+                    }
+                    if (!isdigit(c)) {
+                        valid = false;
+                        break;
+                    }
+                }
+
+                if (!valid) {
+                    Serial.println("Invalid schedule value");
+                    request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
+                    return;
+                }
+
+
+                uint8_t startHour = scheduleStart.substring(0, 2).toInt();
+                uint8_t startMinute = scheduleStart.substring(3, 5).toInt();
+                uint8_t endHour = scheduleEnd.substring(0, 2).toInt();
+                uint8_t endMinute = scheduleEnd.substring(3, 5).toInt();
+
+                std::map<String, String> params;
+                params[FPSTR(PARAM_SCHEDULE_ENABLED)] = FPSTR(VALUE_ON);
+                params[FPSTR(PARAM_SCHEDULE_START)] = String((unsigned long)startHour * 3600UL + startMinute * 60UL);
+                params[FPSTR(PARAM_SCHEDULE_END)] = String((unsigned long)endHour * 3600UL + endMinute * 60UL);
+                requestCallback(ControlType::LightSchedule, params);
+                request->send(200, FPSTR(CONTENT_TEXT), FPSTR(VALUE_SUCCESS));
+                return;
+            } 
+        } 
+        Serial.println("Invalid schedule value");
+        request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
+        return;
+    } else {
+        Serial.println("Invalid request");
+        request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
+        return;
+    }
+}
+
+void WebUI::handleSetNTPConfig(AsyncWebServerRequest *request)
+{
+    if (request->hasParam(FPSTR(PARAM_ENABLED), true))
+    {
+        String ntpEnabledParam = request->getParam(FPSTR(PARAM_ENABLED), true)->value();
+        if (ntpEnabledParam == FPSTR(VALUE_OFF))
+        {
+            std::map<String, String> params;
+            params[FPSTR(PARAM_NTP_ENABLED)] = FPSTR(VALUE_OFF);
+            params[FPSTR(PARAM_NTP_HOST)] = String();
+            params[FPSTR(PARAM_NTP_UPDATE_INTERVAL)] = String();
+            params[FPSTR(PARAM_NTP_TIMEZONE)] = String();
+            requestCallback(ControlType::NTPSync, params);
+            request->send(200, FPSTR(CONTENT_TEXT), FPSTR(VALUE_SUCCESS));
+            return;
+        }
+        else if (ntpEnabledParam == FPSTR(VALUE_ON))
+        {
+            if(request->hasParam(FPSTR(PARAM_NTP_HOST), true) && request->hasParam(FPSTR(PARAM_NTP_UPDATE_INTERVAL), true) && request->hasParam(FPSTR(PARAM_NTP_TIMEZONE), true))
+            {
+                String ntpHost = request->getParam(FPSTR(PARAM_NTP_HOST), true)->value();
+                String ntpInterval = request->getParam(FPSTR(PARAM_NTP_UPDATE_INTERVAL), true)->value();
+                String ntpTimezone = request->getParam(FPSTR(PARAM_NTP_TIMEZONE), true)->value();
+                if (ntpHost.length() > 0 && ntpInterval.length() > 0 && ntpTimezone.length() > 0)
+                {
+                    std::map<String, String> params;
+                    params[FPSTR(PARAM_NTP_ENABLED)] = FPSTR(VALUE_ON);
+                    params[FPSTR(PARAM_NTP_HOST)] = ntpHost;
+                    params[FPSTR(PARAM_NTP_UPDATE_INTERVAL)] = ntpInterval;
+                    params[FPSTR(PARAM_NTP_TIMEZONE)] = ntpTimezone;
+                    requestCallback(ControlType::NTPSync, params);
+                    request->send(200, FPSTR(CONTENT_TEXT), FPSTR(VALUE_SUCCESS));
+                    return;
+                }
+            }
+        }
+            
+        Serial.println("Invalid NTP parameters");
+        request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
+        return;
+    }
+    Serial.println("Invalid request");
+    request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
+    return;
+}
+
+
 void WebUI::handleSetHAIntegration(AsyncWebServerRequest *request)
 {
-    printAllParams(request);
+    //printAllParams(request);
     if (request->hasParam(FPSTR(PARAM_ENABLED), true))
     {
         String haIntegrationParam = request->getParam(FPSTR(PARAM_ENABLED), true)->value();
@@ -451,7 +626,7 @@ void WebUI::handleSetHAIntegration(AsyncWebServerRequest *request)
             params[FPSTR(PARAM_BROKER_PASS)] = String();
             params[FPSTR(PARAM_BROKER_DEFAULT_TOPIC)] = String();
             requestCallback(ControlType::HaIntegration, params);
-            request->send(200, CONTENT_TEXT, FPSTR(VALUE_SUCCESS));
+            request->send(200, FPSTR(CONTENT_TEXT), FPSTR(VALUE_SUCCESS));
             return;
         }
         else if (haIntegrationParam == FPSTR(VALUE_ON))
@@ -462,7 +637,7 @@ void WebUI::handleSetHAIntegration(AsyncWebServerRequest *request)
                 !request->hasParam(FPSTR(PARAM_BROKER_DEFAULT_TOPIC), true))
             {
                 Serial.println("Missing parameters");
-                request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+                request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
                 return;
             }
 
@@ -512,27 +687,27 @@ void WebUI::handleSetHAIntegration(AsyncWebServerRequest *request)
                     params[FPSTR(PARAM_BROKER_DEFAULT_TOPIC)] = Defaults::DEFAULT_MQTT_TOPIC;
                 }
                 requestCallback(ControlType::HaIntegration, params);
-                request->send(200, CONTENT_TEXT, FPSTR(VALUE_SUCCESS));
+                request->send(200, FPSTR(CONTENT_TEXT), FPSTR(VALUE_SUCCESS));
                 return;
             }
             else
             {
                 Serial.println("Invalid MQTT host");
-                request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+                request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
                 return;
             }
         }
         else
         {
             Serial.println("Invalid HA Integration value");
-            request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+            request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
             return;
         }
     }
     else
     {
         Serial.println("Invalid request");
-        request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+        request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
         return;
     }
 }
@@ -548,20 +723,20 @@ void WebUI::handleSetClockFace(AsyncWebServerRequest *request)
             std::map<String, String> params;
             params[FPSTR(PARAM_OPTION)] = option;
             requestCallback(ControlType::ClockFace, params);
-            request->send(200, CONTENT_TEXT, FPSTR(VALUE_SUCCESS));
+            request->send(200, FPSTR(CONTENT_TEXT), FPSTR(VALUE_SUCCESS));
             return;
         }
         else
         {
             Serial.println("Invalid clock face option value");
-            request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+            request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
             return;
         }
     }
     else
     {
         Serial.println("Missing clock face parameter");
-        request->send(400, CONTENT_TEXT, FPSTR(VALUE_ERROR));
+        request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
         return;
     }
 }
@@ -665,23 +840,27 @@ String WebUI::timePageProcessor(const String &var, const std::map<String, String
     }
     else if (var == FPSTR(PROC_NTP_TIMEZONE))
     {
-        /*
-            <option value="Etc/UTC">UTC</option>
-            <option value="Europe/Berlin">Europe/Berlin</option>
-            <option value="Europe/London">Europe/London</option>
-            <option value="Europe/Paris">Europe/Paris</option>
-            <option value="Europe/Rome">Europe/Rome</option>
-            <option value="Atlantic/Reykjavik">Atlantic/Reykjavik</option>
-
-            Etc/UTC -> UTC0
-            Europe/Berlin -> CET-1CEST,M3.5.0,M10.5.0/3
-            Europe/London -> GMT0BST,M3.5.0/1,M10.5.0
-            Europe/Paris -> CET-1CEST,M3.5.0,M10.5.0/3
-            Europe/Rome -> CET-1CEST,M3.5.0,M10.5.0/3
-            Atlantic/Reykjavik -> GMT0
-        */
-        // return params[FPSTR(PARAM_NTP_TIMEZONE)];
-        return "<option value=\"Europe/Berlin\">Europe/Berlin</option>";
+        const String currentTz = params.at(FPSTR(PARAM_NTP_TIMEZONE));
+        String options;
+        char buffer[64];  // Adjust size based on your longest timezone string
+        
+        for(size_t i = 0; i < TZ_COUNT; i++) {
+            // Read name and posixTz from PROGMEM one at a time
+            strcpy_P(buffer, (char*)pgm_read_ptr(&(TIMEZONES[i].name)));
+            options += F("<option value=\"");
+            options += buffer;
+            options += F("\"");            
+            if(String(buffer) == currentTz) {
+                options += F(" selected");
+            }            
+            options += F(">");
+            options += buffer;
+            options += F("</option>");
+            
+            // Optional: yield to prevent watchdog timer from triggering
+            //if(i % 5 == 0) yield();
+        }
+        return options;
     }
     else if (var == FPSTR(PROC_NTP_UPDATE_INTERVAL))
     {
@@ -693,11 +872,21 @@ String WebUI::timePageProcessor(const String &var, const std::map<String, String
     }
     else if (var == FPSTR(PROC_SCHEDULE_START))
     {
-        return params.at(FPSTR(PARAM_SCHEDULE_START));
+        int seconds = params.at(FPSTR(PARAM_SCHEDULE_START)).toInt();
+        int hours = seconds / 3600;
+        int minutes = (seconds % 3600) / 60;
+        char buffer[6]; // "HH:mm" + null terminator
+        sprintf(buffer, "%02d:%02d", hours, minutes);
+        return String(buffer);
     }
     else if (var == FPSTR(PROC_SCHEDULE_END))
     {
-        return params.at(FPSTR(PARAM_SCHEDULE_END));
+        int seconds = params.at(FPSTR(PARAM_SCHEDULE_START)).toInt();
+        int hours = seconds / 3600;
+        int minutes = (seconds % 3600) / 60;
+        char buffer[6]; // "HH:mm" + null terminator
+        sprintf(buffer, "%02d:%02d", hours, minutes);
+        return String(buffer);
     }
     else
     {

@@ -11,6 +11,7 @@
 #include <map>
 #include "configuration.h"
 #include "callbacktypes.h"
+#include "timezone_data.h"
 
 using RequestCallback = std::function<void(ControlType type, const std::map<String, String>& params)>;
 using ResponseCallback = std::function<std::map<String, String>(PageType page)>;
@@ -40,6 +41,9 @@ class WebUI
         void handleSetLightColor(AsyncWebServerRequest *request);
         void handleSetAutoBrightness(AsyncWebServerRequest *request);
         void handleSetBrightness(AsyncWebServerRequest *request);
+        void handleSetTime(AsyncWebServerRequest *request);
+        void handleSetLightSchedule(AsyncWebServerRequest *request);
+        void handleSetNTPConfig(AsyncWebServerRequest *request);
         void handleSetHAIntegration(AsyncWebServerRequest *request);
         void handleSetClockFace(AsyncWebServerRequest *request);
         void printAllParams(AsyncWebServerRequest *request);

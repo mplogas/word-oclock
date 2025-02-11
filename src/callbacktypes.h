@@ -27,6 +27,12 @@ enum PageType {
     FWUPDATE
 };
 
+enum SchedulerType {
+    Timestamp,
+    ScheduleStart,
+    ScheduleEnd
+};
+
 // enum DetailsType {
 //   LightConfig,
 //   SystemConfig,

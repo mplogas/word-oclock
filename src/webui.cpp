@@ -7,6 +7,9 @@ const char WebUI::PATH_TIME_HTML[] PROGMEM = "/time.html";
 const char WebUI::PATH_SYSTEM_HTML[] PROGMEM = "/system.html";
 const char WebUI::PATH_FIRMWARE_HTML[] PROGMEM = "/firmware.html";
 const char WebUI::PATH_WIFI_HTML[] PROGMEM = "/wifimanager.html";
+const char WebUI::PATH_CSS[] PROGMEM = "/style.css";
+const char WebUI::PATH_JS[] PROGMEM = "/index.js";
+const char WebUI::PATH_ICON[] PROGMEM = "/favicon.ico";
 
 // page titles
 const char WebUI::LIGHT_PAGE_TITLE[] PROGMEM = "Light Settings";
@@ -45,12 +48,14 @@ const char WebUI::PROC_FW_VERS[] PROGMEM = "FW_VERSION";
 const char WebUI::VALUE_SUCCESS[] PROGMEM = "Success";
 const char WebUI::VALUE_ERROR[] PROGMEM = "Error!";
 const char WebUI::VALUE_CHECKED[] PROGMEM = "checked";
+const char WebUI::VALUE_ACTIVE[] PROGMEM = "active";
 const char WebUI::VALUE_EMPTY[] PROGMEM = "";
 const char WebUI::VALUE_FIRMWARE[] PROGMEM = "firmware";
 const char WebUI::VALUE_FILESYS[] PROGMEM = "filesystem";
 
 const char WebUI::CONTENT_TEXT[] PROGMEM = "text/plain";
 const char WebUI::CONTENT_HTML[] PROGMEM = "text/html";
+const char WebUI::CONTENT_CACHE[] PROGMEM = "max-age=86400";
 
 const char WebUI::PARAM_FW_Type[] PROGMEM = "updateType";
 

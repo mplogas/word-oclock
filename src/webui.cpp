@@ -881,7 +881,7 @@ String WebUI::timePageProcessor(const String &var, const std::map<String, String
     }
     else if (var == FPSTR(PROC_SCHEDULE_END))
     {
-        int seconds = params.at(FPSTR(PARAM_SCHEDULE_START)).toInt();
+        int seconds = params.at(FPSTR(PARAM_SCHEDULE_END)).toInt();
         int hours = seconds / 3600;
         int minutes = (seconds % 3600) / 60;
         char buffer[6]; // "HH:mm" + null terminator

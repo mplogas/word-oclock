@@ -2,6 +2,34 @@
 
 #include "configuration.h"
 
+// System Preferences Keys
+const char Configuration::IS_INITIALIZED_KEY[] PROGMEM    = "is_init";
+const char Configuration::CLOCK_MODE_KEY[] PROGMEM          = "clock_mode";
+const char Configuration::WIFI_SSID_KEY[] PROGMEM           = "wifi_ssid";
+const char Configuration::WIFI_PASSWORD_KEY[] PROGMEM       = "wifi_pass";
+const char Configuration::MQTT_ENABLED_KEY[] PROGMEM        = "mqtt_nbld";
+const char Configuration::MQTT_HOST_KEY[] PROGMEM           = "mqtt_host";
+const char Configuration::MQTT_PORT_KEY[] PROGMEM           = "mqtt_port";
+const char Configuration::MQTT_USERNAME_KEY[] PROGMEM       = "mqtt_user";
+const char Configuration::MQTT_PASSWORD_KEY[] PROGMEM       = "mqtt_pass";
+const char Configuration::MQTT_TOPIC_KEY[] PROGMEM          = "mqtt_tpc";
+const char Configuration::NTP_ENABLED_KEY[] PROGMEM         = "ntp_nbld";
+const char Configuration::NTP_TIMEZONE_KEY[] PROGMEM        = "ntp_tz";
+const char Configuration::NTP_SERVER_KEY[] PROGMEM          = "ntp_srv";
+const char Configuration::NTP_UPDATE_ENABLED_KEY[] PROGMEM  = "ntp_upd_nbld";
+const char Configuration::NTP_UPDATE_INTERVAL_KEY[] PROGMEM = "ntp_upd_itvl";
+
+// Light Preferences Keys
+const char Configuration::LIGHT_SCHEDULE_ENABLED_KEY[] PROGMEM   = "ls_nbld";
+const char Configuration::LIGHT_SCHEDULE_START_TIME_KEY[] PROGMEM  = "ls_start_t";
+const char Configuration::LIGHT_SCHEDULE_END_TIME_KEY[] PROGMEM    = "ls_end_t";
+const char Configuration::AUTO_BRIGHTNESS_ENABLED_KEY[] PROGMEM    = "ab_nbld";
+const char Configuration::AUTO_BRIGHTNESS_THRESH_HIGH_KEY[] PROGMEM  = "ab_thrsh_hi";
+const char Configuration::AUTO_BRIGHTNESS_THRESH_LOW_KEY[] PROGMEM   = "ab_thrsh_lo";
+const char Configuration::LIGHT_BRIGHTNESS_KEY[] PROGMEM           = "lght_brightn";
+const char Configuration::LIGHT_COLOR_KEY[] PROGMEM                = "lght_color";
+const char Configuration::LIGHT_STATE_KEY[] PROGMEM               = "lght_state";
+
 // Constructor
 Configuration::Configuration() {
     // Initialization is done in the init() method

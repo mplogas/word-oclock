@@ -85,32 +85,32 @@ private:
     //Preferences internalPreferences;
 
     // System Preferences Keys
-    static constexpr const char* IS_INITIALIZED_KEY = "is_init";
-    static constexpr const char* CLOCK_MODE_KEY = "clock_mode";
-    static constexpr const char* WIFI_SSID_KEY = "wifi_ssid";
-    static constexpr const char* WIFI_PASSWORD_KEY = "wifi_pass";
-    static constexpr const char* MQTT_ENABLED_KEY = "mqtt_nbld";
-    static constexpr const char* MQTT_HOST_KEY = "mqtt_host";
-    static constexpr const char* MQTT_PORT_KEY = "mqtt_port";
-    static constexpr const char* MQTT_USERNAME_KEY = "mqtt_user";
-    static constexpr const char* MQTT_PASSWORD_KEY = "mqtt_pass";
-    static constexpr const char* MQTT_TOPIC_KEY = "mqtt_tpc";
-    static constexpr const char* NTP_ENABLED_KEY = "ntp_nbld";
-    static constexpr const char* NTP_TIMEZONE_KEY = "ntp_tz";
-    static constexpr const char* NTP_SERVER_KEY = "ntp_srv";
-    static constexpr const char* NTP_UPDATE_ENABLED_KEY = "ntp_upd_nbld";
-    static constexpr const char* NTP_UPDATE_INTERVAL_KEY = "ntp_upd_itvl";
+    static const char IS_INITIALIZED_KEY[] PROGMEM;
+    static const char CLOCK_MODE_KEY[] PROGMEM;
+    static const char WIFI_SSID_KEY[] PROGMEM;
+    static const char WIFI_PASSWORD_KEY[] PROGMEM;
+    static const char MQTT_ENABLED_KEY[] PROGMEM;
+    static const char MQTT_HOST_KEY[] PROGMEM;
+    static const char MQTT_PORT_KEY[] PROGMEM;
+    static const char MQTT_USERNAME_KEY[] PROGMEM;
+    static const char MQTT_PASSWORD_KEY[] PROGMEM;
+    static const char MQTT_TOPIC_KEY[] PROGMEM;
+    static const char NTP_ENABLED_KEY[] PROGMEM;
+    static const char NTP_TIMEZONE_KEY[] PROGMEM;
+    static const char NTP_SERVER_KEY[] PROGMEM;
+    static const char NTP_UPDATE_ENABLED_KEY[] PROGMEM;
+    static const char NTP_UPDATE_INTERVAL_KEY[] PROGMEM;
 
     // Light Preferences Keys
-    static constexpr const char* LIGHT_SCHEDULE_ENABLED_KEY = "ls_nbld";
-    static constexpr const char* LIGHT_SCHEDULE_START_TIME_KEY = "ls_start_t";
-    static constexpr const char* LIGHT_SCHEDULE_END_TIME_KEY = "ls_end_t";
-    static constexpr const char* AUTO_BRIGHTNESS_ENABLED_KEY = "ab_nbld";
-    static constexpr const char* AUTO_BRIGHTNESS_THRESH_HIGH_KEY = "ab_thrsh_hi";
-    static constexpr const char* AUTO_BRIGHTNESS_THRESH_LOW_KEY = "ab_thrsh_lo";
-    static constexpr const char* LIGHT_BRIGHTNESS_KEY = "lght_brightn";
-    static constexpr const char* LIGHT_COLOR_KEY = "lght_color";
-    static constexpr const char* LIGHT_STATE_KEY = "lght_state";
+    static const char LIGHT_SCHEDULE_ENABLED_KEY[] PROGMEM;
+    static const char LIGHT_SCHEDULE_START_TIME_KEY[] PROGMEM;
+    static const char LIGHT_SCHEDULE_END_TIME_KEY[] PROGMEM;
+    static const char AUTO_BRIGHTNESS_ENABLED_KEY[] PROGMEM;
+    static const char AUTO_BRIGHTNESS_THRESH_HIGH_KEY[] PROGMEM;
+    static const char AUTO_BRIGHTNESS_THRESH_LOW_KEY[] PROGMEM;
+    static const char LIGHT_BRIGHTNESS_KEY[] PROGMEM;
+    static const char LIGHT_COLOR_KEY[] PROGMEM;
+    static const char LIGHT_STATE_KEY[] PROGMEM;
 
     bool getIsInitialized();
     void setIsInitialized(bool isInitialized = true);

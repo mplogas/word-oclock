@@ -58,9 +58,9 @@ class WebUI
         static const char PATH_SYSTEM_HTML[] PROGMEM;
         static const char PATH_FIRMWARE_HTML[] PROGMEM;
         static const char PATH_WIFI_HTML[] PROGMEM;
-        static constexpr const char* PATH_CSS = "/style.css";
-        static constexpr const char* PATH_JS = "/index.js";
-        static constexpr const char* PATH_ICON = "/favicon.ico";
+        static const char PATH_CSS[] PROGMEM;
+        static const char PATH_JS[] PROGMEM;
+        static const char PATH_ICON[] PROGMEM;
 
         // page titles
         static const char LIGHT_PAGE_TITLE[] PROGMEM;
@@ -100,7 +100,7 @@ class WebUI
         // values
         static const char VALUE_SUCCESS[] PROGMEM;
         static const char VALUE_ERROR[] PROGMEM;
-        static constexpr const char* VALUE_ACTIVE = "active";
+        static const char VALUE_ACTIVE[] PROGMEM;
         static const char VALUE_CHECKED[] PROGMEM;
         static const char VALUE_EMPTY[] PROGMEM;
         static const char VALUE_FIRMWARE[] PROGMEM;
@@ -108,7 +108,8 @@ class WebUI
 
         static const char CONTENT_TEXT[] PROGMEM;
         static const char CONTENT_HTML[] PROGMEM;
-        static constexpr const char* CONTENT_CACHE = "max-age=3600";
+        static const char CONTENT_CACHE[] PROGMEM;
+        //static constexpr const char* CONTENT_CACHE = "max-age=3600";
 
         static const char PARAM_FW_Type[] PROGMEM;
 

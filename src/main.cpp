@@ -500,7 +500,7 @@ void loop()
     {
       lastUpdate = now;
       showCurrentTime();
-      Serial.printf("Free heap / min heap: %d / %d\n", ESP.getFreeHeap(), ESP.getMinFreeHeap());
+      // Serial.printf("Free heap / min heap: %d / %d\n", ESP.getFreeHeap(), ESP.getMinFreeHeap());
     }
 
     wordClock->loop();

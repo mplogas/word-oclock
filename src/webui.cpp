@@ -507,12 +507,9 @@ void WebUI::handleSetLightSchedule(AsyncWebServerRequest *request)
             }
             String scheduleStart = request->getParam(FPSTR(PARAM_SCHEDULE_START), true)->value();
             String scheduleEnd = request->getParam(FPSTR(PARAM_SCHEDULE_END), true)->value();
-            Serial.printf("Start: %s, End: %s\n", scheduleStart.c_str(), scheduleEnd.c_str());
-            // Start: 15:10, End: 19:25
+            //Serial.printf("Start: %s, End: %s\n", scheduleStart.c_str(), scheduleEnd.c_str());
+
             // Validate schedule format (expecting HH:MM)
-
-
-
             if (scheduleStart.length() == 5 && scheduleStart[2] == ':' && scheduleEnd.length() == 5 && scheduleEnd[2] == ':') {
                 bool valid = true;
                 for (size_t i = 0; i < scheduleStart.length(); i++) {
@@ -537,25 +534,25 @@ void WebUI::handleSetLightSchedule(AsyncWebServerRequest *request)
                     }
                 }
 
-                if (!valid) {
-                    Serial.println("Invalid schedule value");
-                    request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
-                    return;
+                if (valid) {
+                    uint32_t startHour = scheduleStart.substring(0, 2).toInt();
+                    uint32_t startMinute = scheduleStart.substring(3, 5).toInt();
+                    uint32_t endHour = scheduleEnd.substring(0, 2).toInt();
+                    uint32_t endMinute = scheduleEnd.substring(3, 5).toInt();
+    
+                    if(startHour < 24 || startMinute < 60 || endHour < 24 || endMinute < 60 ) {
+                        uint32_t startSeconds = startHour * 3600UL + startMinute * 60UL;
+                        uint32_t endSeconds = endHour * 3600UL + endMinute * 60UL;
+        
+                        std::map<String, String> params;
+                        params[FPSTR(PARAM_SCHEDULE_ENABLED)] = FPSTR(VALUE_ON);
+                        params[FPSTR(PARAM_SCHEDULE_START)] = String(startSeconds);
+                        params[FPSTR(PARAM_SCHEDULE_END)] = String(endSeconds);
+                        requestCallback(ControlType::LightSchedule, params);
+                        request->send(200, FPSTR(CONTENT_TEXT), FPSTR(VALUE_SUCCESS));
+                        return;
+                    }
                 }
-
-
-                uint8_t startHour = scheduleStart.substring(0, 2).toInt();
-                uint8_t startMinute = scheduleStart.substring(3, 5).toInt();
-                uint8_t endHour = scheduleEnd.substring(0, 2).toInt();
-                uint8_t endMinute = scheduleEnd.substring(3, 5).toInt();
-
-                std::map<String, String> params;
-                params[FPSTR(PARAM_SCHEDULE_ENABLED)] = FPSTR(VALUE_ON);
-                params[FPSTR(PARAM_SCHEDULE_START)] = String((unsigned long)startHour * 3600UL + startMinute * 60UL);
-                params[FPSTR(PARAM_SCHEDULE_END)] = String((unsigned long)endHour * 3600UL + endMinute * 60UL);
-                requestCallback(ControlType::LightSchedule, params);
-                request->send(200, FPSTR(CONTENT_TEXT), FPSTR(VALUE_SUCCESS));
-                return;
             } 
         } 
         Serial.println("Invalid schedule value");
@@ -613,7 +610,6 @@ void WebUI::handleSetNTPConfig(AsyncWebServerRequest *request)
     request->send(400, FPSTR(CONTENT_TEXT), FPSTR(VALUE_ERROR));
     return;
 }
-
 
 void WebUI::handleSetHAIntegration(AsyncWebServerRequest *request)
 {
@@ -877,7 +873,7 @@ String WebUI::timePageProcessor(const String &var, const std::map<String, String
     }
     else if (var == FPSTR(PROC_SCHEDULE_START))
     {
-        int seconds = params.at(FPSTR(PARAM_SCHEDULE_START)).toInt();
+        uint32_t seconds = params.at(FPSTR(PARAM_SCHEDULE_START)).toInt();
         int hours = seconds / 3600;
         int minutes = (seconds % 3600) / 60;
         char buffer[6]; // "HH:mm" + null terminator
@@ -886,7 +882,7 @@ String WebUI::timePageProcessor(const String &var, const std::map<String, String
     }
     else if (var == FPSTR(PROC_SCHEDULE_END))
     {
-        int seconds = params.at(FPSTR(PARAM_SCHEDULE_END)).toInt();
+        uint32_t seconds = params.at(FPSTR(PARAM_SCHEDULE_END)).toInt();
         int hours = seconds / 3600;
         int minutes = (seconds % 3600) / 60;
         char buffer[6]; // "HH:mm" + null terminator

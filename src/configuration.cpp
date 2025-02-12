@@ -219,6 +219,7 @@ Configuration::SystemConfig Configuration::getSystemConfig() {
     SystemConfig config;
     config.mqttConfig = getMqttConfig();
     config.ntpConfig = getNtpConfig();
+    config.lightScheduleConfig = getLightSchedule();
     config.mode = getClockMode();
     return config;
 }

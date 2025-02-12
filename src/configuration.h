@@ -36,8 +36,8 @@ public:
 
     struct LightScheduleConfig {
         bool enabled;
-        time_t startTime; // Time in seconds since midnight
-        time_t endTime;
+        uint32_t startTime; // Time in seconds since midnight
+        uint32_t endTime;
     };
 
     struct AutoBrightnessConfig {

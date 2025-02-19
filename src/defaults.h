@@ -9,7 +9,8 @@ public:
     static const uint32_t WIFI_SCAN_TIMEOUT = 10000;
     static const uint16_t LED_INTERVAL = 5000;
     static constexpr const char* PRODUCT = "word-o-clock";
-    static constexpr const char* FW_VERSION = "0.6.0.3-DBG";
+    static constexpr const char* FW_VERSION = "0.8.0.0-DBG";
+    static constexpr const char* MANUFACTURER = "testwiese Berlin";
     static constexpr const char* DEFAULT_WIFI_SETUP_PASS = "w0Rd0Cl0cK";
     static constexpr bool DEFAULT_MQTT_ENABLED = false;
     static constexpr uint16_t DEFAULT_MQTT_PORT = 1883;

@@ -31,6 +31,7 @@ void WoC_MQTT::onBrightnessCommandStatic(uint8_t brightness, HALight* sender)
         char payload[4];
         snprintf(payload, sizeof(payload), "%d", brightness);
         instance->mqttEventCallback(MQTTEvent::BrightnessCommand, payload);
+        sender->setBrightness(brightness);
     }
 }
 
@@ -41,6 +42,7 @@ void WoC_MQTT::onRGBCommandStatic(HALight::RGBColor color, HALight* sender)
         char payload[8];
         snprintf(payload, sizeof(payload), "#%02X%02X%02X", color.red, color.green, color.blue);
         instance->mqttEventCallback(MQTTEvent::RGBCommand, payload);
+        sender->setRGBColor(color);
     }
 }
 
@@ -49,6 +51,7 @@ void WoC_MQTT::onStateCommandStatic(bool state, HALight* sender)
     if (instance && instance->mqttEventCallback) {
         const char* payload = state ? "1" : "0";
         instance->mqttEventCallback(MQTTEvent::StateCommand, payload);
+        sender->setState(state);
     }
 }
 
@@ -69,6 +72,8 @@ void WoC_MQTT::onSwitchCommandStatic(bool state, HASwitch* sender)
         } else {
             Serial.printf("Unknown switch sender %s\n", sender->getName());
         }
+
+        sender->setState(state);
     }
 }
 
@@ -93,14 +98,12 @@ WoC_MQTT::WoC_MQTT(WiFiClient& client, const char* devicename, const char* firmw
     
     
     snprintf(uniqueid, sizeof(uniqueid), ID_PATTERN, ID_DEVICE, macStr);
-    Serial.printf("Unique ID: %s\n", uniqueid);
 
     device = new HADevice(uniqueid);
-    //device->setUniqueId(uniqueid); 
     device->setName(devicename);
     device->setSoftwareVersion(firmware);
     device->setModel(Defaults::FW_VERSION);
-    device->setManufacturer("testwiese Berlin");
+    device->setManufacturer(Defaults::MANUFACTURER);
 
     haMqtt = new HAMqtt(client, *device);
 }
@@ -116,7 +119,6 @@ WoC_MQTT::~WoC_MQTT()
 
 void WoC_MQTT::connect(IPAddress host, MqttEventCallback eventCallback, const char* username, const char* password, const char* topic)
 {
-    Serial.println("Connecting to MQTT");
     if(isInitialized) {
         return;
     }
@@ -204,8 +206,9 @@ void WoC_MQTT::setupHomeAssistant() {
     light->onStateCommand(onStateCommandStatic);
     light->setName(NAME_LEDS);
 
-    lightSensor = new HASensor(idIlluminance);
+    lightSensor = new HASensorNumber(idIlluminance, HABaseDeviceType::NumberPrecision::PrecisionP0, HASensorNumber::Features::DefaultFeatures);
     lightSensor->setName(NAME_LIGHT_INTENSITY);
+    lightSensor->setUnitOfMeasurement("lx");
 
     autoBrightness = new HASwitch(idAutoBrightness);
     autoBrightness->onCommand(onSwitchCommandStatic);
@@ -276,7 +279,7 @@ void WoC_MQTT::setLightColor(const char* hex)
     light->setRGBColor(HALight::RGBColor(red, green, blue));
 }
 
-void WoC_MQTT::setLightSensorValue(const char* sensorValue)
+void WoC_MQTT::setLightSensorValue(const uint16_t sensorValue)
 {
     if(!isInitialized || !lightSensor) {
         return;

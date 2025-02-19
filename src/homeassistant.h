@@ -44,7 +44,7 @@ class WoC_MQTT
         HAMqtt *haMqtt;
         HADevice *device;
         HALight *light;
-        HASensor *lightSensor;
+        HASensorNumber *lightSensor;
         HASwitch *autoBrightness;
         HASwitch *option1;
         HASwitch *option2;
@@ -78,7 +78,7 @@ class WoC_MQTT
         void toggleLightState(bool state);
         void setLightColor(const char* color);
         void setLightBrightness(uint8_t brightness);
-        void setLightSensorValue(const char* sensorValue);
+        void setLightSensorValue(const uint16_t sensorValue);
         void toggleAutoBrightness(bool state);
         void toggleOption1(bool state);
         void toggleOption2(bool state);

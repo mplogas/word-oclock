@@ -449,7 +449,7 @@ void WebUI::handleSetBrightness(AsyncWebServerRequest *request)
 }
 
 void WebUI::handleSetTime(AsyncWebServerRequest *request) {
-    printAllParams(request);
+    //printAllParams(request);
     if (request->hasParam(FPSTR(PARAM_TIME), true)) {
         String timeParam = request->getParam(FPSTR(PARAM_TIME), true)->value();
         // Validate time format (expecting HH:MM)

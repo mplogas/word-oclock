@@ -76,7 +76,7 @@ std::vector<std::pair<int, int>> TimeConverterDE::convertTime(const uint8_t hour
                 ledArray.push_back(LEDS_HALB); // "halb"
             } else if(roundedMinutes == 35) {
                 // "es ist fuenf nach halb"
-                ledArray.push_back(getMinuteLEDs(30 - roundedMinutes)); // Minutes word
+                ledArray.push_back(getMinuteLEDs(roundedMinutes - 30)); // Minutes word
                 ledArray.push_back(LEDS_NACH); // "nach"
                 ledArray.push_back(LEDS_HALB); // "halb"
             } else {

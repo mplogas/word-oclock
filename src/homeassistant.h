@@ -43,13 +43,13 @@ class WoC_MQTT
     
         HAMqtt *haMqtt;
         HADevice *device;
-        HALight *light;
-        HASensorNumber *lightSensor;
-        HASwitch *autoBrightness;
-        HASwitch *option1;
-        HASwitch *option2;
-        HASwitch *option3;
-        HASwitch *option4;
+        HALight *light = nullptr;
+        HASensorNumber *lightSensor = nullptr;
+        HASwitch *autoBrightness = nullptr;
+        HASwitch *option1 = nullptr;
+        HASwitch *option2 = nullptr;
+        HASwitch *option3 = nullptr;
+        HASwitch *option4 = nullptr;
 
         MqttEventCallback mqttEventCallback;
 

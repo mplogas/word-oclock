@@ -266,15 +266,35 @@ void WoC_MQTT::setupHomeAssistant()
 
 void WoC_MQTT::disableHomeAssistant()
 {
-    delete light;
-    delete lightSensor;
-    delete autoBrightness;
-    if (useOptions)
-    {
-        delete option1;
-        delete option2;
-        delete option3;
-        delete option4;
+    if (light) {
+        delete light;
+        light = nullptr;
+    }
+    if (lightSensor) {
+        delete lightSensor;
+        lightSensor = nullptr;
+    }
+    if (autoBrightness) {
+        delete autoBrightness;
+        autoBrightness = nullptr;
+    }
+    if (useOptions) {
+        if (option1) {
+            delete option1;
+            option1 = nullptr;
+        }
+        if (option2) {
+            delete option2;
+            option2 = nullptr;
+        }
+        if (option3) {
+            delete option3;
+            option3 = nullptr;
+        }
+        if (option4) {
+            delete option4;
+            option4 = nullptr;
+        }
     }
 }
 

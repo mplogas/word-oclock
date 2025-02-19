@@ -192,9 +192,13 @@ function saveClockFace() {
     .catch(error => console.error('Error saving clock face:', error));
 }
 
-function toggleHaIntegration(isChecked) {
-  // const form = document.getElementById('haIntegrationContainer');
-  // form.style.display = isChecked ? 'block' : 'none';
+function toggleHaIntegration(isChecked, firstLoad = false) {
+  const form = document.getElementById('haIntegrationContainer');
+  form.style.display = isChecked ? 'block' : 'none';
+
+  if(!firstLoad && !isChecked) {
+    saveHaIntegration();
+  }
 }
 
 function toggleResetConfiguration(isChecked) {
@@ -205,6 +209,10 @@ function toggleResetConfiguration(isChecked) {
 // Function to handle form submission
 function saveHaIntegration() {
   const haIntegrationToggle = document.getElementById('haIntegrationToggle').checked;
+  const formData = new FormData();
+  formData.append('enabled', haIntegrationToggle ? '1' : '0');
+
+  if(haIntegrationToggle) {
   const mqttHost = document.getElementById('brokerIP').value;
   const mqttPort = document.getElementById('brokerPort').value;
   const mqttUsername = document.getElementById('mqttUsername').value;
@@ -216,20 +224,16 @@ function saveHaIntegration() {
     return;
   }
 
-  const formData = new FormData();
-  formData.append('enabled', haIntegrationToggle ? '1' : '0');
-  if(haIntegrationToggle) {
-    formData.append('mqttHost', mqttHost);
-    formData.append('mqttPort', mqttPort);
-    if(mqttUsername.length > 0) {
-      formData.append('mqttUsername', mqttUsername);
-      if(mqttPassword.length > 0) {
-        formData.append('mqttPassword', mqttPassword);
-      }
+  formData.append('mqttHost', mqttHost);
+  formData.append('mqttPort', mqttPort);
+  if(mqttUsername.length > 0) {
+    formData.append('mqttUsername', mqttUsername);
+    if(mqttPassword.length > 0) {
+      formData.append('mqttPassword', mqttPassword);
     }
-    if(mqttTopic.length > 0) formData.append('mqttTopic', mqttTopic);
   }
-
+  if(mqttTopic.length > 0) formData.append('mqttTopic', mqttTopic);
+  }
 
   fetch('/setHaIntegration', {
     method: 'POST',
@@ -304,7 +308,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Initialize HomeAssistant Integration
   const haIntegrationToggle = document.getElementById('haIntegrationToggle');
   if (haIntegrationToggle) {
-    toggleHaIntegration(haIntegrationToggle.checked);
+    toggleHaIntegration(haIntegrationToggle.checked, true);
   }
 
   const resetConfigurationToggle = document.getElementById('resetConfiguration');

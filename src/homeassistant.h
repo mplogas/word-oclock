@@ -53,6 +53,7 @@ class WoC_MQTT
 
         MqttEventCallback mqttEventCallback;
 
+        bool useOptions = false;
         const uint8_t maclen = 6;
         static constexpr const char* DEFAULT_ICON = "mdi:clock-digital";
         bool isInitialized = false;
@@ -72,7 +73,7 @@ class WoC_MQTT
     public:
         WoC_MQTT(WiFiClient& client, const char* devicename, const char* firmware);
         ~WoC_MQTT();
-        void connect(IPAddress host, MqttEventCallback eventCallback, const char* username = nullptr, const char* password = nullptr, const char* topic = nullptr);
+        void connect(IPAddress host, MqttEventCallback eventCallback, const char* username = nullptr, const char* password = nullptr, const char* topic = nullptr, bool useOptions = false);
         void disconnect();
         void loop();
         void toggleLightState(bool state);

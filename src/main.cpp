@@ -8,10 +8,10 @@
 #include "defaults.h"
 #include "configuration.h"
 #include "wifisetup.h"
-#include "homeassistant.h"
 #include "wclock.h"
 #include "webui.h"
 #include "leds.h"
+#include "homeassistant.h"
 #include "timeconverterde.h"
 #include "callbacktypes.h"
 
@@ -26,27 +26,16 @@ Configuration::WifiConfig wifiConfig;
 AsyncWebServer server(80);
 WebUI webui(server);
 WClock *wordClock;
-HomeAssistant *homeAssistant;
+WoC_MQTT *haMqtt;
 ITimeConverter *timeConverter;
 LED ledController;
 
 bool initialized = false;
 unsigned long lastUpdate = 0;
 bool isDark = false;
+bool pushStatus = false;
 uint8_t lastHour = 0;
 uint8_t lastMinute = 0;
-
-// this if for (reduced) testing purposes
-boolean isTick;
-std::vector<std::pair<int, int>> tickLEDs = {
-    {0, 1},
-    {1, 1}, // From LED index 0, turn on 3 LEDs (0 to 2)
-    {6, 1}  // From LED index 6, turn on 3 LEDs (6 to 9)
-};
-std::vector<std::pair<int, int>> tockLEDs = {
-    {0, 1},
-    {3, 1} // From LED index 3, turn on 5 LEDs (3 to 5)
-};
 
 void showCurrentTime(uint8_t hour, uint8_t minute)
 {
@@ -112,36 +101,111 @@ void handleWiFiCredentials(const String &ssid, const String &password)
   config.setWifiConfig(wifiConfig);
 }
 
-// Callback for MQTT connected
-void handleMqttConnected()
+void setColor(const char *color)
 {
-  Serial.println("MQTT Connected Successfully!");
-  // Additional logic upon successful connection
+  ledController.setColor(ledController.HexToRGB(color));
+  showCurrentTime();
+  strlcpy(lightConfig.color, color, sizeof(lightConfig.color));
+  config.setLightColor(lightConfig.color);
 }
 
-// Callback for MQTT disconnected
-void handleMqttDisconnected()
+void setBrightness(uint8_t brightness)
 {
-  Serial.println("MQTT Disconnected!");
-  // Additional logic upon disconnection
+  ledController.setBrightness(brightness);
+  lightConfig.brightness = brightness;
+  config.setLightBrightness(lightConfig.brightness);
 }
 
-// home assistant callbacks
-void handleSwitchCommand(SwitchType switchType, bool state)
+void setAutoBrightness(bool enabled)
 {
-  Serial.printf("Switch command received for %s: %s\n", switchType, state ? "ON" : "OFF");
-  // Additional logic to handle switch commands
-}
-
-void handleIlluminanceSensorUpdate(const int value)
-{
-  Serial.printf("Illuminance sensor value: %d\n", value);
-
-  if (systemConfig.mqttConfig.enabled && homeAssistant != nullptr)
+  if (enabled)
   {
-    char buf[8];
-    itoa(value, buf, 10);
-    homeAssistant->setSensorValue(SensorType::LightIntensity, buf);
+    ledController.enableAutoBrightness(lightConfig.autoBrightnessConfig.illuminanceThresholdHigh, lightConfig.autoBrightnessConfig.illuminanceThresholdLow);
+  }
+  else
+  {
+    ledController.disableAutoBrightness();
+    ledController.setBrightness(lightConfig.brightness);
+  }
+
+  lightConfig.autoBrightnessConfig.enabled = enabled;
+  config.setAutoBrightness(lightConfig.autoBrightnessConfig);
+}
+
+void setLightState(bool state)
+{
+  if (state)
+  {
+    isDark = false;
+    showCurrentTime();
+  }
+  else
+  {
+    isDark = true;
+    ledController.clearLEDs();
+  }
+
+  lightConfig.state = state;
+  config.setLightState(lightConfig.state);
+}
+
+void lightSensorCallback(const int value)
+{
+  if (systemConfig.mqttConfig.enabled && haMqtt != nullptr)
+  {
+    haMqtt->setLightSensorValue(value);
+  }
+}
+
+void pushInitialStatusToMqtt()
+{
+  if (systemConfig.mqttConfig.enabled && haMqtt != nullptr)
+  {
+    haMqtt->toggleLightState(lightConfig.state);
+    haMqtt->setLightColor(lightConfig.color);
+    haMqtt->setLightBrightness(lightConfig.brightness);
+    haMqtt->toggleAutoBrightness(lightConfig.autoBrightnessConfig.enabled);
+  }
+}
+
+void mqttCallback(MQTTEvent event, const char* payload) {
+  switch (event)
+  {
+  case MQTTEvent::Connected:
+    if(pushStatus) {
+      pushInitialStatusToMqtt();
+      pushStatus = false;
+    }
+    break;
+  case MQTTEvent::Disconnected:
+    Serial.println("MQTT Disconnected!");
+    break;
+  case MQTTEvent::BrightnessCommand:
+    setBrightness(atoi(payload));
+    break;
+  case MQTTEvent::RGBCommand:
+    setColor(payload);
+    break;
+  case MQTTEvent::StateCommand:
+    setLightState(payload == "1"); //hmmm
+    break;
+  case MQTTEvent::AutoBrightnessSwitchCommand:
+    setAutoBrightness(payload == "1");
+    break;
+  case MQTTEvent::Option1SwitchCommand:
+    Serial.printf("Option1 switch command received: %s\n", payload);
+    break;
+  case MQTTEvent::Option2SwitchCommand:
+    Serial.printf("Option2 switch command received: %s\n", payload);
+    break;
+  case MQTTEvent::Option3SwitchCommand:
+    Serial.printf("Option3 switch command received: %s\n", payload);
+    break;
+  case MQTTEvent::Option4SwitchCommand:
+    Serial.printf("Option4 switch command received: %s\n", payload);
+    break;  
+  default:
+    break;
   }
 }
 
@@ -149,26 +213,24 @@ void enableMqtt()
 {
   if (systemConfig.mqttConfig.host != nullptr)
   {
-    homeAssistant = new HomeAssistant(client, Defaults::PRODUCT, Defaults::FW_VERSION);
-    homeAssistant->addSensor(SensorType::LightIntensity, "0", "mdi:brightness-5");
-    homeAssistant->addSwitch(SwitchType::LED, false, "mdi:lightbulb");
-    homeAssistant->setSwitchCommandCallback(handleSwitchCommand);
-
-    ledController.registerIlluminanceSensorCallback(handleIlluminanceSensorUpdate);
-    homeAssistant->connect(IPAddress(systemConfig.mqttConfig.host), handleMqttConnected, handleMqttDisconnected, systemConfig.mqttConfig.username, systemConfig.mqttConfig.password, systemConfig.mqttConfig.topic);
+    haMqtt = new WoC_MQTT(client, Defaults::PRODUCT, Defaults::FW_VERSION);
+    haMqtt->connect(IPAddress(systemConfig.mqttConfig.host), mqttCallback, systemConfig.mqttConfig.username, systemConfig.mqttConfig.password, systemConfig.mqttConfig.topic);
+    ledController.registerIlluminanceSensorCallback(lightSensorCallback);
+    pushStatus = true;
   }
 }
 
 void disableMqtt()
 {
-  if (homeAssistant != nullptr)
+  if (haMqtt != nullptr)
   {
     ledController.unregisterIlluminanceSensorCallback();
-    homeAssistant->disconnect();
-    delete homeAssistant;
-    homeAssistant = nullptr;
+    haMqtt->disconnect();
+    delete haMqtt;
+    haMqtt = nullptr;
   }
 }
+
 
 void httpRequestCallback(ControlType type, const std::map<String, String> &params)
 {
@@ -183,50 +245,39 @@ void httpRequestCallback(ControlType type, const std::map<String, String> &param
   {
   case ControlType::LightStatus:
   {
-    bool status = params.at(FPSTR(WebUI::PARAM_ENABLED)) == FPSTR(WebUI::VALUE_ON);
-    if (status)
-    {
-      isDark = false;
-      showCurrentTime();
+    setLightState(params.at(FPSTR(WebUI::PARAM_ENABLED)) == FPSTR(WebUI::VALUE_ON));
+    if(systemConfig.mqttConfig.enabled && haMqtt != nullptr) {
+      haMqtt->toggleLightState(lightConfig.state);
     }
-    else
-    {
-      isDark = true;
-      ledController.clearLEDs();
-    }
-    lightConfig.state = status;
-    config.setLightState(lightConfig.state);
     break;
   }
   case ControlType::Color:
   {
-    ledController.setColor(ledController.HexToRGB(params.at(FPSTR(WebUI::PARAM_COLOR))));
-    showCurrentTime();
-    strlcpy(lightConfig.color, params.at(FPSTR(WebUI::PARAM_COLOR)).c_str(), sizeof(lightConfig.color));
-    config.setLightColor(lightConfig.color);
+    setColor(params.at(FPSTR(WebUI::PARAM_COLOR)).c_str());
+
+    if(systemConfig.mqttConfig.enabled && haMqtt != nullptr) {
+      haMqtt->setLightColor(lightConfig.color);
+    }
     break;
   }
   case ControlType::AutoBrightness:
   {
-    lightConfig.autoBrightnessConfig.enabled = params.at(FPSTR(WebUI::PARAM_AUTO_BRIGHTNESS_ENABLED)) == FPSTR(WebUI::VALUE_ON);
-    config.setAutoBrightness(lightConfig.autoBrightnessConfig);
-    if (lightConfig.autoBrightnessConfig.enabled)
-    {
-      ledController.enableAutoBrightness(lightConfig.autoBrightnessConfig.illuminanceThresholdHigh, lightConfig.autoBrightnessConfig.illuminanceThresholdLow);
-    }
-    else
-    {
-      ledController.disableAutoBrightness();
-      ledController.setBrightness(lightConfig.brightness);
+    setAutoBrightness(params.at(FPSTR(WebUI::PARAM_AUTO_BRIGHTNESS_ENABLED)) == FPSTR(WebUI::VALUE_ON));
+    if(systemConfig.mqttConfig.enabled && haMqtt != nullptr) {    
+      haMqtt->toggleAutoBrightness(lightConfig.autoBrightnessConfig.enabled);
+      if(!lightConfig.autoBrightnessConfig.enabled) {
+        haMqtt->setLightBrightness(lightConfig.brightness);
+      }
     }
     break;
   }
   case ControlType::Brightness:
   {
-    uint8_t brightness = params.at(FPSTR(WebUI::PARAM_BRIGHTNESS)).toInt();
-    ledController.setBrightness(brightness);
-    lightConfig.brightness = brightness;
-    config.setLightBrightness(lightConfig.brightness);
+    setBrightness(params.at(FPSTR(WebUI::PARAM_BRIGHTNESS)).toInt());
+    if(systemConfig.mqttConfig.enabled && haMqtt != nullptr) {
+      haMqtt->setLightBrightness(lightConfig.brightness);
+    }
+
     break;
   }
   case ControlType::HaIntegration:
@@ -334,7 +385,6 @@ void httpRequestCallback(ControlType type, const std::map<String, String> &param
 
 const std::map<String, String> httpResponseCallback(PageType page)
 {
-  Serial.printf("Details type: %d\n", page);
   std::map<String, String> params;
   switch (page)
   {
@@ -403,7 +453,6 @@ void clockSchedulerCallback(SchedulerType type, uint8_t hour, uint8_t minute)
 
 void setup()
 {
-  isTick = true;
   Serial.begin(115200);
   Serial.printf("Starting with FW %s...\n", Defaults::FW_VERSION);
 
@@ -437,26 +486,19 @@ void setup()
 
     if (systemConfig.ntpConfig.enabled)
     {
-      Serial.printf("NTP enabled with server: %s, interval: %d, timezone: %s\n", systemConfig.ntpConfig.server, systemConfig.ntpConfig.interval, systemConfig.ntpConfig.timezone);
       wordClock->enableNTP(systemConfig.ntpConfig.timezone, systemConfig.ntpConfig.server, systemConfig.ntpConfig.interval);
     }
     else
     {
       wordClock->setTimeZone(systemConfig.ntpConfig.timezone);
-      //wordClock->setTime(12, 0);
     }
-
-    // Serial.printf("Light state recovered: %s\n", lightConfig.state ? "ON" : "OFF");
-    // Serial.printf("Light color recovered: %s\n", lightConfig.color);
-    // Serial.printf("Light brightness recovered: %d\n", lightConfig.brightness);
-    // Serial.printf("Auto brightness state recovered: %s\n", lightConfig.autoBrightnessConfig.enabled ? "true" : "false");
 
     ledController = LED();
     ledController.init();
     if (lightConfig.autoBrightnessConfig.enabled)
     {
       ledController.enableAutoBrightness(lightConfig.autoBrightnessConfig.illuminanceThresholdHigh, lightConfig.autoBrightnessConfig.illuminanceThresholdLow);
-    }
+    }    
     else
     {
       ledController.setBrightness(lightConfig.brightness);
@@ -465,12 +507,12 @@ void setup()
 
     timeConverter = new TimeConverterDE();
 
+    webui.init(httpRequestCallback, httpResponseCallback, handleFWUpload, isUpdateSuccess);
+
     if (systemConfig.mqttConfig.enabled)
     {
-      enableMqtt();
+      enableMqtt();      
     }
-
-    webui.init(httpRequestCallback, httpResponseCallback, handleFWUpload, isUpdateSuccess);
   }
   else
   {
@@ -500,14 +542,14 @@ void loop()
     {
       lastUpdate = now;
       showCurrentTime();
-      // Serial.printf("Free heap / min heap: %d / %d\n", ESP.getFreeHeap(), ESP.getMinFreeHeap());
+      Serial.printf("Free heap / min heap: %d / %d\n", ESP.getFreeHeap(), ESP.getMinFreeHeap());
     }
 
     wordClock->loop();
     ledController.loop();
-    if (systemConfig.mqttConfig.enabled && homeAssistant != nullptr)
+    if (systemConfig.mqttConfig.enabled && haMqtt != nullptr)
     {
-      homeAssistant->loop();
+      haMqtt->loop();
     }
   }
 }

@@ -49,8 +49,6 @@ class WebUI
         void printAllParams(AsyncWebServerRequest *request);
         String readFile(const char* path);
 
-        // TODO: move to PROGMEM!
-
         // paths
         static const char PATH_NAVIGATION_HTML[] PROGMEM;
         static const char PATH_LIGHT_HTML[] PROGMEM;

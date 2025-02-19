@@ -1,290 +1,392 @@
 #include "homeassistant.h"
 
+WoC_MQTT *WoC_MQTT::instance = nullptr;
 
-// Initialize static member
-HomeAssistant* HomeAssistant::instance = nullptr;
+const char WoC_MQTT::NAME_LEDS[] PROGMEM = "LEDs";
+const char WoC_MQTT::NAME_LIGHT_INTENSITY[] PROGMEM = "Light Intensity";
+const char WoC_MQTT::NAME_AUTO_BRIGHTNESS[] PROGMEM = "Auto Brightness";
+const char WoC_MQTT::NAME_OPTION1[] PROGMEM = "Option 1";
+const char WoC_MQTT::NAME_OPTION2[] PROGMEM = "Option 2";
+const char WoC_MQTT::NAME_OPTION3[] PROGMEM = "Option 3";
+const char WoC_MQTT::NAME_OPTION4[] PROGMEM = "Option 4";
 
-// Sensor names in PROGMEM
-const char sensorName_LightIntensity[] PROGMEM = "Light Intensity";
-const char sensorName_LightColor[] PROGMEM    = "Light Color";
-const char sensorName_TimeUpdateInterval[] PROGMEM    = "TimeUpdate Interval";
-
-// Array of sensor names
-const char* const sensorNames[] PROGMEM = {
-    sensorName_LightIntensity,
-    sensorName_LightColor,
-    sensorName_TimeUpdateInterval
-};
-
-// Switch names in PROGMEM
-const char switchName_LED[] PROGMEM  = "LEDs";
-const char switchName_AutoUpdate[] PROGMEM  = "TimeUpdate Automation";
-
-// Array of switch names
-const char* const switchNames[] PROGMEM = {
-    switchName_LED,
-    switchName_AutoUpdate,
-};
-
-
-// Static callback forwarders
-void HomeAssistant::onMqttConnectedStatic()
+// // Static callback forwarders
+void WoC_MQTT::onMqttConnectedStatic()
 {
-    if (instance && instance->mqttConnectCallback) {
-        instance->mqttConnectCallback();
-    }
-}
-
-void HomeAssistant::onMqttDisconnectedStatic()
-{
-    if (instance && instance->mqttDisconnectCallback) {
-        instance->mqttDisconnectCallback();
-    }
-}
-
-void HomeAssistant::onSwitchCommandStatic(bool state, HASwitch* sender)
-{
-    if (instance && instance->switchCommandCallback)
+    if (instance && instance->mqttEventCallback)
     {
-        // Find the SwitchType corresponding to the sender
-        for (uint8_t i = 0; i < static_cast<uint8_t>(SwitchType::SwitchTypeCount); ++i)
-        {
-            if (instance->switches[i] && instance->switches[i] == sender)
-            {
-                SwitchType switchType = static_cast<SwitchType>(i);
-                instance->switchCommandCallback(switchType, state);
-                break;
-            }
-        }
+        instance->mqttEventCallback(MQTTEvent::Connected, nullptr);
     }
 }
 
-// Constructor Implementation
-HomeAssistant::HomeAssistant(WiFiClient& client, const char* name, const char* firmware) : device(), mqtt(client, device)
+void WoC_MQTT::onMqttDisconnectedStatic()
+{
+    if (instance && instance->mqttEventCallback)
+    {
+        instance->mqttEventCallback(MQTTEvent::Disconnected, nullptr);
+    }
+}
+
+void WoC_MQTT::onBrightnessCommandStatic(uint8_t brightness, HALight *sender)
+{
+    if (instance && instance->mqttEventCallback)
+    {
+        char payload[4];
+        snprintf(payload, sizeof(payload), "%d", brightness);
+        instance->mqttEventCallback(MQTTEvent::BrightnessCommand, payload);
+        sender->setBrightness(brightness);
+    }
+}
+
+void WoC_MQTT::onRGBCommandStatic(HALight::RGBColor color, HALight *sender)
+{
+    if (instance && instance->mqttEventCallback)
+    {
+        // convert RGB to HEX
+        char payload[8];
+        snprintf(payload, sizeof(payload), "#%02X%02X%02X", color.red, color.green, color.blue);
+        instance->mqttEventCallback(MQTTEvent::RGBCommand, payload);
+        sender->setRGBColor(color);
+    }
+}
+
+void WoC_MQTT::onStateCommandStatic(bool state, HALight *sender)
+{
+    if (instance && instance->mqttEventCallback)
+    {
+        const char *payload = state ? "1" : "0";
+        instance->mqttEventCallback(MQTTEvent::StateCommand, payload);
+        sender->setState(state);
+    }
+}
+
+void WoC_MQTT::onSwitchCommandStatic(bool state, HASwitch *sender)
+{
+    if (instance && instance->mqttEventCallback)
+    {
+        const char *payload = state ? "1" : "0";
+        if (sender == instance->autoBrightness)
+        {
+            instance->mqttEventCallback(MQTTEvent::AutoBrightnessSwitchCommand, payload);
+        }
+        else if (sender == instance->option1)
+        {
+            instance->mqttEventCallback(MQTTEvent::Option1SwitchCommand, payload);
+        }
+        else if (sender == instance->option2)
+        {
+            instance->mqttEventCallback(MQTTEvent::Option2SwitchCommand, payload);
+        }
+        else if (sender == instance->option3)
+        {
+            instance->mqttEventCallback(MQTTEvent::Option3SwitchCommand, payload);
+        }
+        else if (sender == instance->option4)
+        {
+            instance->mqttEventCallback(MQTTEvent::Option4SwitchCommand, payload);
+        }
+        else
+        {
+            Serial.printf("Unknown switch sender %s\n", sender->getName());
+        }
+
+        sender->setState(state);
+    }
+}
+
+WoC_MQTT::WoC_MQTT(WiFiClient &client, const char *devicename, const char *firmware) //: device(), mqtt(client, device)
 {
     // Set the static instance pointer
-    if (instance == nullptr) {
+    if (instance == nullptr)
+    {
         instance = this;
-    } else {
-        // Handle multiple instances is not supported
-        Serial.println("Warning: Multiple instances of HomeAssistant are not supported.");
+    }
+    else
+    {
+        Serial.println("Warning: Multiple instances of WoC MQTT are not supported.");
+        return;
     }
 
-    // // Build the HADevice first
+    // Build the HADevice first
     byte mac[maclen];
-    WiFi.macAddress(mac);    
+    WiFi.macAddress(mac);
     // Extract the last two bytes of the MAC address
-    uint8_t lastTwoBytes[2] = { mac[4], mac[5] };
+    uint8_t lastTwoBytes[2] = {mac[4], mac[5]};
     // Format the last two bytes as a hexadecimal string (4 characters)
     char macStr[5]; // 4 hex digits + null terminator
     snprintf(macStr, sizeof(macStr), "%02X%02X", lastTwoBytes[0], lastTwoBytes[1]);
-    
-    char uniqueid[strlen(Defaults::PRODUCT)+5]; // PRODUCT + "XXXX" (4) + null terminator (1)
-    snprintf(uniqueid, sizeof(uniqueid), "%s_%s", Defaults::PRODUCT, macStr);
-    Serial.print("Unique ID: ");
-    Serial.println(uniqueid);
 
-    //HADevice device("TestDevice-01");  
-    device.setUniqueId(uniqueid); 
-    device.setName(name);
-    device.setSoftwareVersion(firmware);
-    device.setModel(Defaults::FW_VERSION);
-    device.setManufacturer("testwiese Berlin");
+    snprintf(uniqueid, sizeof(uniqueid), ID_PATTERN, ID_DEVICE, macStr);
 
-    // Initialize HAMqtt with the built device
-    //HAMqtt test(client, device); // last number is the amount of devices/sensors implemented
+    device = new HADevice(uniqueid);
+    device->setName(devicename);
+    device->setSoftwareVersion(firmware);
+    device->setModel(Defaults::FW_VERSION);
+    device->setManufacturer(Defaults::MANUFACTURER);
+
+    haMqtt = new HAMqtt(client, *device);
 }
 
-// Destructor Implementation
-HomeAssistant::~HomeAssistant()
+WoC_MQTT::~WoC_MQTT()
 {
     disconnect();
-
-    // TODO: killing the sensors and switches causes a sigterm.
-    // not killing them creates dangling pointers to the switch callbacks
-    // meh, life sucks :(
-
-    // for (uint8_t i = 0; i < static_cast<uint8_t>(SensorType::SensorTypeCount); i++)
-    // {
-    //     if (sensors[i]!= nullptr) delete sensors[i];
-    // }
-    // for (uint8_t i = 0; i < static_cast<uint8_t>(SwitchType::SwitchTypeCount); i++)
-    // {
-    //     if (switches[i]!= nullptr) delete switches[i];
-    // }
-
-    // Clear the static instance pointer if it points to this object
-    if (instance == this) {
+    delete haMqtt;
+    if (instance == this)
+    {
         instance = nullptr;
     }
 }
 
-void HomeAssistant::loop()
+void WoC_MQTT::connect(IPAddress host, MqttEventCallback eventCallback, const char *username, const char *password, const char *topic, bool useOptions)
 {
-        mqtt.loop();
-}
+    if (isInitialized)
+    {
+        return;
+    }
+    mqttEventCallback = eventCallback;
+    instance->useOptions = useOptions;
 
-// Connect with username and password
-bool HomeAssistant::connect(
-    IPAddress broker,
-    const MqttConnectCallback& onConnected,
-    const MqttDisconnectCallback& onDisconnected,
-    const char* username,
-    const char* password,
-    const char* defaultTopic
-)
-{
-    // Store the callbacks
-    mqttConnectCallback = onConnected;
-    mqttDisconnectCallback = onDisconnected;
-
-    // Use static forwarders
-    mqtt.onConnected(&HomeAssistant::onMqttConnectedStatic);
-    mqtt.onDisconnected(&HomeAssistant::onMqttDisconnectedStatic);
-
-    if(defaultTopic) {
-        mqtt.setDataPrefix(defaultTopic);
-    } else {
-        mqtt.setDataPrefix(Defaults::DEFAULT_MQTT_TOPIC);
+    if (topic)
+    {
+        haMqtt->setDataPrefix(topic);
+    }
+    else
+    {
+        haMqtt->setDataPrefix(Defaults::DEFAULT_MQTT_TOPIC);
     }
 
-    //Connect with or without credentials
-    if (username && password) {
-        return mqtt.begin(broker, username, password);
-    } else {
-        return mqtt.begin(broker);
+    // callbacks and components setup
+    haMqtt->onConnected(onMqttConnectedStatic);
+    haMqtt->onDisconnected(onMqttConnectedStatic);
+    setupHomeAssistant();
+
+    // Connect with or without credentials
+    bool result = false;
+    if (username && password && *username != '\0' && *password != '\0')
+    {
+        result = haMqtt->begin(host, username, password);
     }
-    //return mqtt.begin(broker);
+    else
+    {
+        result = haMqtt->begin(host);
+    }
+    Serial.printf("MQTT connection result: %s\n", result ? "Success" : "Failed");
+
+    isInitialized = true;
 }
 
-void HomeAssistant::disconnect()
+void WoC_MQTT::disconnect()
 {
-    mqtt.disconnect();
-    mqtt.onConnected(nullptr);
-    mqtt.onDisconnected(nullptr);
-    mqttConnectCallback = nullptr;
-    mqttDisconnectCallback = nullptr;
-}
-
-// // Build HADevice
-// void HomeAssistant::setupDevice(const char* name, const char* firmware)
-// {
-//     byte mac[maclen];
-//     WiFi.macAddress(mac);
-    
-//     //HADevice haDevice(mac, sizeof(mac)); 
-//     device = HADevice("TestDevice");
-    
-//     device.setName(name);
-//     device.setSoftwareVersion(firmware);
-//     device.setModel("v1.0");
-//     device.setManufacturer("digitalnatives Berlin");
-// }
-
-const char* HomeAssistant::generateUniqueId(const char* name)
-{
-    // Static buffer to hold the unique ID
-    static char uniqueId[64]; 
-
-    const char* deviceId = device.getUniqueId();
-
-    // Build the unique ID
-    snprintf(uniqueId, sizeof(uniqueId), "%s-%s", deviceId, name);
-    uniqueId[sizeof(uniqueId) - 1] = '\0'; // Ensure null-termination
-
-    return uniqueId;
-}
-
-const char* HomeAssistant::getSensorName(SensorType sensor)
-{
-    // Static buffer to hold the name
-    static char buffer[30]; // Adjust the size as needed
-
-    uint8_t index = static_cast<uint8_t>(sensor);
-    if (index >= static_cast<uint8_t>(SensorType::SensorTypeCount)) {
-        buffer[0] = '\0'; // Empty buffer for invalid index
-        return buffer;
+    if (!isInitialized)
+    {
+        return;
     }
 
-    // Read the address of the sensor name from PROGMEM
-    const char* namePtr = (const char*)pgm_read_ptr(&sensorNames[index]);
-
-    // Copy the string from PROGMEM to RAM
-    strncpy_P(buffer, namePtr, sizeof(buffer));
-    buffer[sizeof(buffer) - 1] = '\0'; // Ensure null-termination
-
-    return buffer;
+    if (haMqtt->isConnected())
+        haMqtt->disconnect();
+    disableHomeAssistant();
+    haMqtt->onConnected(nullptr);
+    haMqtt->onDisconnected(nullptr);
+    mqttEventCallback = nullptr;
 }
 
-const char* HomeAssistant::getSwitchName(SwitchType sw)
+void WoC_MQTT::loop()
 {
-    // Static buffer to hold the name
-    static char buffer[30]; // Adjust the size as needed
+    if (haMqtt)
+    {
+        /*
+            enum ConnectionState {
+                StateConnecting = -5,
+                StateConnectionTimeout = -4,
+                StateConnectionLost = -3,
+                StateConnectionFailed = -2,
+                StateDisconnected = -1,
+                StateConnected = 0,
+                StateBadProtocol = 1,
+                StateBadClientId = 2,
+                StateUnavailable = 3,
+                StateBadCredentials = 4,
+                StateUnauthorized = 5
+            };
+        */
+        // int connectionState = haMqtt->getState();
+        // if(connectionState != connectionResult) {
+        //     Serial.printf("Connection result changed from %d to %d\n", connectionResult, connectionState);
+        //     connectionResult = connectionState;
+        // }
 
-    uint8_t index = static_cast<uint8_t>(sw);
-    if (index >= static_cast<uint8_t>(SwitchType::SwitchTypeCount)) {
-        buffer[0] = '\0'; // Empty buffer for invalid index
-        return buffer;
-    }
-
-    // Read the address of the switch name from PROGMEM
-    const char* namePtr = (const char*)pgm_read_ptr(&switchNames[index]);
-
-    // Copy the string from PROGMEM to RAM
-    strncpy_P(buffer, namePtr, sizeof(buffer));
-    buffer[sizeof(buffer) - 1] = '\0'; // Ensure null-termination
-
-    return buffer;
-}
-
-void HomeAssistant::addSensor(SensorType sensorType, const char *initialValue, const char* icon)
-{
-    uint8_t index = static_cast<uint8_t>(sensorType);
-
-    const char* name = getSensorName(sensorType);
-    const char* uniqueId = generateUniqueId(name);
-
-    sensors[index] = new HASensor(uniqueId);
-    sensors[index]->setName(name);
-    if (icon) sensors[index]->setIcon(icon);
-    if (initialValue) {
-        sensors[index]->setValue(initialValue);
+        haMqtt->loop();
     }
 }
 
-void HomeAssistant::addSwitch(SwitchType switchType, bool initialState, const char* icon)
+void WoC_MQTT::setupHomeAssistant()
 {
-    uint8_t index = static_cast<uint8_t>(switchType);
 
-    const char* name = getSwitchName(switchType);
-    const char* uniqueId = generateUniqueId(name);
+    snprintf(idLeds, sizeof(idLeds), ID_PATTERN, uniqueid, ID_LEDS);
+    snprintf(idIlluminance, sizeof(idIlluminance), ID_PATTERN, uniqueid, ID_ILLUMINANCE);
+    snprintf(idAutoBrightness, sizeof(idAutoBrightness), ID_PATTERN, uniqueid, ID_AUTO_BRIGHTNESS);
+    snprintf(idOption1, sizeof(idOption1), ID_PATTERN, uniqueid, ID_OPTION1);
+    snprintf(idOption2, sizeof(idOption2), ID_PATTERN, uniqueid, ID_OPTION2);
+    snprintf(idOption3, sizeof(idOption3), ID_PATTERN, uniqueid, ID_OPTION3);
+    snprintf(idOption4, sizeof(idOption4), ID_PATTERN, uniqueid, ID_OPTION4);
 
-    switches[index] = new HASwitch(uniqueId);
-    switches[index]->setName(name);
-    if (icon) switches[index]->setIcon(icon);
-    switches[index]->setState(initialState);
+    light = new HALight(idLeds, HALight::BrightnessFeature | HALight::RGBFeature);
+    light->onBrightnessCommand(onBrightnessCommandStatic);
+    light->onRGBColorCommand(onRGBCommandStatic);
+    light->onStateCommand(onStateCommandStatic);
+    light->setName(NAME_LEDS);
 
-    // Set up the command callback
-    switches[index]->onCommand(&HomeAssistant::onSwitchCommandStatic);
-}
+    lightSensor = new HASensorNumber(idIlluminance, HABaseDeviceType::NumberPrecision::PrecisionP0, HASensorNumber::Features::DefaultFeatures);
+    lightSensor->setName(NAME_LIGHT_INTENSITY);
+    lightSensor->setUnitOfMeasurement("lx");
 
-void HomeAssistant::setSensorValue(SensorType sensorType, const char *value)
-{
-    uint8_t index = static_cast<uint8_t>(sensorType);
-    if (sensors[index]) {
-        sensors[index]->setValue(value);
+    autoBrightness = new HASwitch(idAutoBrightness);
+    autoBrightness->onCommand(onSwitchCommandStatic);
+    autoBrightness->setName(NAME_AUTO_BRIGHTNESS);
+
+    if (useOptions)
+    {
+        option1 = new HASwitch(idOption1);
+        option1->onCommand(onSwitchCommandStatic);
+        option1->setName(NAME_OPTION1);
+
+        option2 = new HASwitch(idOption2);
+        option2->onCommand(onSwitchCommandStatic);
+        option2->setName(NAME_OPTION2);
+
+        option3 = new HASwitch(idOption3);
+        option3->onCommand(onSwitchCommandStatic);
+        option3->setName(NAME_OPTION3);
+
+        option4 = new HASwitch(idOption4);
+        option4->onCommand(onSwitchCommandStatic);
+        option4->setName(NAME_OPTION4);
     }
 }
 
-void HomeAssistant::setSwitchState(SwitchType switchType, bool state)
+void WoC_MQTT::disableHomeAssistant()
 {
-    uint8_t index = static_cast<uint8_t>(switchType);
-    if (switches[index]) {
-        switches[index]->setState(state);
+    delete light;
+    delete lightSensor;
+    delete autoBrightness;
+    if (useOptions)
+    {
+        delete option1;
+        delete option2;
+        delete option3;
+        delete option4;
     }
 }
 
-void HomeAssistant::setSwitchCommandCallback(const SwitchCommandCallback& callback)
+void WoC_MQTT::toggleLightState(bool state)
 {
-    switchCommandCallback = callback;
+    if (!isInitialized || !light)
+    {
+        return;
+    }
+    light->setState(state);
+}
+
+void WoC_MQTT::setLightBrightness(uint8_t brightness)
+{
+    if (!isInitialized || !light)
+    {
+        return;
+    }
+    light->setBrightness(brightness);
+}
+
+void WoC_MQTT::setLightColor(const char *hex)
+{
+    if (!isInitialized || !light)
+    {
+        return;
+    }
+
+    long number;
+    // Skip '#' if present
+    if (hex[0] == '#')
+    {
+        number = strtol(hex + 1, nullptr, 16);
+    }
+    else
+    {
+        number = strtol(hex, nullptr, 16);
+    }
+
+    // Example Input: "#ff0000" (or "ff0000")
+    uint8_t red = (number >> 16);         // 0xff0000 >> 16 = 0xff = 255
+    uint8_t green = (number >> 8) & 0xFF; // 0xff0000 >> 8 = 0xff00, & 0xFF = 0x00 = 0
+    uint8_t blue = number & 0xFF;         // 0xff0000 & 0xFF = 0x00 = 0
+
+    light->setRGBColor(HALight::RGBColor(red, green, blue));
+}
+
+void WoC_MQTT::setLightSensorValue(const uint16_t sensorValue)
+{
+    if (!isInitialized || !lightSensor)
+    {
+        return;
+    }
+    lightSensor->setValue(sensorValue);
+}
+
+void WoC_MQTT::toggleAutoBrightness(bool state)
+{
+    if (!isInitialized || !autoBrightness)
+    {
+        return;
+    }
+    autoBrightness->setState(state);
+}
+
+void WoC_MQTT::toggleOption1(bool state)
+{
+    if (!isInitialized || !option1)
+    {
+        return;
+    }
+    if (useOptions)
+    {
+        option1->setState(state);
+    }
+}
+
+void WoC_MQTT::toggleOption2(bool state)
+{
+    if (!isInitialized || !option2)
+    {
+        return;
+    }
+
+    if (useOptions)
+    {
+        option2->setState(state);
+    }
+}
+
+void WoC_MQTT::toggleOption3(bool state)
+{
+    if (!isInitialized || !option3)
+    {
+        return;
+    }
+
+    if (useOptions)
+    {
+        option3->setState(state);
+    }
+}
+
+void WoC_MQTT::toggleOption4(bool state)
+{
+    if (!isInitialized || !option4)
+    {
+        return;
+    }
+
+    if (useOptions)
+    {
+        option4->setState(state);
+    }
 }

@@ -1,95 +1,90 @@
-#ifndef HOMEASSISTANT_H
-#define HOMEASSISTANT_H
+#ifndef WOC_MQTT_H
+#define WOC_MQTT_H
 
 #include <Arduino.h>
 #include <WiFi.h>
 #include <ArduinoHA.h>
 #include <functional>
+#include "callbacktypes.h"
 #include "defaults.h"
 
-// HA entities enums
-enum class SensorType {
-    LightIntensity=0,
-    LightColor,
-    TimeUpdateInterval,
-    SensorTypeCount // Keep this as the last element
+using MqttEventCallback = std::function<void(MQTTEvent event, const char* payload)>;
+
+class WoC_MQTT
+{  
+    private:
+        static const char NAME_LEDS[] PROGMEM;
+        static const char NAME_LIGHT_INTENSITY[] PROGMEM;
+        static const char NAME_AUTO_BRIGHTNESS[] PROGMEM;
+        static const char NAME_OPTION1[] PROGMEM;
+        static const char NAME_OPTION2[] PROGMEM;
+        static const char NAME_OPTION3[] PROGMEM;
+        static const char NAME_OPTION4[] PROGMEM;
+
+        static constexpr const char* ID_PATTERN = "%s_%s";
+        static constexpr const char* ID_DEVICE = "woc";
+        static constexpr const char* ID_LEDS = "leds";
+        static constexpr const char* ID_ILLUMINANCE = "illuminance";
+        static constexpr const char* ID_AUTO_BRIGHTNESS = "autoBrightness";
+        static constexpr const char* ID_OPTION1 = "option1";
+        static constexpr const char* ID_OPTION2 = "option2";
+        static constexpr const char* ID_OPTION3 = "option3";
+        static constexpr const char* ID_OPTION4 = "option4";
+
+        //because of how the ArduinoHA lib is built, we need to run this class as singleton
+        static WoC_MQTT* instance;
+        // and we need to store the callback in a static variable
+        static void onMqttConnectedStatic();
+        static void onMqttDisconnectedStatic();
+        static void onBrightnessCommandStatic(uint8_t brightness, HALight* sender);
+        static void onRGBCommandStatic(HALight::RGBColor color, HALight* sender);
+        static void onStateCommandStatic(bool state, HALight* sender);
+        static void onSwitchCommandStatic(bool state, HASwitch* sender);
+    
+        HAMqtt *haMqtt;
+        HADevice *device;
+        HALight *light;
+        HASensorNumber *lightSensor;
+        HASwitch *autoBrightness;
+        HASwitch *option1;
+        HASwitch *option2;
+        HASwitch *option3;
+        HASwitch *option4;
+
+        MqttEventCallback mqttEventCallback;
+
+        bool useOptions = false;
+        const uint8_t maclen = 6;
+        static constexpr const char* DEFAULT_ICON = "mdi:clock-digital";
+        bool isInitialized = false;
+        int connectionResult = -5;
+        char uniqueid[9]; // 'woc' + '_' + "XXXX" (4) + null terminator (1)
+        char idLeds[14]; // uniqueid + '_leds' + null terminator (1)
+        char idIlluminance[21]; // uniqueid + '_illuminance' + null terminator (1)
+        char idAutoBrightness[24]; // uniqueid + '_autoBrightness' + null terminator (1)
+        char idOption1[17]; // uniqueid + '_option1' + null terminator (1)
+        char idOption2[17]; // uniqueid + '_option2' + null terminator (1)
+        char idOption3[17]; // uniqueid + '_option3' + null terminator (1)
+        char idOption4[17]; // uniqueid + '_option4' + null terminator (1)
+
+        // helper methods
+        void setupHomeAssistant();
+        void disableHomeAssistant();
+    public:
+        WoC_MQTT(WiFiClient& client, const char* devicename, const char* firmware);
+        ~WoC_MQTT();
+        void connect(IPAddress host, MqttEventCallback eventCallback, const char* username = nullptr, const char* password = nullptr, const char* topic = nullptr, bool useOptions = false);
+        void disconnect();
+        void loop();
+        void toggleLightState(bool state);
+        void setLightColor(const char* color);
+        void setLightBrightness(uint8_t brightness);
+        void setLightSensorValue(const uint16_t sensorValue);
+        void toggleAutoBrightness(bool state);
+        void toggleOption1(bool state);
+        void toggleOption2(bool state);
+        void toggleOption3(bool state);
+        void toggleOption4(bool state);
 };
 
-enum class SwitchType {
-    LED=0,
-    AutoTimeUpdate,
-    SwitchTypeCount // Keep this as the last element
-};
-
-// Define callback types
-using MqttConnectCallback = std::function<void()>;
-using MqttDisconnectCallback = std::function<void()>;
-using SwitchCommandCallback = std::function<void(SwitchType switchType, bool state)>;
-
-class HomeAssistant
-{
-private:
-    const uint8_t maclen = 6;
-    static constexpr const char* DEFAULT_ICON = "mdi:clock-digital";
-
-    HAMqtt mqtt;
-    HADevice device;
-
-    // Callbacks for MQTT
-    MqttConnectCallback mqttConnectCallback;
-    MqttDisconnectCallback mqttDisconnectCallback;
-
-    // Callback for switch commands
-    SwitchCommandCallback switchCommandCallback;
-
-    // Static pointer to the current instance
-    static HomeAssistant* instance;
-
-    // Static callback forwarders
-    static void onMqttConnectedStatic();
-    static void onMqttDisconnectedStatic();
-    static void onSwitchCommandStatic(bool state, HASwitch* sender);
-
-    // Arrays to store sensors and switches
-    HASensor* sensors[static_cast<uint8_t>(SensorType::SensorTypeCount)];
-    HASwitch* switches[static_cast<uint8_t>(SwitchType::SwitchTypeCount)];
-
-    // Helper method to generate, devices, names and unique IDs
-    void setupDevice(const char* name, const char* firmware);
-    const char* generateUniqueId(const char* name);
-    const char* getSensorName(SensorType sensor);
-    const char* getSwitchName(SwitchType sw);
-
-public:
-    // Constructor and Destructor
-    HomeAssistant(WiFiClient& client, const char* devicename, const char* firmware);
-    ~HomeAssistant();
-
-    // Connect methods with callbacks
-    bool connect(
-        IPAddress broker, 
-        const MqttConnectCallback& onConnected, 
-        const MqttDisconnectCallback& onDisconnected,
-        const char* username = nullptr,
-        const char* password = nullptr,
-        const char* defaultTopic = nullptr
-    );
-    void disconnect();
-
-        // Methods to add sensors and switches
-    void addSensor(SensorType sensorType, const char * initialValue = nullptr, const char* icon = HomeAssistant::DEFAULT_ICON);
-    void addSwitch(SwitchType switchType, bool initialState = false, const char* icon = HomeAssistant::DEFAULT_ICON);
-
-    // Methods to modify sensor and switch values
-    void setSensorValue(SensorType sensorType, const char *value);
-    void setSwitchState(SwitchType switchType, bool state);
-
-    // Method to set switch command callback
-    void setSwitchCommandCallback(const SwitchCommandCallback& callback);
-
-    // Loop method to maintain MQTT connection
-    void loop();
-};
-
-
-#endif // HOMEASSISTANT_H
+#endif // WOC_MQTT_H

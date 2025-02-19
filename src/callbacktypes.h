@@ -33,11 +33,17 @@ enum SchedulerType {
     ScheduleEnd
 };
 
-// enum DetailsType {
-//   LightConfig,
-//   SystemConfig,
-//   TimeConfig,
-//   UpdateConfig
-// };
+enum MQTTEvent {
+    Connected,
+    Disconnected,
+    BrightnessCommand,
+    RGBCommand,
+    StateCommand,
+    AutoBrightnessSwitchCommand,
+    Option1SwitchCommand,
+    Option2SwitchCommand,
+    Option3SwitchCommand,
+    Option4SwitchCommand
+};
 
 #endif // CALLBACKTYPES_H

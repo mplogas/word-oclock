@@ -16,8 +16,7 @@ void LED::init() {
 void LED::setBrightness(uint8_t brightness) {
     this->autoBrightness = false;
     this->brightness = brightness;
-    FastLED.setBrightness(brightness);
-    FastLED.show();
+    //FastLED.setBrightness(brightness);
 }
 
 void LED::setColor(const CRGB& color) {
@@ -45,26 +44,12 @@ void LED::unregisterIlluminanceSensorCallback() {
 }
 
 void LED::setLEDs(const std::vector<std::pair<int, int>>& ledRanges) {
-    if(ledRanges.empty()) return;
-    if(this->testMode) {
-        // this->testMode = false;
-        return;
-    }
-
-    FastLED.clear();
-
-    for (const auto& range : ledRanges) {
-        int start = range.first;
-        int count = range.second;
-        //Serial.printf("Setting LEDs from %d to %d\n", start, start + count -1);
-        for (int i = start; i < start + count && i < NUM_LEDS; i++) {
-            //Serial.printf("Setting LED %d\n", i);
-            this->leds[i] = color;
-        }
-    }
-    FastLED.show();
+    if(ledRanges.empty() || this->testMode) return;
+    activeLEDs = ledRanges;
 }
 
+// TODO / BUG: we need an isdark bool here to avoid that the loop displays the time again after the light was turned off 
+// another bug: it takes a while until the first time is displayed (max 1 minute), due to the loop. need to address that in main, probably
 void LED::clearLEDs() {
     //FastLED.clear(true);
     for( int i = 0; i < NUM_LEDS; i++) {
@@ -160,6 +145,29 @@ void LED::loop() {
         if(currentMillis - this->lastBrightnessUpdate > BRIGHTNESS_UPDATE_INTERVAL && this->autoBrightness == true) {
             this->lastBrightnessUpdate = currentMillis;
             handleAutoBrightness();
+        }
+
+        // Update LEDs from the stored activeLEDs with color and brightness (if auto brightness is disabled)
+        if(currentMillis - this->lastLEDUpdate > LED_UPDATE_INTERVAL && !this->testMode) {
+            this->lastLEDUpdate = currentMillis;
+            for( int i = 0; i < NUM_LEDS; i++) {
+                this->leds[i] = CRGB::Black;
+            }
+
+            if(activeLEDs.empty()) return;
+
+            for(auto ledRange : activeLEDs) {
+                int start = ledRange.first;
+                int count = ledRange.second;                  
+                for(int i = 0; i < count && (start + i) < NUM_LEDS; i++) {
+                    this->leds[start + i] = this->color;
+                }
+            }
+
+            if(!this->autoBrightness) {
+                FastLED.setBrightness(this->brightness);
+            }
+            FastLED.show();
         }
 
         if(currentMillis - this->lastSensorUpdate > SENSOR_UPDATE_INTERVAL  && this->sensorCallback) 

@@ -36,8 +36,9 @@ private:
     static const uint8_t BRIGHTNESS_MAX = 255; // max brightness for auto brightness
     static const unsigned long BRIGHTNESS_UPDATE_INTERVAL = 150; // Brightness update interval
     static const int ILLUMINANCE_UPDATE_INTERVAL = 500; // Illuminance update interval
-    static const int SENSOR_UPDATE_INTERVAL = 1000; // Sensor update interval
+    static const int SENSOR_UPDATE_INTERVAL = 1000; // Sensor callback update interval
     static const int TEST_LED_INTERVAL = 85; // Test LED interval
+    static const int LED_UPDATE_INTERVAL = Defaults::LED_INTERVAL; // LED update interval
     CRGB leds[NUM_LEDS];
     uint8_t brightness = Defaults::DEFAULT_LIGHT_BRIGHTNESS;
     bool autoBrightness = false;
@@ -52,7 +53,9 @@ private:
     unsigned long lastSensorUpdate  = 0;
     unsigned long lastIlluminanceUpdate  = 0;
     unsigned long lastTestLEDUpdate  = 0;
+    unsigned long lastLEDUpdate  = 0;
     IlluminanceSensorCallback sensorCallback;
+    std::vector<std::pair<int, int>> activeLEDs;
     void handleAutoBrightness();
 };
 

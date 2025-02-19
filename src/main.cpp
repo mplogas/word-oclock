@@ -41,16 +41,11 @@ void showCurrentTime(uint8_t hour, uint8_t minute)
 {
   if (!isDark)
   {
-    // Serial.printf("Current time: %d:%d\n", hour, minute);
+    Serial.printf("Current time: %d:%d\n", hour, minute);
     std::vector<std::pair<int, int>> leds = timeConverter->convertTime(hour, minute, (systemConfig.mode == Configuration::ClockMode::Regular), true);
-    // Serial.printf("LEDs: %d\n", leds.size());
+    Serial.printf("LEDs: %d\n", leds.size());
     ledController.setLEDs(leds);
   }
-}
-
-void showCurrentTime()
-{
-  showCurrentTime(lastHour, lastMinute);
 }
 
 // callbacks
@@ -104,7 +99,6 @@ void handleWiFiCredentials(const String &ssid, const String &password)
 void setColor(const char *color)
 {
   ledController.setColor(ledController.HexToRGB(color));
-  showCurrentTime();
   strlcpy(lightConfig.color, color, sizeof(lightConfig.color));
   config.setLightColor(lightConfig.color);
 }
@@ -137,7 +131,7 @@ void setLightState(bool state)
   if (state)
   {
     isDark = false;
-    showCurrentTime();
+    showCurrentTime(lastHour, lastMinute);
   }
   else
   {
@@ -537,13 +531,12 @@ void loop()
 {
   if (!isSetup && initialized)
   {
-    unsigned long now = millis();
-    if (now - lastUpdate > Defaults::LED_INTERVAL)
-    {
-      lastUpdate = now;
-      showCurrentTime();
-      Serial.printf("Free heap / min heap: %d / %d\n", ESP.getFreeHeap(), ESP.getMinFreeHeap());
-    }
+    // unsigned long now = millis();
+    // if (now - lastUpdate > Defaults::LED_INTERVAL)
+    // {
+    //   lastUpdate = now;
+    //   Serial.printf("Free heap / min heap: %d / %d\n", ESP.getFreeHeap(), ESP.getMinFreeHeap());
+    // }
 
     wordClock->loop();
     ledController.loop();

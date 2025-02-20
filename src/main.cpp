@@ -428,11 +428,23 @@ void clockSchedulerCallback(SchedulerType type, uint8_t hour, uint8_t minute)
   case SchedulerType::ScheduleStart:
     Serial.printf("Schedule start: %d:%d\n", hour, minute);
     ledController.setDark(false);
+    lightConfig.state = true;
+    config.setLightState(lightConfig.state);
     showCurrentTime(hour, minute);
+    if(systemConfig.mqttConfig.enabled && haMqtt != nullptr)
+    {
+      haMqtt->toggleLightState(lightConfig.state);
+    }
     break;
   case SchedulerType::ScheduleEnd:
     Serial.printf("Schedule end: %d:%d\n", hour, minute);
     ledController.setDark();
+    lightConfig.state = false;
+    config.setLightState(lightConfig.state);
+    if(systemConfig.mqttConfig.enabled && haMqtt != nullptr)
+    {
+      haMqtt->toggleLightState(lightConfig.state);
+    }
     break;
   default:
     break;

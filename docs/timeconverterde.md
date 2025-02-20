@@ -1,5 +1,11 @@
-**LED Ids**
+# German Word Clock Face Documentation
 
+## Overview
+The German word clock face displays time in a natural language format using an 11x11 LED matrix. It supports both standard German time format ("DREIVIERTEL VIER") and regional variations like ("VIERTEL VOR VIER").
+
+## LED Layout
+
+### LED Matrix (IDs)
 ```
 |110|111|112|113|114|115|116|117|118|119|120|
 |109|108|107|106|105|104|103|102|101|100| 99|
@@ -14,8 +20,7 @@
 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |10 |
 ```
 
-** Letters **
-
+### Letter Matrix
 ```
 | E | S | K | I | S | T | L | F | Ü | N | F |
 | Z | E | H | N | Z | W | A | N | Z | I | G |
@@ -28,4 +33,29 @@
 | W | A | C | H | T | Z | E | H | N | R | S |
 | B | S | E | C | H | S | F | M | U | H | R |
 | E | V | ° | X | ° | N | ° | S | ° | P | I |
-```i
+```
+
+## Time Format Examples
+
+### Standard German Format
+- 3:00 - "ES IST DREI UHR"
+- 3:15 - "ES IST VIERTEL VIER"
+- 3:30 - "ES IST HALB VIER"
+- 3:45 - "ES IST DREIVIERTEL VIER"
+
+### Regional Format
+- 3:00 - "ES IST DREI UHR"
+- 3:15 - "ES IST VIERTEL NACH DREI"
+- 3:30 - "ES IST HALB VIER"
+- 3:45 - "ES IST VIERTEL VOR VIER"
+
+## Special Features
+- Corner dots (°) can be used as status indicators
+- "ES IST" always remains lit
+- Uses 120 individually addressable LEDs
+- LED numbering starts from bottom left (0) to top right (120)
+
+## Implementation Notes
+- LED ranges are defined as pairs of (startIndex, length)
+- Words are composed by lighting up specific LED ranges
+- The format can be switched between standard and regional through configuration

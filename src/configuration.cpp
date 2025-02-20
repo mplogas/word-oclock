@@ -275,5 +275,4 @@ void Configuration::initializeDefaultConfig(){
     setClockMode(Regular);
 
     setIsInitialized();
-    Serial.println("Default configuration initialized");
 }

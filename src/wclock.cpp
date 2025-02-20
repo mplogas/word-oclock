@@ -105,10 +105,10 @@ void WClock::setTimeZone(const char *timezone)
         strcpy_P(buf, (char*)pgm_read_ptr(&(tz.name)));
 
         if(strcmp(timezone, buf) == 0) {
-            Serial.print("Setting timezone to ");
-            Serial.println(buf);
+            //Serial.print("Setting timezone to ");
+            //Serial.println(buf);
             strcpy_P(buf, (char*)pgm_read_ptr(&(tz.posixTz)));
-            Serial.println(buf);
+            //Serial.println(buf);
             setenv("TZ", buf, 1);
             tzset();
             return;
@@ -190,8 +190,8 @@ bool WClock::fetchLocalTime(struct tm &timeinfo) {
 
     if (getLocalTime(&timeinfo, ntpTimeout))
     {
-        Serial.println("Successfully obtained time");
-        Serial.println(&timeinfo, "%d.%m.%Y %H:%M:%S %Z");
+        // Serial.println("Successfully obtained time");
+        // Serial.println(&timeinfo, "%d.%m.%Y %H:%M:%S %Z");
         lastNTPtime = millis();
         return true;
     }

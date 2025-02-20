@@ -2,7 +2,7 @@
 
 WoC_MQTT *WoC_MQTT::instance = nullptr;
 
-const char WoC_MQTT::NAME_LEDS[] PROGMEM = "LEDs";
+const char WoC_MQTT::NAME_LEDS[] PROGMEM = "Word-o-Clock LEDs";
 const char WoC_MQTT::NAME_LIGHT_INTENSITY[] PROGMEM = "Light Intensity";
 const char WoC_MQTT::NAME_AUTO_BRIGHTNESS[] PROGMEM = "Auto Brightness";
 const char WoC_MQTT::NAME_OPTION1[] PROGMEM = "Option 1";

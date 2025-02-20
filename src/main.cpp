@@ -84,7 +84,7 @@ bool isUpdateSuccess()
 
 void handleWiFiCredentials(const String &ssid, const String &password)
 {
-  Serial.printf("SSID set to: %s\n", ssid.c_str());
+  // Serial.printf("SSID set to: %s\n", ssid.c_str());
   // Serial.printf("Password set to: %s\n", password.c_str());
 
   strlcpy(wifiConfig.ssid, ssid.c_str(), sizeof(wifiConfig.ssid));
@@ -296,12 +296,12 @@ void httpRequestCallback(ControlType type, const std::map<String, String> &param
     if (params.at(FPSTR(WebUI::PARAM_OPTION)) == FPSTR(WebUI::VALUE_OFF))
     {
       systemConfig.mode = Configuration::ClockMode::Regular;
-      Serial.println("Clock mode set to dreiviertel");
+      //Serial.println("Clock mode set to dreiviertel");
     }
     else
     {
       systemConfig.mode = Configuration::ClockMode::Option_1;
-      Serial.println("Clock mode set to viertel vor");
+      //Serial.println("Clock mode set to viertel vor");
     }
     config.setClockMode(systemConfig.mode);
     break;
@@ -332,7 +332,7 @@ void httpRequestCallback(ControlType type, const std::map<String, String> &param
       strlcpy(systemConfig.ntpConfig.timezone, params.at(FPSTR(WebUI::PARAM_NTP_TIMEZONE)).c_str(), sizeof(systemConfig.ntpConfig.timezone));
       config.setNtpConfig(systemConfig.ntpConfig);
   
-      Serial.printf("NTP enabled with server: %s, interval: %d, timezone: %s\n", systemConfig.ntpConfig.server, systemConfig.ntpConfig.interval, systemConfig.ntpConfig.timezone);
+      //printf("NTP enabled with server: %s, interval: %d, timezone: %s\n", systemConfig.ntpConfig.server, systemConfig.ntpConfig.interval, systemConfig.ntpConfig.timezone);
       wordClock->enableNTP(systemConfig.ntpConfig.timezone, systemConfig.ntpConfig.server, systemConfig.ntpConfig.interval);
     } else {
       config.setNtpConfig(systemConfig.ntpConfig);
@@ -426,7 +426,7 @@ void clockSchedulerCallback(SchedulerType type, uint8_t hour, uint8_t minute)
     showCurrentTime(hour, minute);
     break;
   case SchedulerType::ScheduleStart:
-    Serial.printf("Schedule start: %d:%d\n", hour, minute);
+    //Serial.printf("Schedule start: %d:%d\n", hour, minute);
     ledController.setDark(false);
     lightConfig.state = true;
     config.setLightState(lightConfig.state);
@@ -437,7 +437,7 @@ void clockSchedulerCallback(SchedulerType type, uint8_t hour, uint8_t minute)
     }
     break;
   case SchedulerType::ScheduleEnd:
-    Serial.printf("Schedule end: %d:%d\n", hour, minute);
+    //Serial.printf("Schedule end: %d:%d\n", hour, minute);
     ledController.setDark();
     lightConfig.state = false;
     config.setLightState(lightConfig.state);

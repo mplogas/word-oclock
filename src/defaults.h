@@ -7,9 +7,9 @@ class Defaults
 {
 public:
     static const uint32_t WIFI_SCAN_TIMEOUT = 10000;
-    static const uint16_t LED_INTERVAL = 5000;
+    static const uint16_t LED_INTERVAL = 1000;
     static constexpr const char* PRODUCT = "word-o-clock";
-    static constexpr const char* FW_VERSION = "0.9.1-OTA";
+    static constexpr const char* FW_VERSION = "0.9.5-DBG";
     static constexpr const char* MANUFACTURER = "testwiese Berlin";
     static constexpr const char* DEFAULT_WIFI_SETUP_PASS = "w0Rd0Cl0cK";
     static constexpr bool DEFAULT_MQTT_ENABLED = false;

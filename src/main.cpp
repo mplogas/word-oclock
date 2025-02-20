@@ -32,20 +32,16 @@ LED ledController;
 
 bool initialized = false;
 unsigned long lastUpdate = 0;
-bool isDark = false;
 bool pushStatus = false;
 uint8_t lastHour = 0;
 uint8_t lastMinute = 0;
 
 void showCurrentTime(uint8_t hour, uint8_t minute)
 {
-  if (!isDark)
-  {
-    Serial.printf("Current time: %d:%d\n", hour, minute);
-    std::vector<std::pair<int, int>> leds = timeConverter->convertTime(hour, minute, (systemConfig.mode == Configuration::ClockMode::Regular), true);
-    Serial.printf("LEDs: %d\n", leds.size());
-    ledController.setLEDs(leds);
-  }
+  //Serial.printf("Current time: %d:%d\n", hour, minute);
+  std::vector<std::pair<int, int>> leds = timeConverter->convertTime(hour, minute, (systemConfig.mode == Configuration::ClockMode::Regular), true);
+  //Serial.printf("LEDs: %d\n", leds.size());
+  ledController.setLEDs(leds);
 }
 
 // callbacks
@@ -130,13 +126,12 @@ void setLightState(bool state)
 {
   if (state)
   {
-    isDark = false;
+    ledController.setDark(false);
     showCurrentTime(lastHour, lastMinute);
   }
   else
   {
-    isDark = true;
-    ledController.clearLEDs();
+    ledController.setDark();
   }
 
   lightConfig.state = state;
@@ -432,13 +427,12 @@ void clockSchedulerCallback(SchedulerType type, uint8_t hour, uint8_t minute)
     break;
   case SchedulerType::ScheduleStart:
     Serial.printf("Schedule start: %d:%d\n", hour, minute);
-    isDark = false;
+    ledController.setDark(false);
     showCurrentTime(hour, minute);
     break;
   case SchedulerType::ScheduleEnd:
     Serial.printf("Schedule end: %d:%d\n", hour, minute);
-    isDark = true;
-    ledController.clearLEDs();
+    ledController.setDark();
     break;
   default:
     break;
@@ -498,6 +492,7 @@ void setup()
       ledController.setBrightness(lightConfig.brightness);
     }
     ledController.setColor(ledController.HexToRGB(lightConfig.color));
+    ledController.setDark(!lightConfig.state);
 
     timeConverter = new TimeConverterDE();
 
@@ -507,6 +502,10 @@ void setup()
     {
       enableMqtt();      
     }
+
+    lastHour = wordClock->getHour();
+    lastMinute = wordClock->getMinute();
+    showCurrentTime(lastHour, lastMinute);
   }
   else
   {

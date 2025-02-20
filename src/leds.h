@@ -19,7 +19,8 @@ public:
     void setBrightness(uint8_t brightness);
     void setColor(const CRGB& color);
     void setLEDs(const std::vector<std::pair<int, int>>& ledRanges);
-    void clearLEDs();
+    void setDark(bool dark = true);
+    //void clearLEDs();
     void enableAutoBrightness(int illuminanceThresholdHigh, int illuminanceThresholdLow);
     void disableAutoBrightness();
     void registerIlluminanceSensorCallback(const IlluminanceSensorCallback &callback);
@@ -43,6 +44,7 @@ private:
     uint8_t brightness = Defaults::DEFAULT_LIGHT_BRIGHTNESS;
     bool autoBrightness = false;
     bool testMode = false;
+    bool isDark = false;
     int testLED = 0;
     uint16_t illuminance = 0;
     int illuminanceThresholdHigh = 0;

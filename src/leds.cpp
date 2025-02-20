@@ -48,16 +48,20 @@ void LED::setLEDs(const std::vector<std::pair<int, int>>& ledRanges) {
     activeLEDs = ledRanges;
 }
 
-// TODO / BUG: we need an isdark bool here to avoid that the loop displays the time again after the light was turned off 
 // another bug: it takes a while until the first time is displayed (max 1 minute), due to the loop. need to address that in main, probably
-void LED::clearLEDs() {
-    //FastLED.clear(true);
-    for( int i = 0; i < NUM_LEDS; i++) {
-        this->leds[i] = CRGB::Black;
-    }
-
-    FastLED.show();
+void LED::setDark(bool dark) {
+    this->isDark = dark;
 }
+
+
+// void LED::clearLEDs() {
+//     //FastLED.clear(true);
+//     for( int i = 0; i < NUM_LEDS; i++) {
+//         this->leds[i] = CRGB::Black;
+//     }
+
+//     FastLED.show();
+// }
 
 void LED::test() {
     if (!this->testMode) {
@@ -154,19 +158,22 @@ void LED::loop() {
                 this->leds[i] = CRGB::Black;
             }
 
-            if(activeLEDs.empty()) return;
+            if(!isDark) {
+                if(activeLEDs.empty()) return;
 
-            for(auto ledRange : activeLEDs) {
-                int start = ledRange.first;
-                int count = ledRange.second;                  
-                for(int i = 0; i < count && (start + i) < NUM_LEDS; i++) {
-                    this->leds[start + i] = this->color;
+                for(auto ledRange : activeLEDs) {
+                    int start = ledRange.first;
+                    int count = ledRange.second;                  
+                    for(int i = 0; i < count && (start + i) < NUM_LEDS; i++) {
+                        this->leds[start + i] = this->color;
+                    }
+                }
+    
+                if(!this->autoBrightness) {
+                    FastLED.setBrightness(this->brightness);
                 }
             }
-
-            if(!this->autoBrightness) {
-                FastLED.setBrightness(this->brightness);
-            }
+            
             FastLED.show();
         }
 

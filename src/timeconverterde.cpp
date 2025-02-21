@@ -41,7 +41,7 @@ std::vector<std::pair<int, int>> TimeConverterDE::convertTime(const uint8_t hour
             // "es ist viertel [next hour]"
             if(isRegionalFormat) {
                 ledArray.push_back(LEDS_VIERTEL); // "viertel"
-                ledArray.push_back(getHourLEDs(displayHour)); // Next hour
+                ledArray.push_back(getHourLEDs(normalizedHours + 1)); // Next hour
             } else {
                 ledArray.push_back(LEDS_VIERTEL); // "viertel"
                 ledArray.push_back(LEDS_NACH); // "nach"

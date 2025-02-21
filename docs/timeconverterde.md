@@ -39,23 +39,26 @@ The German word clock face displays time in a natural language format using an 1
 
 ### Standard German Format
 - 3:00 - "ES IST DREI UHR"
+- 3:05 - "ES IST FÜNF NACH DREI"
+- 3:10 - "ES IST ZEHN NACH DREI"
 - 3:15 - "ES IST VIERTEL VIER"
+- 3:20 - "ES IST ZWANZIG NACH DREI"
+- 3:25 - "ES IST FÜNF VOR HALB VIER"
 - 3:30 - "ES IST HALB VIER"
+- 3:35 - "ES IST FÜNF NACH HALB VIER"
+- 3:40 - "ES IST ZWANZIG VOR VIER"
 - 3:45 - "ES IST DREIVIERTEL VIER"
+- 3:50 - "ES IST ZEHN VOR VIER"
+- 3:55 - "ES IST FÜNF VOR VIER"
 
 ### Regional Format
-- 3:00 - "ES IST DREI UHR"
 - 3:15 - "ES IST VIERTEL NACH DREI"
-- 3:30 - "ES IST HALB VIER"
 - 3:45 - "ES IST VIERTEL VOR VIER"
 
 ## Special Features
-- Corner dots (°) can be used as status indicators
-- "ES IST" always remains lit
-- Uses 120 individually addressable LEDs
-- LED numbering starts from bottom left (0) to top right (120)
+- Minute dots (°) can be used as status indicators
 
 ## Implementation Notes
+- LED numbering starts from bottom left (0) to top right (120), like a snake
 - LED ranges are defined as pairs of (startIndex, length)
-- Words are composed by lighting up specific LED ranges
 - The format can be switched between standard and regional through configuration

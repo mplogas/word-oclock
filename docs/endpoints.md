@@ -9,7 +9,7 @@
 | `/setAutoBrightness` | GET | - `enabled` (string): "0" or "1" |
 | `/setBrightness` | GET | - `value` (number): 0-255 |
 
-TODO: that's not particular RESTful. Move them to POST/PUT like the other endpoints.
+**TODO:** that's not particular RESTful. Move them to POST/PUT like the other endpoints.
 
 ## Time Configuration
 
@@ -58,6 +58,6 @@ TODO: that's not particular RESTful. Move them to POST/PUT like the other endpoi
 | `/favicon.ico` | Favicon |
 
 **Notes:**
-- All success responses return "Success"
+- All success responses return 200 "Success"
 - Error responses return "Error!" with HTTP 400/500 status codes
 - Static resources are cached for 86400 seconds (24 hours)

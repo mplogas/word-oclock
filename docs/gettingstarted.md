@@ -1,32 +1,6 @@
 # Getting Started with Word-o-Clock
 
-## Initial Setup
-
-
-
-### First Power-Up
-1. Connect your Word-o-Clock to power, make sure it delivers enough power (any modern, PD-capable USB-charger should do)
-2. The device will create a WiFi access point named `Word-o-Clock`
-3. Connect to this network using password: `w0Rd0Cl0cK`
-4. Open a web browser and navigate to `192.168.4.1`
-   ![web ui](images/ui_wifi.png "WiFi Web UI")
-5. Enter your WiFi credentials
-6. Save
-
-### Accessing the Web Interface
-1. Once connected to your network, find the device's IP address
-   - Check your router's DHCP client list
-   - Or use network discovery tools
-2. Navigate to the IP address in your web browser
-
 ## Basic Configuration
-
-### Navigation
-1. Pages: switch between Light, Time and System. The FW Update page is accessible via System - Update
-2. Light/Dark Mode
-3. Turning off a toggle usually turns of the feature (e.g HA integration, light schedule) immediately. Turning on a feature often requires additional parameters, so use the save button to save the on state.
-
-
 
 ### First Power-Up
 

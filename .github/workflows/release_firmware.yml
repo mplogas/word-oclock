@@ -1,0 +1,53 @@
+name: Build & Release Firmware
+
+on:
+    push:
+      branches:
+        - main
+      paths-ignore:
+        - .github/**
+        - data/**
+        - README.md
+        - TODO.md
+        - LICENSE
+        - .gitignore
+
+    workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+
+      - name: Build PlatformIO Project
+        run: pio run --environment ESP32
+      - name: copy file
+        run: cp .pio/build/ESP32/firmware.bin firmware.bin
+      - name: generate checksum
+        ##sha256sum .pio/build/ESP32/firmware.bin > .pio/build/ESP32/firmware.bin.sha256
+        run: |
+          echo CHECKSUM="$(sha256sum firmware.bin | awk '{ print $1 }')" >> "$GITHUB_ENV"  
+      - name: write checksum to file
+        run: |
+          echo $CHECKSUM > firmware.bin.sha256
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: v1.0.0
+          files: |
+            firmware.bin
+            firmware.bin.sha256

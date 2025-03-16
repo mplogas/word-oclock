@@ -49,8 +49,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          name: Firmware Release
-          tag_name: firmware-${{ env.NOW }}
+          name: Firmware Release ${{ env.NOW }}
+          tag_name: firmware
           body: |
             - SHA256: ${{ env.CHECKSUM }}
           draft: true

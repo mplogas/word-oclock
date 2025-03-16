@@ -42,8 +42,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          name: Filesystem Release
-          tag_name: filesystem-${{ env.NOW }}
+          name: Filesystem Release ${{ env.NOW }}
+          tag_name: filesystem
           body: |
             - SHA256: ${{ env.CHECKSUM }}
           draft: true

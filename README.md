@@ -16,14 +16,14 @@ An ESP32-based word clock that displays time in natural language, with smart hom
 2. Connect to the `word-o-Clock` WiFi network using the default password
 3. Navigate to `192.168.4.1` in your browser
 4. Enter your WiFi credentials
-5. Follow the [first steps](https://wordoclock.testwiese.de/gettingstarted) 
+5. Follow the [first steps](https://wordoclock.testwiese.de/docs/quickstart/) 
 
 ## Documentation
 Full documentation is available at [wordoclock.testwiese.de](https://wordoclock.testwiese.de):
-- [Getting Started Guide](https://wordoclock.testwiese.de/gettingstarted)
-- [Feature Documentation](https://wordoclock.testwiese.de/features)
-- [Endpoint Reference](https://wordoclock.testwiese.de/endpoints)
-- [German Clock Face](https://wordoclock.testwiese.de/timeconverterde)
+- [Getting Started Guide](https://wordoclock.testwiese.de/docs/quickstart/)
+- [Feature Documentation](https://wordoclock.testwiese.de/docs/features/)
+- [Endpoint Reference](https://wordoclock.testwiese.de/docs/development/endpoints/)
+- [German Clock Face](https://wordoclock.testwiese.de/docs/development/timeconverter-de/)
 
 ## Hardware Requirements
 - ESP32 microcontroller

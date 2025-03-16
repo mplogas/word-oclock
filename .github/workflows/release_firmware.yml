@@ -1,17 +1,16 @@
 name: Build & Release Firmware
 
 on:
-    push:
-      branches:
-        - main
-      paths-ignore:
-        - .github/**
-        - data/**
-        - README.md
-        - TODO.md
-        - LICENSE
-        - .gitignore
-
+    # push:
+    #   branches:
+    #     - main
+    #   paths-ignore:
+    #     - .github/**
+    #     - data/**
+    #     - README.md
+    #     - TODO.md
+    #     - LICENSE
+    #     - .gitignore
     workflow_dispatch:
 
 jobs:
@@ -39,7 +38,6 @@ jobs:
       - name: copy file
         run: cp .pio/build/ESP32/firmware.bin firmware.bin
       - name: generate checksum
-        ##sha256sum .pio/build/ESP32/firmware.bin > .pio/build/ESP32/firmware.bin.sha256
         run: |
           echo CHECKSUM="$(sha256sum firmware.bin | awk '{ print $1 }')" >> "$GITHUB_ENV"  
       - name: write checksum to file
@@ -49,7 +47,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag_name: v1.0.0
+          name: Fimrware Release
+          body: |
+            - SHA256: $CHECKSUM
+          draft: true
           files: |
             firmware.bin
             firmware.bin.sha256

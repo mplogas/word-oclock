@@ -40,14 +40,17 @@ jobs:
       - name: generate checksum
         run: |
           echo CHECKSUM="$(sha256sum firmware.bin | awk '{ print $1 }')" >> "$GITHUB_ENV"  
-      - name: write checksum to file
+      - name: Write checksum to checksum file
         run: |
           echo $CHECKSUM > firmware.bin.sha256
+      - name: Set current date as env variable
+        run: echo "NOW=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          name: Fimrware Release
+          name: Firmware Release
+          tag_name: firmware-${{ env.NOW }}
           body: |
             - SHA256: $CHECKSUM
           draft: true

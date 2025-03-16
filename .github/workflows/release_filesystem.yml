@@ -1,16 +1,11 @@
-name: Build & Release Firmware
+name: Build & Release Filesystem
 
 on:
     # push:
     #   branches:
     #     - main
-    #   paths-ignore:
-    #     - .github/**
+    #   paths:
     #     - data/**
-    #     - README.md
-    #     - TODO.md
-    #     - LICENSE
-    #     - .gitignore
     workflow_dispatch:
 
 jobs:
@@ -18,7 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
@@ -32,28 +26,27 @@ jobs:
           python-version: '3.11'
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
-
       - name: Build PlatformIO Project
-        run: pio run --environment ESP32
-      - name: Copy Firmware *.bin file
-        run: cp .pio/build/ESP32/firmware.bin firmware.bin
+        run: pio run --target buildfs --environment ESP32
+      - name: Copy file system *.bin file
+        run: cp .pio/build/ESP32/littlefs.bin filesystem.bin
       - name: Generate checksum
         run: |
-          echo CHECKSUM="$(sha256sum firmware.bin | awk '{ print $1 }')" >> "$GITHUB_ENV"  
+          echo CHECKSUM="$(sha256sum filesystem.bin | awk '{ print $1 }')" >> "$GITHUB_ENV"  
       - name: Write checksum to release checksum file
         run: |
-          echo $CHECKSUM > firmware.bin.sha256
+          echo $CHECKSUM > filesystem.bin.sha256
       - name: Get current date for release tag
         run: echo "NOW=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
       - name: Upload release to Github
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          name: Firmware Release
-          tag_name: firmware-${{ env.NOW }}
+          name: Filesystem Release
+          tag_name: filesystem-${{ env.NOW }}
           body: |
             - SHA256: ${{ env.CHECKSUM }}
           draft: true
           files: |
-            firmware.bin
-            firmware.bin.sha256
+            filesystem.bin
+            filesystem.bin.sha256

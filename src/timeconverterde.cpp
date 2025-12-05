@@ -32,16 +32,19 @@ std::vector<std::pair<int, int>> TimeConverterDE::convertTime(const uint8_t hour
     switch (roundedMinutes) {
         case 0:
             // "es ist [hour] uhr"
-            ledArray.push_back(getHourLEDs(displayHour)); // Hour word
+            if(displayHour == 1) {
+                ledArray.push_back(LEDS_H_EIN); // "ein"
+            } else {    
+                ledArray.push_back(getHourLEDs(displayHour)); // Hour word
+            }
             ledArray.push_back(LEDS_UHR); // "uhr"
             break;
         case 15:
-            // "es ist viertel [next hour]"
+            ledArray.push_back(LEDS_VIERTEL); // "viertel"
             if(isRegionalFormat) {
-                ledArray.push_back(LEDS_VIERTEL); // "viertel"
-                ledArray.push_back(getHourLEDs(normalizedHours + 1)); // Next hour
+                uint8_t nextHour = (normalizedHours % 12) + 1; // wraps 12→1
+                ledArray.push_back(getHourLEDs(nextHour));
             } else {
-                ledArray.push_back(LEDS_VIERTEL); // "viertel"
                 ledArray.push_back(LEDS_NACH); // "nach"
                 ledArray.push_back(getHourLEDs(normalizedHours)); // Current hour
              }            

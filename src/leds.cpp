@@ -146,6 +146,10 @@ void LED::loop() {
             //Serial.printf("Illuminance: %d\n", this->illuminance);
         }
 
+        // this causes the flickering when auto brightness is enabled
+        // it handles the auto brightness adjustment and then collides with the "main" update
+        // maybe its better to have a single "renderer" that handles a certain state at a certain time.  
+
         if(currentMillis - this->lastBrightnessUpdate > BRIGHTNESS_UPDATE_INTERVAL && this->autoBrightness == true) {
             this->lastBrightnessUpdate = currentMillis;
             handleAutoBrightness();

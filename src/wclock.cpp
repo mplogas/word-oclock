@@ -235,7 +235,7 @@ void WClock::loop()
                 scheduleRunning = true;
             }
         }
-        if (scheduleEnabled && scheduleRunning && timeinfo.tm_hour == scheduleEndHour && timeinfo.tm_min == scheduleEndMinute)
+        if (scheduleEnabled && timeinfo.tm_hour == scheduleEndHour && timeinfo.tm_min == scheduleEndMinute)
         {
             if (schedulerCallback)
             {

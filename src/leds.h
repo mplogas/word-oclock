@@ -45,6 +45,7 @@ private:
     bool autoBrightness = false;
     bool testMode = false;
     bool isDark = false;
+    bool pendingFrame = false;
     int testLED = 0;
     uint16_t illuminance = 0;
     int illuminanceThresholdHigh = 0;

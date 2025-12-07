@@ -40,6 +40,9 @@ private:
     static const int SENSOR_UPDATE_INTERVAL = 1000; // Sensor callback update interval
     static const int TEST_LED_INTERVAL = 85; // Test LED interval
     static const int LED_UPDATE_INTERVAL = Defaults::LED_INTERVAL; // LED update interval
+    static const int FAST_REFRESH_INTERVAL_MS = 100; // ~100 Hz ceiling
+    static const uint32_t FASTLED_WARN_US = 6000;
+    static const uint32_t FASTLED_FATAL_US = 8000;
     CRGB leds[NUM_LEDS];
     uint8_t brightness = Defaults::DEFAULT_LIGHT_BRIGHTNESS;
     bool autoBrightness = false;
@@ -57,9 +60,28 @@ private:
     unsigned long lastIlluminanceUpdate  = 0;
     unsigned long lastTestLEDUpdate  = 0;
     unsigned long lastLEDUpdate  = 0;
+    unsigned long lastFastRefresh = 0;
+    unsigned long lastRegularTick = 0;
+    bool immediateUpdatePending = false;
+    bool brightnessUpdatePending = false;
+    bool regularUpdatePending = false;
+    bool renderInProgress = false;
+    uint32_t lastRenderDurationUs = 0;
+    uint32_t maxRenderDurationUs = 0;
     IlluminanceSensorCallback sensorCallback;
     std::vector<std::pair<int, int>> activeLEDs;
     void handleAutoBrightness();
+    bool canRunFastRefresh(unsigned long now) const;
+    bool takeImmediateUpdate();
+    bool takeTestUpdate(unsigned long now);
+    bool takeBrightnessUpdate(unsigned long now);
+    bool takeRegularUpdate(unsigned long now);
+    void performRender(const std::vector<std::pair<int, int>>& ledSnapshot,
+                       const CRGB& colorSnapshot,
+                       bool darkSnapshot,
+                       uint8_t brightnessSnapshot);
+    void scheduleRegularTick(unsigned long now);
+    void logRenderDuration(uint32_t durationUs);
 };
 
 #endif // LEDS_H

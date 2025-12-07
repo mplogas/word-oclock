@@ -22,12 +22,15 @@ void LED::setBrightness(uint8_t brightness) {
     this->autoBrightness = false;
     this->brightness = brightness;
     this->pendingFrame = true;
+    this->immediateUpdatePending = true;
     portEXIT_CRITICAL(&ledsMux);
 }
 
 void LED::setColor(const CRGB& color) {
     portENTER_CRITICAL(&ledsMux);
     this->color = color;
+    this->pendingFrame = true;
+    this->immediateUpdatePending = true;
     portEXIT_CRITICAL(&ledsMux);
 }
 
@@ -59,6 +62,8 @@ void LED::setLEDs(const std::vector<std::pair<int, int>>& ledRanges) {
     if(ledRanges.empty() || this->testMode) return;
     portENTER_CRITICAL(&ledsMux);
     activeLEDs = ledRanges;
+    this->pendingFrame = true;
+    this->immediateUpdatePending = true;
     portEXIT_CRITICAL(&ledsMux);
 }
 
@@ -66,6 +71,8 @@ void LED::setLEDs(const std::vector<std::pair<int, int>>& ledRanges) {
 void LED::setDark(bool dark) {
     portENTER_CRITICAL(&ledsMux);
     this->isDark = dark;
+    this->pendingFrame = true;
+    this->immediateUpdatePending = true;
     portEXIT_CRITICAL(&ledsMux);
 }
 
@@ -83,6 +90,7 @@ void LED::test() {
     if (!this->testMode) {
         this->testMode = true;
         this->testLED = 0;
+        this->immediateUpdatePending = true;
     }
 }
 
@@ -127,86 +135,222 @@ void LED::handleAutoBrightness() {
     portENTER_CRITICAL(&ledsMux);
     this->brightness = smoothedBrightness;
     this->pendingFrame = true;
+    this->brightnessUpdatePending = true;
     portEXIT_CRITICAL(&ledsMux);
 }
 
 
-void LED::loop() {
-    unsigned long currentMillis = millis();
+bool LED::canRunFastRefresh(unsigned long now) const {
+    return (now - lastFastRefresh) >= FAST_REFRESH_INTERVAL_MS;
+}
 
-    if(this->testMode && currentMillis - this->lastTestLEDUpdate > TEST_LED_INTERVAL && this->testLED < NUM_LEDS) {
-        this->lastTestLEDUpdate = currentMillis;
-        this->leds[this->testLED] = CRGB::Black;
+bool LED::takeImmediateUpdate() {
+    bool shouldRun = false;
+    portENTER_CRITICAL(&ledsMux);
+    if (immediateUpdatePending) {
+        immediateUpdatePending = false;
+        shouldRun = true;
+    }
+    portEXIT_CRITICAL(&ledsMux);
+    return shouldRun;
+}
 
-        if(this->testLED == NUM_LEDS - 1) {
-            this->testMode = false;
-            this->testLED = 0;
-        } else {
-            this->testLED++;
-            this->leds[this->testLED] = CRGB::White;
-        }
+bool LED::takeTestUpdate(unsigned long now) {
+    if (!testMode) {
+        return false;
+    }
 
-        FastLED.show();
+    if (now - lastTestLEDUpdate < TEST_LED_INTERVAL || this->testLED >= NUM_LEDS) {
+        return false;
+    }
+
+    lastTestLEDUpdate = now;
+    this->leds[this->testLED] = CRGB::Black;
+
+    if(this->testLED == NUM_LEDS - 1) {
+        this->testMode = false;
+        this->testLED = 0;
     } else {
-        if(currentMillis - this->lastIlluminanceUpdate > ILLUMINANCE_UPDATE_INTERVAL) {
-            this->lastIlluminanceUpdate = currentMillis;
-            this->illuminance = analogRead(LDR_PIN);
-            //Serial.printf("Illuminance: %d\n", this->illuminance);
-        }
+        this->testLED++;
+        this->leds[this->testLED] = CRGB::White;
+    }
 
-        bool autoMode = false;
-        bool pendingSnapshot = false;
-        portENTER_CRITICAL(&ledsMux);
-        autoMode = this->autoBrightness;
-        pendingSnapshot = this->pendingFrame;
-        portEXIT_CRITICAL(&ledsMux);
+    return true;
+}
 
-        if(currentMillis - this->lastBrightnessUpdate > BRIGHTNESS_UPDATE_INTERVAL && autoMode) {
-            this->lastBrightnessUpdate = currentMillis;
-            handleAutoBrightness();
-        }
+bool LED::takeBrightnessUpdate(unsigned long now) {
+    bool shouldCheck = false;
+    portENTER_CRITICAL(&ledsMux);
+    shouldCheck = autoBrightness;
+    portEXIT_CRITICAL(&ledsMux);
 
-        const bool ledIntervalElapsed = (currentMillis - this->lastLEDUpdate) > LED_UPDATE_INTERVAL;
+    if (!shouldCheck) {
+        return false;
+    }
 
-        if((pendingSnapshot || ledIntervalElapsed) && !this->testMode) {
-            this->lastLEDUpdate = currentMillis;
-            std::vector<std::pair<int, int>> ledSnapshot;
-            CRGB colorSnapshot;
-            bool darkSnapshot;
-            uint8_t brightnessSnapshot;
+    if (now - lastBrightnessUpdate < BRIGHTNESS_UPDATE_INTERVAL) {
+        return false;
+    }
 
-            portENTER_CRITICAL(&ledsMux);
-            ledSnapshot = activeLEDs;
-            colorSnapshot = this->color;
-            darkSnapshot = this->isDark;
-            brightnessSnapshot = this->brightness;
-            this->pendingFrame = false;
-            portEXIT_CRITICAL(&ledsMux);
+    lastBrightnessUpdate = now;
+    handleAutoBrightness();
 
-            for(int i = 0; i < NUM_LEDS; i++) {
-                this->leds[i] = CRGB::Black;
+    bool runRender = false;
+    portENTER_CRITICAL(&ledsMux);
+    if (brightnessUpdatePending) {
+        brightnessUpdatePending = false;
+        runRender = true;
+    }
+    portEXIT_CRITICAL(&ledsMux);
+    return runRender;
+}
+
+void LED::scheduleRegularTick(unsigned long now) {
+    if (now - lastRegularTick >= 1000) {
+        lastRegularTick = now;
+        regularUpdatePending = true;
+    }
+}
+
+bool LED::takeRegularUpdate(unsigned long now) {
+    scheduleRegularTick(now);
+    bool shouldRun = false;
+    if (!(now - lastLEDUpdate > LED_UPDATE_INTERVAL)) {
+        return false;
+    }
+
+    portENTER_CRITICAL(&ledsMux);
+    if (regularUpdatePending || pendingFrame) {
+        regularUpdatePending = false;
+        pendingFrame = false;
+        shouldRun = true;
+    }
+    portEXIT_CRITICAL(&ledsMux);
+    return shouldRun;
+}
+
+void LED::performRender(const std::vector<std::pair<int, int>>& ledSnapshot,
+                        const CRGB& colorSnapshot,
+                        bool darkSnapshot,
+                        uint8_t brightnessSnapshot) {
+    const uint32_t renderStart = micros();
+
+    for(int i = 0; i < NUM_LEDS; i++) {
+        this->leds[i] = CRGB::Black;
+    }
+
+    if(!darkSnapshot && !ledSnapshot.empty()) {
+        for(auto ledRange : ledSnapshot) {
+            int start = ledRange.first;
+            int count = ledRange.second;                  
+            for(int i = 0; i < count && (start + i) < NUM_LEDS; i++) {
+                this->leds[start + i] = colorSnapshot;
             }
-
-            if(!darkSnapshot && !ledSnapshot.empty()) {
-                for(auto ledRange : ledSnapshot) {
-                    int start = ledRange.first;
-                    int count = ledRange.second;                  
-                    for(int i = 0; i < count && (start + i) < NUM_LEDS; i++) {
-                        this->leds[start + i] = colorSnapshot;
-                    }
-                }
-            }
-            
-            FastLED.setBrightness(brightnessSnapshot);
-            FastLED.show();
-        }
-
-        if(currentMillis - this->lastSensorUpdate > SENSOR_UPDATE_INTERVAL  && this->sensorCallback) 
-        {
-            this->lastSensorUpdate = currentMillis;    
-            int value = this->illuminance;
-            sensorCallback(value);
         }
     }
 
+    FastLED.setBrightness(brightnessSnapshot);
+    renderInProgress = true;
+    FastLED.show();
+    renderInProgress = false;
+
+    lastRenderDurationUs = micros() - renderStart;
+    if (lastRenderDurationUs > maxRenderDurationUs) {
+        maxRenderDurationUs = lastRenderDurationUs;
+    }
+    logRenderDuration(lastRenderDurationUs);
+}
+
+void LED::logRenderDuration(uint32_t durationUs) {
+    if (durationUs > FASTLED_FATAL_US) {
+        Serial.printf("[LED] Render took %uus (max %uus)\n", durationUs, maxRenderDurationUs);
+    } else if (durationUs > FASTLED_WARN_US) {
+        Serial.printf("[LED] Render slow: %uus\n", durationUs);
+    }
+}
+
+void LED::loop() {
+    const unsigned long now = millis();
+
+    if (!canRunFastRefresh(now)) {
+        return;
+    }
+
+    lastFastRefresh = now;
+
+    if(now - this->lastIlluminanceUpdate > ILLUMINANCE_UPDATE_INTERVAL) {
+        this->lastIlluminanceUpdate = now;
+        this->illuminance = analogRead(LDR_PIN);
+    }
+
+    if(now - this->lastSensorUpdate > SENSOR_UPDATE_INTERVAL  && this->sensorCallback) 
+    {
+        this->lastSensorUpdate = now;    
+        int value = this->illuminance;
+        sensorCallback(value);
+    }
+
+    if (renderInProgress) {
+        return;
+    }
+
+    bool shouldRender = false;
+    bool testRender = false;
+
+    if (!shouldRender) {
+        shouldRender = takeImmediateUpdate();
+    }
+
+    if (!shouldRender) {
+        testRender = takeTestUpdate(now);
+        shouldRender = testRender;
+    }
+
+    if (!shouldRender) {
+        shouldRender = takeBrightnessUpdate(now);
+    }
+
+    if (!shouldRender) {
+        shouldRender = takeRegularUpdate(now);
+    }
+
+    if (!shouldRender) {
+        return;
+    }
+
+    this->lastLEDUpdate = now;
+
+    if (testRender) {
+        uint8_t brightnessSnapshot;
+        portENTER_CRITICAL(&ledsMux);
+        brightnessSnapshot = this->brightness;
+        portEXIT_CRITICAL(&ledsMux);
+
+        const uint32_t renderStart = micros();
+        FastLED.setBrightness(brightnessSnapshot);
+        renderInProgress = true;
+        FastLED.show();
+        renderInProgress = false;
+        lastRenderDurationUs = micros() - renderStart;
+        if (lastRenderDurationUs > maxRenderDurationUs) {
+            maxRenderDurationUs = lastRenderDurationUs;
+        }
+        logRenderDuration(lastRenderDurationUs);
+        return;
+    }
+
+    std::vector<std::pair<int, int>> ledSnapshot;
+    CRGB colorSnapshot;
+    bool darkSnapshot;
+    uint8_t brightnessSnapshot;
+
+    portENTER_CRITICAL(&ledsMux);
+    ledSnapshot = activeLEDs;
+    colorSnapshot = this->color;
+    darkSnapshot = this->isDark;
+    brightnessSnapshot = this->brightness;
+    pendingFrame = false;
+    portEXIT_CRITICAL(&ledsMux);
+
+    performRender(ledSnapshot, colorSnapshot, darkSnapshot, brightnessSnapshot);
 }
